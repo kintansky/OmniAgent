@@ -1,0 +1,9 @@
+div.jumbotron {
+    text-align: center;
+}
+div.paginator {
+    text-align: right;
+}
+div.counter {
+    text-align: left;
+}

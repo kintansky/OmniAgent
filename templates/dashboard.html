@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %} Dashboard {% endblock %}
+{% block navbar_dashboard_active %}active{% endblock %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="jumbotron">
+        <div class="container">
+            <h1>OMNI AGENT</h1>
+            <p>Omni Agent is a tool set for administrator to keep eyes on the machine and check the status everywhere.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4">
+                <h2>Devices</h2>
+                <div class="alert alert-success" role="alert">
+                    <strong>{{ device_count }}</strong> devices recorded. 
+                </div>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ device_ipman_count }}</span>
+                        IPMAN
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ device_cmnet_count }}</span>
+                        CMNET
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ device_oth_count }}</span>
+                        OTHERS
+                    </li>
+                </ul>
+                <!-- <p><a class="btn btn-success pull-right" href="#" role="button">Check performance &raquo;</a></p> -->
+                <div class="btn-toolbar pull-right">
+                    <div class="btn-group" role="group" aria-label="...">
+                        <a class="btn btn-success" href="{% url 'device_list' %}" role="button">View devices &raquo;</a>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="...">
+                        <a class="btn btn-primary" href="#" role="button">Performance &raquo;</a>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="...">
+                        <a class="btn btn-warning" href="#" role="button">Utility &raquo;</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <h2>Optical Moudle Status</h2>
+                {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
+                    <div class="alert alert-success" role="alert">
+                        Nothing has been changed in 24h.
+                    </div>
+                {% else %}
+                    {% if moudle_miss_count != 0 %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Danger! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=MISS&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                {{ moudle_miss_count }} moudles are missing.
+                            </a>
+                        </div>
+                    {% endif %}
+                    {% if moudle_ch_count != 0 %}
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Notice! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=CH&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                {{ moudle_ch_count }} moudles are changed.
+                            </a>
+                        </div>
+                    {% endif %}
+                    {% if moudle_new_count != 0 %}
+                        <div class="alert alert-info" role="alert">
+                            <strong>Info! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=NEW&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                {{ moudle_new_count }} new moudles are founded.
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+                {# button显示部分 #}
+                {% if moudle_miss_count != 0 %}
+                    <p><a class="btn btn-danger pull-right" href="{% url 'moudle_list' %}" role="button">View details &raquo;</a></p>
+                {% else %}
+                    <p><a class="btn btn-primary pull-right" href="{% url 'moudle_list' %}" role="button">View details &raquo;</a></p>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <h2>IP Records</h2>
+                <div class="alert alert-success" role="alert">
+                    Walke through {{ device_ipman_count }} devices, found <strong>{{ ip_count }}</strong> ip records.
+                </div>
+                <p><a class="btn btn-primary pull-right" href="{% url 'ip_record' %}" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+    </div>
+    
+{% endblock %}

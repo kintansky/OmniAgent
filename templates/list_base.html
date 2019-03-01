@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br>
+        <ol class="breadcrumb">
+            <li><a href="{% url 'dashboard' %}">Home</a></li>
+            {% block breadcrumb %}{% endblock %}
+        </ol>
+        <h2 class="sub-header">{% block subheader %}{% endblock %}</h2>
+        <br>
+        <div class="row">
+            <div class="col-lg-1">
+                <a class="btn btn-success {% block new_button_active %}{% endblock %}" href="{% url 'add_device' %}" role="button">New</a>
+            </div>
+            <div class="col-lg-11">
+                {% block search_form %}{% endblock %}
+            </div>
+        </div>
+        {% block alert_content %}{% endblock %}
+        <br>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        {% block table_title %}{% endblock %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% block table_body %}{% endblock %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col-lg-2 counter">
+                <p class="counter">
+                    <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                    Found <strong>{{ page_of_objects.paginator.count }}</strong> records
+                </p>
+            </div>
+            <div class="col-lg-10">
+                {% block paginator %}{% endblock%}
+            </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}
