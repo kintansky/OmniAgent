@@ -9,24 +9,11 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+# omni_admin password123!@#
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '(n)6f(v^7ty62&fcr9(=1#awr9^2jb&#1tdf6jk!+*0i#a)(*j'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Application definition
 
@@ -76,28 +63,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'omni.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-# django连接mysql 参考官方文档 https://dev.mysql.com/doc/connector-python/en/connector-python-django-backend.html
-DATABASES = {
-    'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'ENGINE': 'mysql.connector.django',
-        'NAME': 'omni_agent',
-        'USER': 'root',
-        'PASSWORD': 'hlw2018!@#',
-        'HOST': '127.0.0.1',
-        'PORT': '9003',
-        'OPTIONS': {
-            'autocommit': True,
-        },
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
