@@ -2,10 +2,11 @@
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} 光模块记录 {% endblock %}
-{% block navbar_moudle_active %}active{% endblock %}
+{% block navbar_inspect_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
 {% block breadcrumb %}
+    <li class="active">Inspect</li>
     <li class="active">Optical Moudle</li>
 {% endblock %}
 

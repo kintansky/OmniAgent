@@ -2,10 +2,11 @@
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} IP地址记录 {% endblock %}
-{% block navbar_iprecord_active %}active{% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
 {% block breadcrumb %}
+    <li class="active">Resource</li>
     <li class="active">IP Record</li>
 {% endblock %}
 

@@ -34,17 +34,30 @@
                     <li class="dropdown {% block navbar_device_list_active %}{% endblock %}">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Devices <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="{% url 'device_list' %}">Device table</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a href="#">Performance</a></li>
-                            <li><a href="#">Utility</a></li>
+                            <li><a href="{% url 'device_list' %}">Device Table</a></li>
                             <li role="separator" class="divider"></li>
                             <!-- <li class="dropdown-header">Operation</li> -->
-                            <li><a href="{% url 'add_device' %}">Add device</a></li>
+                            <li><a href="{% url 'add_device' %}">Add Device</a></li>
                         </ul>
                     </li>
-                    <li class="{% block navbar_moudle_active %}{% endblock %}"><a href="{% url 'moudle_list' %}">Optical Moudle</a></li>
-                    <li class="{% block navbar_iprecord_active %}{% endblock %}"><a href="{% url 'ip_record' %}">IP Record</a></li>
+                    <li class="{% block navbar_inspect_active %}{% endblock %}">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Inspect <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'moudle_list' %}">Optical Moudle</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Performance(in progress)</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Utility(in progress)</a></li>
+                        </ul>
+                    </li>
+                    <li class="{% block navbar_resource_active %}{% endblock %}">
+                        <a href="#"  class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Resource <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'ip_record' %}">IP Records</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="">Port Utility</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="">About</a></li>
