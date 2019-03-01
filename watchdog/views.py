@@ -34,9 +34,9 @@ def search_device(request):
     if ip_address != '' and device_name == '':
         device_all_list = Device.objects.filter(device_ip=ip_address)
     elif device_name != '' and ip_address == '':
-        device_all_list = Device.objects.filter(device_name=device_name)
+        device_all_list = Device.objects.filter(device_name__icontains=device_name)
     elif ip_address != '' and device_name != '':
-        device_all_list = Device.objects.filter(device_name=device_name, device_ip=ip_address)
+        device_all_list = Device.objects.filter(device_name__icontains=device_name, device_ip=ip_address)
     else:
         device_all_list = Device.objects.all()
 

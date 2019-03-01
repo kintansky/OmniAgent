@@ -4,18 +4,14 @@ from django.core.paginator import Paginator
 from django.conf import settings
 import datetime
 from django.utils import timezone
-import pytz
 from .forms import MoudleSearchForm
-
-TODAY_TIME = timezone.datetime.now()
-TZ = pytz.timezone(timezone.get_current_timezone_name())
 
 # Create your views here.
 def moudle_list(request):
     # 获取当天00:00至第二天00:00
-    time_end = timezone.datetime(year=TODAY_TIME.year, month=TODAY_TIME.month, day=TODAY_TIME.day, hour=23, minute=59, second=59)
-    time_end = TZ.localize(time_end)    # pytz和django的timezone获取的Shanghai时间与北京时间差6分钟，通过这样才能修正，否则转换为UTC后匹配有问题
-    time_begin = time_end + timezone.timedelta(days=-5)  # 展示前3天数据
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=-3)  # 展示前3天数据
     moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=(time_begin, time_end))
     # moudle_all_list = OpticalMoudleDiff.objects.all()
 

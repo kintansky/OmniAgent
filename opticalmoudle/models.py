@@ -12,7 +12,7 @@ class OpticalMoudleDiff(models.Model):
         ('CH', 'changed'),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
-    record_time = models.DateTimeField()
+    record_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-record_time']

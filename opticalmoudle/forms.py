@@ -1,8 +1,5 @@
 from django import forms
-from .models import OpticalMoudleDiff
 import datetime
-from django.utils import timezone
-import pytz
 
 class MoudleSearchForm(forms.Form):
     CHOICES = (
@@ -20,17 +17,14 @@ class MoudleSearchForm(forms.Form):
         # super().clean()
         # time_begin = self.cleaned_data['time_begin']
         # time_end = self.cleaned_data['time_end']
-        cleaned_data = super().clean()  # 保证继承原有的字段验证
+        cleaned_data = super().clean()  # 保证先继承原有的字段验证，进行初步验证
         time_begin = cleaned_data.get('time_begin')
         time_end = cleaned_data.get('time_end')
-        tz = pytz.timezone(timezone.get_current_timezone_name())
         if type(time_begin) is str and type(time_end) is str:
             try:
                 time_begin = datetime.datetime.strptime(time_begin, '%Y-%m-%d+%H:%M:%S')
-                time_begin = tz.localize(time_begin)
                 self.cleaned_data['time_begin'] = time_begin
                 time_end = datetime.datetime.strptime(time_end, '%Y-%m-%d+%H:%M:%S')
-                time_end = tz.localize(time_end)
                 self.cleaned_data['time_end'] = time_end
             except:
                 raise forms.ValidationError('Time Format Error. Input should like "2018-01-01 00:00:00"')

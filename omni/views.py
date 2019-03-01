@@ -9,7 +9,6 @@ from watchdog.models import Device
 from opticalmoudle.models import OpticalMoudleDiff
 from iprecord.models import PublicIpRecord
 import datetime
-import pytz
 from django.utils import timezone
 
 def dashboard(request):
@@ -19,9 +18,7 @@ def dashboard(request):
     device_oth_count = device_count-device_ipman_count-device_cmnet_count
     
     today_time = datetime.datetime.now()
-    tz = pytz.timezone(timezone.get_current_timezone_name())
     time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-    time_end = tz.localize(time_end)
     time_begin = time_end + timezone.timedelta(days=-1)
     moudle_new_count = OpticalMoudleDiff.objects.filter(status='NEW', record_time__range=(time_begin, time_end)).count()
     moudle_miss_count = OpticalMoudleDiff.objects.filter(status='MISS', record_time__range=(time_begin, time_end)).count()
