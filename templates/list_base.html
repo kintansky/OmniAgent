@@ -15,10 +15,10 @@
         <h2 class="sub-header">{% block subheader %}{% endblock %}</h2>
         <br>
         <div class="row">
-            <div class="col-lg-1">
+            <div class="col-md-1">
                 <a class="btn btn-success {% block new_button_active %}{% endblock %}" href="{% url 'add_device' %}" role="button">New</a>
             </div>
-            <div class="col-lg-11">
+            <div class="col-md-11">
                 {% block search_form %}{% endblock %}
             </div>
         </div>

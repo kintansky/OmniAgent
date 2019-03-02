@@ -24,4 +24,5 @@ urlpatterns = [
     path('ip/', include('iprecord.urls')),
     path('moudle/', include('opticalmoudle.urls')),
     path('detail/<str:device_name>', views.device_detail, name='device_detail'),
+    path('portresource/', include('networkresource.urls')),
 ]
