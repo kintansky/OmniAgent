@@ -9,9 +9,9 @@
 {% block content %}
     <div class="container">
         <div class="page-header">
-            <h1 class="text-center">{{ device.device_name }} <small>{{ device.device_ip }}</small></h1>
+            <h1 class="text-center">{{ device.device_name }}<small> / {{ device.device_ip }}</small></h1>
         </div>
-        
+
         <div class="page-header">
             <h3 class="text-left">Port Utility <small>{{ port_up_count }} ports up, {{ port_down_count }} ports down</small></h3>
         </div>
@@ -22,17 +22,23 @@
                     <div class="panel-heading" role="tab" id="heading{{ slot.grouper }}">
                         <h3 class="panel-title">
                             <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ slot.grouper }}" aria-expanded="true" aria-controls="collapse{{ slot.grouper }}">
-                                Slot <strong>{{ slot.grouper }}</strong>: {{slot.list|length}} ports
+                                <strong>    Slot {{ slot.grouper }}</strong><small> / {{ slot.list|length }} ports</small>
+                                <span class="glyphicon glyphicon-list pull-right" aria-hidden="true"></span>
                             </a>
+                            
                         </h3>
                     </div>
+                    {% regroup slot.list by mda as mda_list %}
                     <div id="collapse{{ slot.grouper }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ slot.grouper }}">
                         <div class="panel-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Mda</th>
+                            {% for mda in mda_list %}
+                                <h4>
+                                    <span class="label label-success">Mda {{ mda.grouper }}</span>
+                                    <small> {{ mda.list|length }} ports</small>
+                                </h4>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
                                             <th>Port</th>
                                             <th>Brand Width</th>
                                             <th>Port Status</th>
@@ -40,24 +46,23 @@
                                             <th>LogicPort</th>
                                             <th>LogicPort Des</th>
                                             <th>Port Des</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for detail in slot.list %}
-                                            <tr>
-                                                <td>{{ detail.mda }}</td>
-                                                <td>{{ detail.port }}</td>
-                                                <td>{{ detail.brand_width }}</td>
-                                                <td>{{ detail.port_status }}</td>
-                                                <td>{{ detail.port_phy_status }}</td>
-                                                <td>{{ detail.logic_port }}</td>
-                                                <td>{{ detail.logic_port_description }}</td>
-                                                <td>{{ detail.port_description }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody>
+                                            {% for detail in mda.list %}
+                                                <tr>
+                                                    <td>{{ detail.port }}</td>
+                                                    <td>{{ detail.brand_width }}</td>
+                                                    <td>{{ detail.port_status }}</td>
+                                                    <td>{{ detail.port_phy_status }}</td>
+                                                    <td>{{ detail.logic_port }}</td>
+                                                    <td>{{ detail.logic_port_description|truncatechars:50 }}</td>
+                                                    <td>{{ detail.port_description|truncatechars:50 }}</td>
+                                                </tr>
+                                            {% endfor%}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -68,6 +73,5 @@
     </div>
 
 
-    </div>
 {% endblock %}
 
