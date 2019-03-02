@@ -1,13 +1,15 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 # 将路径加入sys.path, 否则找不到models
 import sys
 from os.path import abspath, join, dirname
 sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
 sys.path.insert(0, join(abspath(dirname('omni')), 'opticalmoudle'))
 sys.path.insert(0, join(abspath(dirname('omni')), 'iprecord'))
+sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
 from watchdog.models import Device
 from opticalmoudle.models import OpticalMoudleDiff
 from iprecord.models import PublicIpRecord
+from networkresource.models import IpmanResource
 import datetime
 from django.utils import timezone
 
@@ -38,3 +40,17 @@ def dashboard(request):
     context['time_end'] = '%d-%d-%d+23:59:59' % (today_time.year, today_time.month, today_time.day)
     context['ip_count'] = ip_count
     return render(request, 'dashboard.html', context)
+
+def device_detail(request, device_name):
+    device = get_object_or_404(Device, device_name=device_name)
+    device_ports = IpmanResource.objects.filter(device_name=device_name)
+    port_up_count = IpmanResource.objects.filter(device_name=device_name, port_status__icontains='up').count()
+    port_down_count = IpmanResource.objects.filter(device_name=device_name).count() - port_up_count
+    # 关系查询需要修改model的建立外键关系
+    
+    context = {}
+    context['device'] = device
+    context['device_ports'] = device_ports
+    context['port_up_count'] = port_up_count
+    context['port_down_count'] = port_down_count
+    return render(request, 'device_detail.html', context)

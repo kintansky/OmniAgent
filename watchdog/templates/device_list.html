@@ -37,7 +37,7 @@
 {% block table_body %}
     {% for device in devices %}
         <tr>
-            <td>{{ device.device_name }}</td>
+            <td><a href="{% url 'device_detail' device.device_name %}" target="_blank">{{ device.device_name }}</a></td>
             <td>{{ device.device_ip }}</td>
             <td>{{ device.device_network }}</td>
             <td>{{ device.login_port }}</td>

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %} Device's Detail {% endblock %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="page-header">
+            <h1 class="text-center">{{ device.device_name }} <small>{{ device.device_ip }}</small></h1>
+        </div>
+        
+        <div class="page-header">
+            <h3 class="text-left">Port Utility <small>{{ port_up_count }} ports up, {{ port_down_count }} ports down</small></h3>
+        </div>
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+            {% regroup device_ports by slot as slot_list %}
+            {% for slot in slot_list %}
+                <div class="panel panel-info">
+                    <div class="panel-heading" role="tab" id="heading{{ slot.grouper }}">
+                        <h3 class="panel-title">
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ slot.grouper }}" aria-expanded="true" aria-controls="collapse{{ slot.grouper }}">
+                                Slot <strong>{{ slot.grouper }}</strong>: {{slot.list|length}} ports
+                            </a>
+                        </h3>
+                    </div>
+                    <div id="collapse{{ slot.grouper }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ slot.grouper }}">
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Mda</th>
+                                            <th>Port</th>
+                                            <th>Brand Width</th>
+                                            <th>Port Status</th>
+                                            <th>Phy Status</th>
+                                            <th>LogicPort</th>
+                                            <th>LogicPort Des</th>
+                                            <th>Port Des</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for detail in slot.list %}
+                                            <tr>
+                                                <td>{{ detail.mda }}</td>
+                                                <td>{{ detail.port }}</td>
+                                                <td>{{ detail.brand_width }}</td>
+                                                <td>{{ detail.port_status }}</td>
+                                                <td>{{ detail.port_phy_status }}</td>
+                                                <td>{{ detail.logic_port }}</td>
+                                                <td>{{ detail.logic_port_description }}</td>
+                                                <td>{{ detail.port_description }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+
+    </div>
+
+
+    </div>
+{% endblock %}
+
