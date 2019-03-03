@@ -41,6 +41,18 @@ DATABASES = {
         'OPTIONS': {
             'autocommit': True,
         },
+    },
+    # networkresource使用的是cmdb数据库，migrate的时候需要指定--database=...
+    'cmdb': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': 'cmdb',
+        'USER': 'root',
+        'PASSWORD': 'hlw2018!@#',
+        'HOST': '127.0.0.1',
+        'PORT': '9003',
+        'OPTIONS': {
+            'autocommit': True,
+        },
     }
 }
 

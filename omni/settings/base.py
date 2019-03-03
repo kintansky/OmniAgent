@@ -106,4 +106,23 @@ STATICFILES_DIRS = [
 ]
 
 # 自定义参数
-EACH_PAGE_DEVICES_NUMBER = 5
+EACH_PAGE_DEVICES_NUMBER = 20
+
+# CACHE, 减少数据库查询次数
+# 开发环境和生产环境需要单独创建py manage.py createcachetable --settings omni.settings.development
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+#         'LOCATION': 'my_cache_table',
+#     }
+# }
+
+
+# 注意优先级，多个数据库情况下路由顺序匹配优先，最后是default数据库
+DATABASE_ROUTERS = ['omni.db_router.NetworkresourceRouter',]
+# 多数据库是建议使用下面的方法
+# DATABASE_APPS_MAPPING = {
+#     # example:
+#     #'app_name':'database_name',
+#     'networkresource': 'cmdb',
+# }
