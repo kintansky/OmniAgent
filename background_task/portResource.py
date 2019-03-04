@@ -143,6 +143,7 @@ if __name__ == "__main__":
     del DeviceInfoTable
     
     # 准备记录表
+    tableInfo['db'] = 'cmdb'
     tableInfo['tb'] = 'networkresource_ipmanresource'
     ResourceTable = SqlTable(**tableInfo)
     ResourceTable.executeCmd('truncate table %s' % ResourceTable._tb)
