@@ -21,8 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.dashboard, name='dashboard'),
     path('device/', include('watchdog.urls')),
-    path('ip/', include('iprecord.urls')),
-    path('moudle/', include('opticalmoudle.urls')),
+    path('inspect/', include('inspection.urls')),
     path('detail/<str:device_name>', views.device_detail, name='device_detail'),
-    path('portresource/', include('networkresource.urls')),
+    path('resource/', include('networkresource.urls')),
 ]

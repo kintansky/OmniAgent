@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.show_ports, name='port_resource_empty'),
-    path('search/', views.search_device_ports, name='port_resource'),
+    path('port/', views.show_ports, name='port_resource_empty'),
+    path('port/search/', views.search_device_ports, name='port_resource'),
+    path('ip/', views.ip_list, name='ip_record'),
+    path('ip/search/', views.search_ip, name='search_ip'),
 ]

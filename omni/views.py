@@ -3,13 +3,12 @@ from django.shortcuts import render, get_object_or_404
 import sys
 from os.path import abspath, join, dirname
 sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
-sys.path.insert(0, join(abspath(dirname('omni')), 'opticalmoudle'))
-sys.path.insert(0, join(abspath(dirname('omni')), 'iprecord'))
+sys.path.insert(0, join(abspath(dirname('omni')), 'inspection'))
+# sys.path.insert(0, join(abspath(dirname('omni')), 'iprecord'))
 sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
 from watchdog.models import Device
-from opticalmoudle.models import OpticalMoudleDiff
-from iprecord.models import PublicIpRecord
-from networkresource.models import IpmanResource
+from inspection.models import OpticalMoudleDiff
+from networkresource.models import IpmanResource, IpRecord
 import datetime
 from django.utils import timezone
 
@@ -26,7 +25,7 @@ def dashboard(request):
     moudle_miss_count = OpticalMoudleDiff.objects.filter(status='MISS', record_time__range=(time_begin, time_end)).count()
     moudle_ch_count = OpticalMoudleDiff.objects.filter(status='CH', record_time__range=(time_begin, time_end)).count()
 
-    ip_count = PublicIpRecord.objects.all().count()
+    ip_count = IpRecord.objects.all().count()
 
     context = {}
     context['device_count'] = device_count

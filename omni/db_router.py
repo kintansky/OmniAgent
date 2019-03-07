@@ -40,7 +40,7 @@ class NetworkresourceRouter:
         return None     # 与False不同，以上所有None代表未匹配，会按照router优先级继续往下匹配，最后匹配default
 
 # 使用不同app对应不同数据库的情况下使用以下配置，并对应settings里面的DATABASE_APPS_MAPPING
-# from .settings.development import DATABASE_APPS_MAPPING
+# from .settings.base import DATABASE_APPS_MAPPING
 # class NetworkresourceRouter:
 #     """
 #     A router to control all database operations on models in the

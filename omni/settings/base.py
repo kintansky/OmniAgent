@@ -25,9 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'watchdog.apps.WatchdogConfig',
-    'iprecord.apps.IprecordConfig',
-    'opticalmoudle.apps.OpticalmoudleConfig',
+    # 'opticalmoudle.apps.OpticalmoudleConfig',
     'networkresource.apps.NetworkresourceConfig',
+    'inspection.apps.InspectionConfig',
 ]
 
 MIDDLEWARE = [
@@ -48,7 +48,8 @@ TEMPLATES = [
         'DIRS': [
             os.path.join(BASE_DIR, 'templates'),
             os.path.join(BASE_DIR, 'watchdog/templates'),
-            os.path.join(BASE_DIR, 'iprecord/templates'),
+            os.path.join(BASE_DIR, 'networkresource/templates'),
+            os.path.join(BASE_DIR, 'inspection/templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {
