@@ -4,7 +4,6 @@ import sys
 from os.path import abspath, join, dirname
 sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
 sys.path.insert(0, join(abspath(dirname('omni')), 'inspection'))
-# sys.path.insert(0, join(abspath(dirname('omni')), 'iprecord'))
 sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
 from watchdog.models import Device
 from inspection.models import OpticalMoudleDiff

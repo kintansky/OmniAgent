@@ -25,7 +25,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'watchdog.apps.WatchdogConfig',
-    # 'opticalmoudle.apps.OpticalmoudleConfig',
     'networkresource.apps.NetworkresourceConfig',
     'inspection.apps.InspectionConfig',
 ]
