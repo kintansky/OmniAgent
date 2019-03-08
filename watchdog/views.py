@@ -1,25 +1,17 @@
 from django.shortcuts import render, get_object_or_404
-from django.core.paginator import Paginator
 from .models import Device, DeviceManufactor
 from .forms import AddDeviceForm
-from django.conf import settings
+# 下面为了引入funcpack的公共函数
+import sys
+from os.path import abspath, join, dirname
+sys.path.insert(0, join(abspath(dirname('omni')), 'funcpack'))
+from funcpack.funcs import pages
+# 上面为了引入funcpack的公共函数
 
 # Create your views here.
 def device_list(request):
     device_all_list = Device.objects.all()
-    paginator = Paginator(device_all_list, settings.EACH_PAGE_DEVICES_NUMBER)
-    page_num = request.GET.get('page', 1)
-    page_of_objects = paginator.get_page(page_num)
-    current_page_num = page_of_objects.number
-    page_range = list(range(max(current_page_num-2, 1), min(current_page_num+3, paginator.num_pages)+1))
-    if page_range[0] - 1 > 2:
-        page_range.insert(0, '...')
-    if paginator.num_pages-page_range[-1] >= 2:
-        page_range.append('...')
-    if page_range[0] != 1:
-        page_range.insert(0, 1)
-    if page_range[-1] != paginator.num_pages:
-        page_range.append(paginator.num_pages)
+    page_of_objects, page_range = pages(request, device_all_list)
 
     context = {}
     context['devices'] = page_of_objects.object_list
@@ -40,19 +32,7 @@ def search_device(request):
     else:
         device_all_list = Device.objects.all()
 
-    paginator = Paginator(device_all_list, settings.EACH_PAGE_DEVICES_NUMBER)
-    page_num = request.GET.get('page', 1)
-    page_of_objects = paginator.get_page(page_num)
-    current_page_num = page_of_objects.number
-    page_range = list(range(max(current_page_num-2, 1), min(current_page_num+3, paginator.num_pages)+1))
-    if page_range[0] - 1 > 2:
-        page_range.insert(0, '...')
-    if paginator.num_pages-page_range[-1] >= 2:
-        page_range.append('...')
-    if page_range[0] != 1:
-        page_range.insert(0, 1)
-    if page_range[-1] != paginator.num_pages:
-        page_range.append(paginator.num_pages)
+    page_of_objects, page_range = pages(request, device_all_list)
 
     context = {}
     context['devices'] = page_of_objects.object_list

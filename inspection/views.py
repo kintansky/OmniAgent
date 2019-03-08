@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff
-from django.core.paginator import Paginator
-from django.conf import settings
 import datetime
 from django.utils import timezone
 from .forms import MoudleSearchForm
+import sys
+from os.path import abspath, join, dirname
+sys.path.insert(0, join(abspath(dirname('omni')), 'funcpack'))
+from funcpack.funcs import pages
 
 # Create your views here.
 def moudle_list(request):
@@ -15,20 +17,8 @@ def moudle_list(request):
     moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=(time_begin, time_end))
     # moudle_all_list = OpticalMoudleDiff.objects.all()
 
-    paginator = Paginator(moudle_all_list, settings.EACH_PAGE_DEVICES_NUMBER)
-    page_num = request.GET.get('page', 1)
-    page_of_objects = paginator.get_page(page_num)
-    current_page_num = page_of_objects.number
-    page_range = list(range(max(current_page_num-2, 1), min(current_page_num+3, paginator.num_pages)+1))
-    if page_range[0] - 1 > 2:
-        page_range.insert(0, '...')
-    if paginator.num_pages-page_range[-1] >= 2:
-        page_range.append('...')
-    if page_range[0] != 1:
-        page_range.insert(0, 1)
-    if page_range[-1] != paginator.num_pages:
-        page_range.append(paginator.num_pages)
-    
+    page_of_objects, page_range = pages(request, moudle_all_list)
+
     context = {}
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
@@ -56,19 +46,7 @@ def search_moudle(request):
         context['moudle_search_form'] = moudle_search_form
         return render(request, 'moudle_list.html', context)
 
-    paginator = Paginator(moudle_all_list, settings.EACH_PAGE_DEVICES_NUMBER)
-    page_num = request.GET.get('page', 1)
-    page_of_objects = paginator.get_page(page_num)
-    current_page_num = page_of_objects.number
-    page_range = list(range(max(current_page_num-2, 1), min(current_page_num+3, paginator.num_pages)+1))
-    if page_range[0] - 1 > 2:
-        page_range.insert(0, '...')
-    if paginator.num_pages-page_range[-1] >= 2:
-        page_range.append('...')
-    if page_range[0] != 1:
-        page_range.insert(0, 1)
-    if page_range[-1] != paginator.num_pages:
-        page_range.append(paginator.num_pages)
+    page_of_objects, page_range = pages(request, moudle_all_list)
 
     context = {}
     context['records'] = page_of_objects.object_list
