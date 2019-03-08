@@ -19,7 +19,7 @@ class IpmanResource(models.Model):
         unique_together = (('device_name', 'port'),)
 
 class IpRecord(models.Model):
-    device_ip = models.GenericIPAddressField(protocol='both', primary_key=True)
+    device_ip = models.GenericIPAddressField(protocol='both')
     device_name = models.CharField(max_length=255)
     logic_port = models.CharField(max_length=40)
     svlan = models.CharField(max_length=30)

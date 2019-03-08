@@ -1,6 +1,6 @@
 #-*- coding:utf-8 -*-
 
-from device import Device, SqlTable
+from device import Device, SqlTable, LOG
 import re
 import time
 
@@ -17,10 +17,13 @@ def ipFinderHW(ipInfo):
                 break
             m2 = re.match(exp2, ipInfo[i])
             while m2:
-                if int(m2.group(1).split('.')[0]) > 127:
-                    if m1.group(1) not in ips:
-                        ips[m1.group(1)] = []
-                    ips[m1.group(1)].append([m2.group(1), m2.group(2), m2.group(3), 'None'])
+                # if int(m2.group(1).split('.')[0]) > 127:
+                #     if m1.group(1) not in ips:
+                #         ips[m1.group(1)] = []
+                #     ips[m1.group(1)].append([m2.group(1), m2.group(2), m2.group(3), 'None'])
+                if m1.group(1) not in ips:
+                    ips[m1.group(1)] = []
+                ips[m1.group(1)].append([m2.group(1), m2.group(2), m2.group(3), 'None'])
                 i += 1
                 if i >= len(ipInfo):
                     break
@@ -61,7 +64,7 @@ def ipFinderAL(ipInfo):
             
 def ipFinder(ipInfo, deviceType):
     """
-        parameters: ipInfo由 getDeviceInfo 返回的结果
+    parameters: ipInfo由 getDeviceInfo 返回的结果
     """
     if deviceType == 'huawei':
         return ipFinderHW(ipInfo)
@@ -82,8 +85,9 @@ def getDeviceFeedBack(DeviceNeedCheck):
 
 
 if __name__ == "__main__":
-        # 获得设备列表
-    print('- Device list Obtaining...')
+    # 获得设备列表
+    # print('- Device list Obtaining...')
+    LOG.infoLog('- Device list Obtaining...')
     tableInfo = {
         'tb': 'watchdog_device',
         'host': 'localhost',
@@ -91,16 +95,17 @@ if __name__ == "__main__":
         'user': 'root',
         'password': 'hlw2018!@#',
         'db': 'omni_agent',
-        }
+    }
     DeviceInfoTable = SqlTable(**tableInfo)
     cmd = 'select * from {} where device_network = "IPMAN" and device_name regexp "^GDFOS-MS-IPMAN"'.format(DeviceInfoTable._tb)
     deviceList = DeviceInfoTable.queryResult(cmd)
     DeviceInfoTable = None
     del DeviceInfoTable
     
-        # 准备ip地址记录表
-    print('- Environment setting up...')
-    tableInfo['tb'] = 'iprecord_publiciprecord'
+    # 准备ip地址记录表
+    # print('- Environment setting up...')
+    LOG.infoLog('- Environment setting up...')
+    tableInfo['tb'] = 'networkresource_iprecord'
     IpTable = SqlTable(**tableInfo)
     IpTable.executeCmd('truncate table %s' % IpTable._tb)
     
@@ -113,8 +118,9 @@ if __name__ == "__main__":
             'port': d[3],
             'username': d[4],
             'password': d[5],
-                }
-        print('%d. Checking Device:%s, IP: %s' % (i, deviceInfo['deviceName'], deviceInfo['ip']))
+        }
+        # print('%d. Checking Device:%s, IP: %s' % (i, deviceInfo['deviceName'], deviceInfo['ip']))
+        LOG.infoLog('Function {}: Device {}, IP {}'.format('IP Finder', deviceInfo['deviceName'], deviceInfo['ip']))
         try:
             print('\r- Device logging in...', end='', flush=True)
             DeviceNeedCheck = Device(**deviceInfo)
@@ -134,9 +140,11 @@ if __name__ == "__main__":
             else:
                 print('\r- Got NOTHING return.')
         except mysql.connector.Error as err:
-            print('SQL error: {}'.format(err))
+            LOG.errorLog('SQL error: {}'.format(err))
+            # print('SQL error: {}'.format(err))
         except Exception as err:
-            print('There was an error. {}'.format(err))
+            LOG.errorLog('There was an error. {}'.format(err))
+            # print('There was an error. {}'.format(err))
         finally:
             DeviceNeedCheck = None
             del DeviceNeedCheck
