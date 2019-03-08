@@ -26,6 +26,16 @@
     </form>
 {% endblock %}
 
+{% block alert_content %}
+    {% if ip_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
 {% block table_title %}
     <th>IP</th>
     <th>device_name</th>

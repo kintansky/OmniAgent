@@ -52,14 +52,16 @@ def search_ip(request):
         ip_address = ip_search_form.cleaned_data['ip_address']
         device_name = ip_search_form.cleaned_data['device_name']
         ip_description = ip_search_form.cleaned_data['description']
-        if ip_address != '' and device_name == '':
-            ip_all_list = IpRecord.objects.filter(device_ip=ip_address, ip_description__icontains=ip_description)
-        elif device_name != '' and ip_address == '':
+        if ip_address != '':
+            ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
+        elif device_name != '':
             ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-        elif device_name != '' and ip_address != '':
-            ip_all_list = IpRecord.objects.filter(device_name=device_name, device_ip=ip_address, ip_description__icontains=ip_description)
         else:
             ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+    else:
+        context = {}
+        context['ip_search_form'] = ip_search_form
+        return render(request, 'iprecord.html', context)
 
     paginator = Paginator(ip_all_list, settings.EACH_PAGE_DEVICES_NUMBER)
     page_num = request.GET.get('page', 1)
