@@ -28,7 +28,8 @@ class MoudleSearchForm(forms.Form):
                 self.cleaned_data['time_end'] = time_end
             except:
                 raise forms.ValidationError('Time Format Error. Input should like "2018-01-01 00:00:00"')
-        elif type(time_begin) is datetime.datetime and type(time_end) is datetime.datetime:
-            pass
+        if type(time_begin) is datetime.datetime and type(time_end) is datetime.datetime:
+            if time_begin >= time_end:
+                raise forms.ValidationError('Begin Time must earlier than End Time.')
 
         return self.cleaned_data
