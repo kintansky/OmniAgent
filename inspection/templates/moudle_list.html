@@ -26,6 +26,10 @@
     </form>
 {% endblock %}
 
+{% block export %}
+    <a class="btn btn-success" href="{% url 'export_moudle' %}?device_name={{ search_device_name }}&status={{ search_status }}&time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">Export</a>
+{% endblock %}
+
 {% block alert_content %}
     {% if moudle_search_form.errors %}
         <br>
