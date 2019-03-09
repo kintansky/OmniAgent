@@ -18,8 +18,11 @@
             <div class="col-md-1">
                 <a class="btn btn-success {% block new_button_active %}{% endblock %}" href="{% url 'add_device' %}" role="button">New</a>
             </div>
-            <div class="col-md-11">
+            <div class="col-md-10">
                 {% block search_form %}{% endblock %}
+            </div>
+            <div class="col-ms-1">
+                {% block export %}{% endblock %}
             </div>
         </div>
         {% block alert_content %}{% endblock %}

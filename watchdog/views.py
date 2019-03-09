@@ -2,11 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from .models import Device, DeviceManufactor
 from .forms import AddDeviceForm
 # 下面为了引入funcpack的公共函数
-import sys
-from os.path import abspath, join, dirname
-sys.path.insert(0, join(abspath(dirname('omni')), 'funcpack'))
 from funcpack.funcs import pages
-# 上面为了引入funcpack的公共函数
 
 # Create your views here.
 def device_list(request):

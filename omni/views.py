@@ -1,10 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 # 将路径加入sys.path, 否则找不到models
-import sys
-from os.path import abspath, join, dirname
-sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
-sys.path.insert(0, join(abspath(dirname('omni')), 'inspection'))
-sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
+# import sys
+# from os.path import abspath, join, dirname
+# sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
+# sys.path.insert(0, join(abspath(dirname('omni')), 'inspection'))
+# sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
 from watchdog.models import Device
 from inspection.models import OpticalMoudleDiff
 from networkresource.models import IpmanResource, IpRecord

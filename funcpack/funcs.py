@@ -1,5 +1,7 @@
 from django.core.paginator import Paginator
 from django.conf import settings
+import xlwt
+from io import BytesIO
 
 def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
     paginator = Paginator(object_list, page_conf)
@@ -17,3 +19,29 @@ def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
         page_range.append(paginator.num_pages)
     
     return page_of_objects, page_range
+
+
+def exportXls(fieldlist, object_list):
+    '''
+    title: tuple or list
+    '''
+    book = xlwt.Workbook()
+    sheet = book.add_sheet('sheet1')
+    titles = [field.name for field in fieldlist]
+    col = 0
+    for t in titles:
+        sheet.write(0, col, t)
+        col += 1
+    row = 1
+    for datas in object_list.values():
+        col = 0 
+        for t in titles:
+            sheet.write(row, col, datas[t])
+            col += 1
+        row += 1
+    output = BytesIO()
+    book.save(output)
+    output.seek(0)
+    return output
+
+

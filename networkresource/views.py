@@ -2,10 +2,8 @@ from django.shortcuts import render
 from .models import IpmanResource
 from .models import IpRecord
 from .forms import IPsearchForm
-import sys
-from os.path import abspath, join, dirname
-sys.path.insert(0, join(abspath(dirname('omni')), 'funcpack'))
-from funcpack.funcs import pages
+from funcpack.funcs import pages, exportXls
+from django.http import FileResponse
 
 # Create your views here.
 # port views
@@ -54,7 +52,6 @@ def search_ip(request):
 
     page_of_objects, page_range = pages(request, ip_all_list)
 
-
     context = {}
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
@@ -65,3 +62,24 @@ def search_ip(request):
     context['search_description'] = ip_description
     context['ip_search_form'] = ip_search_form
     return render(request, 'iprecord.html', context)
+
+def export_ip(request):
+    ip_address = request.GET.get('ip_address', '')
+    device_name = request.GET.get('device_name', '')
+    ip_description = request.GET.get('ip_description', '')
+    if ip_address == device_name == ip_description == '':
+        ip_all_list = IpRecord.objects.all()
+    else:
+        if ip_address != '':
+            ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
+        elif device_name != '':
+            ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
+        else:
+            ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+    
+    output = exportXls(IpRecord._meta.fields, ip_all_list)
+
+    # response = HttpResponse(output.getvalue(), content_type='application/vnd.ms-excel')
+    # response['Content-Disposition'] = 'attachment; filename="iprecord_result.xls"'
+    response = FileResponse(output, as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
+    return response

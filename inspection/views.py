@@ -3,9 +3,6 @@ from .models import OpticalMoudleDiff
 import datetime
 from django.utils import timezone
 from .forms import MoudleSearchForm
-import sys
-from os.path import abspath, join, dirname
-sys.path.insert(0, join(abspath(dirname('omni')), 'funcpack'))
 from funcpack.funcs import pages
 
 # Create your views here.
