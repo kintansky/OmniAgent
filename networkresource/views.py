@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .models import IpmanResource
 from .models import IpRecord
-from .forms import IPsearchForm
+from .forms import IPsearchForm, PortSearchForm
 from funcpack.funcs import pages, exportXls
 from django.http import FileResponse
 
@@ -9,16 +9,37 @@ from django.http import FileResponse
 # port views
 def show_ports(request):
     context = {}
+    context['port_search_form'] = PortSearchForm()
     return render(request, 'resource.html', context)
 
 def search_device_ports(request):
-    device_name = request.GET.get('device_name', 'NULL')
+    port_search_form = PortSearchForm(request.GET)
+    if port_search_form.is_valid():
+        device_name = port_search_form.cleaned_data['device_name']
+        slot = port_search_form.cleaned_data['slot']
+        port = port_search_form.cleaned_data['port']
+        port_description = port_search_form.cleaned_data['port_description']
+        if port != '':
+            target_ports = IpmanResource.objects.filter(device_name=device_name, port=port, port_description__icontains=port_description)    # 有明确端口的只返回一条
+            target_slot = target_ports.values_list('slot')
+        elif slot is not None:    # 没有明确端口，有明确的板卡信息，搜索整板卡
+            target_ports = IpmanResource.objects.filter(device_name=device_name, slot=slot, port_description__icontains=port_description)
+            target_slot = target_ports.values_list('slot')
+        elif port_description != '':    # 端口、板卡均不指定，只指定描述
+            target_ports = IpmanResource.objects.filter(device_name=device_name, port_description__icontains=port_description)
+            target_slot = target_ports.values_list('slot')
+    else:
+        context = {}
+        context['port_search_form'] = port_search_form
+        return render(request, 'resource.html', context)
+        
     context = {}
-    if device_name != 'NULL':    
-        ipman_resource = IpmanResource.objects.filter(device_name=device_name)
-        context['device_ports'] = ipman_resource
     context['device_name'] = device_name
+    context['target_slot'] = target_slot
+    context['target_ports'] = target_ports
+    context['port_search_form'] = port_search_form
     return render(request, 'resource.html', context)
+
 
 # iprecord views
 def ip_list(request):

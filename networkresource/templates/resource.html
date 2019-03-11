@@ -18,71 +18,56 @@
         <h2 class="sub-header">Port Utility</h2>
         <br>
         <div class="row">
-            <div class="col-md-5">
+            <div class="col-md-12">
                 <form action="{% url 'port_resource' %}" method="GET" class="form-inline">
-                    <div class="form-group">
-                        <label for="deviceInput">Device</label>
-                        <input type="text" name="device_name" class="form-control" id="deviceInput" placeholder="GDFOS-IPMAN-BNG01-DS-HW">
-                    </div>
+                    {% for field in port_search_form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                        </div>
+                    {% endfor %}
                     <button type="submit" class="btn btn-primary">Search</button>
                 </form>
             </div>
-            <div class="col-md-7">
-                <h2 class="sub-header text-right">{{ device_name }}</h2>
-            </div>
+
         </div>
-        
-        {% regroup device_ports by slot as slot_list %}
-        {% for slot in slot_list %}
-            <div class="panel panel-success">
-                <div class="panel-heading" role="tab" id="heading{{ slot.grouper }}">
-                    <h3 class="panel-title">
-                        <a role="button" data-toggle="collapse" href="#collapse{{ slot.grouper }}" aria-expanded="true" aria-controls="collapse{{ slot.grouper }}">
-                            <strong>    Slot {{ slot.grouper }}</strong><small> / {{ slot.list|length }} ports</small>
-                            <span class="glyphicon glyphicon-list pull-right" aria-hidden="true"></span>
-                        </a>
-                        
-                    </h3>
-                </div>
-                {% regroup slot.list by mda as mda_list %}
-                <div id="collapse{{ slot.grouper }}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{{ slot.grouper }}">
-                    <div class="panel-body">
-                        {% for mda in mda_list %}
-                            <h4>
-                                <span class="label label-success">Mda {{ mda.grouper }}</span>
-                                <small> {{ mda.list|length }} ports</small>
-                            </h4>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <th>Port</th>
-                                        <th>Brand Width</th>
-                                        <th>Port Status</th>
-                                        <th>Phy Status</th>
-                                        <th>LogicPort</th>
-                                        <th>LogicPort Des</th>
-                                        <th>Port Des</th>
-                                    </thead>
-                                    <tbody>
-                                        {% for detail in mda.list %}
-                                            <tr>
-                                                <td>{{ detail.port }}</td>
-                                                <td>{{ detail.brand_width }}</td>
-                                                <td>{{ detail.port_status }}</td>
-                                                <td>{{ detail.port_phy_status }}</td>
-                                                <td>{{ detail.logic_port }}</td>
-                                                <td>{{ detail.logic_port_description|truncatechars:50 }}</td>
-                                                <td>{{ detail.port_description|truncatechars:50 }}</td>
-                                            </tr>
-                                        {% endfor%}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
+        {% if port_search_form.errors %}
+            <br>
+            <div class="alert alert-danger alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <strong>Input Error: </strong>{{ port_search_form.errors.as_text }}
             </div>
-        {% endfor %}
+        {% endif %}
+        <h2 class="sub-header text-center">{{ device_name }}</h2>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <th>Port</th>
+                    <th>Brand Width</th>
+                    <th>Port Status</th>
+                    <th>Phy Status</th>
+                    <th>LogicPort</th>
+                    <th>LogicPort Des</th>
+                    <th>Port Des</th>
+                </thead>
+                <tbody>
+                    {% for pt in target_ports %}
+                    <tr>
+                        <td>{{ pt.port }}</td>
+                        <td>{{ pt.brand_width }}</td>
+                        <td>{{ pt.port_status }}</td>
+                        <td>{{ pt.port_phy_status }}</td>
+                        <td>{{ pt.logic_port }}</td>
+                        <td>{{ pt.logic_port_description|truncatechars:50 }}</td>
+                        <td>{{ pt.port_description|truncatechars:50 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
     </div>
 
 

@@ -10,6 +10,7 @@ from inspection.models import OpticalMoudleDiff
 from networkresource.models import IpmanResource, IpRecord
 import datetime
 from django.utils import timezone
+from django.db.models import Count
 
 def dashboard(request):
     device_count = Device.objects.all().count()
@@ -41,14 +42,15 @@ def dashboard(request):
 
 def device_detail(request, device_name):
     device = get_object_or_404(Device, device_name=device_name)
-    device_ports = IpmanResource.objects.filter(device_name=device_name)
+    # device_ports = IpmanResource.objects.filter(device_name=device_name, slot__range=(7, 10))
+    slot_brief = IpmanResource.objects.filter(device_name=device_name).values_list('slot').annotate(Count('slot')).order_by('slot')
     port_up_count = IpmanResource.objects.filter(device_name=device_name, port_status__icontains='up').count()
     port_down_count = IpmanResource.objects.filter(device_name=device_name).count() - port_up_count
     # 关系查询需要修改model的建立外键关系
-    
     context = {}
     context['device'] = device
-    context['device_ports'] = device_ports
+    context['slot_brief'] = slot_brief
+    # context['device_ports'] = device_ports
     context['port_up_count'] = port_up_count
     context['port_down_count'] = port_down_count
     return render(request, 'device_detail.html', context)

@@ -28,60 +28,42 @@
             <h3 class="text-left">Port Utility <small>{{ port_up_count }} ports up, {{ port_down_count }} ports down</small></h3>
         </div>
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-            {% regroup device_ports by slot as slot_list %}
-            {% for slot in slot_list %}
+            {% for sl in slot_brief %}
                 <div class="panel panel-success">
-                    <div class="panel-heading" role="tab" id="heading{{ slot.grouper }}">
+                    <div class="panel-heading" role="tab" id="heading{{ sl.0 }}">
                         <h3 class="panel-title">
-                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ slot.grouper }}" aria-expanded="true" aria-controls="collapse{{ slot.grouper }}">
-                                <strong>    Slot {{ slot.grouper }}</strong><small> / {{ slot.list|length }} ports</small>
+                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.0 }}" aria-expanded="true" aria-controls="collapse{{ sl.0 }}">
+                                <strong>    Slot {{ sl.0 }}</strong><small> / {{ sl.1 }} </small>
                                 <span class="glyphicon glyphicon-list pull-right" aria-hidden="true"></span>
                             </a>
-                            
                         </h3>
                     </div>
-                    {% regroup slot.list by mda as mda_list %}
-                    <div id="collapse{{ slot.grouper }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ slot.grouper }}">
+                    <div id="collapse{{ sl.0 }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ sl.0 }}">
                         <div class="panel-body">
-                            {% for mda in mda_list %}
-                                <h4>
-                                    <span class="label label-success">Mda {{ mda.grouper }}</span>
-                                    <small> {{ mda.list|length }} ports</small>
-                                </h4>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <th>Port</th>
-                                            <th>Brand Width</th>
-                                            <th>Port Status</th>
-                                            <th>Phy Status</th>
-                                            <th>LogicPort</th>
-                                            <th>LogicPort Des</th>
-                                            <th>Port Des</th>
-                                        </thead>
-                                        <tbody>
-                                            {% for detail in mda.list %}
-                                                <tr>
-                                                    <td>{{ detail.port }}</td>
-                                                    <td>{{ detail.brand_width }}</td>
-                                                    <td>{{ detail.port_status }}</td>
-                                                    <td>{{ detail.port_phy_status }}</td>
-                                                    <td>{{ detail.logic_port }}</td>
-                                                    <td>{{ detail.logic_port_description|truncatechars:50 }}</td>
-                                                    <td>{{ detail.port_description|truncatechars:50 }}</td>
-                                                </tr>
-                                            {% endfor%}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            {% endfor %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <th>Slot Type</th>
+                                        <th>Mda</th>
+                                        <th>Port</th>
+                                        <th>Brand Width</th>
+                                        <th>Port Status</th>
+                                        <th>Phy Status</th>
+                                        <th>LogicPort</th>
+                                        <th>LogicPort Des</th>
+                                        <th>Port Des</th>
+                                    </thead>
+                                    <tbody>
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-
-
+        
     </div>
 
     <script type="text/javascript">
@@ -156,7 +138,6 @@
         // 使用刚指定的配置项和数据显示图表。
         perfBar.hideLoading();
         perfBar.setOption(option);
-
 
     </script>
 {% endblock %}
