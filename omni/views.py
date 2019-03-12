@@ -1,4 +1,8 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import auth
+from django.urls import reverse
+from .forms import LoginForm, RegisterForm
+from django.contrib.auth.models import User
 # 将路径加入sys.path, 否则找不到models
 # import sys
 # from os.path import abspath, join, dirname
@@ -11,6 +15,44 @@ from networkresource.models import IpmanResource, IpRecord
 import datetime
 from django.utils import timezone
 from django.db.models import Count
+
+def register(request):
+    if request.method == 'POST':
+        reg_form = RegisterForm(request.POST)
+        if reg_form.is_valid():   # is_valid方法会执行forms内的clean的方法
+            username = reg_form.cleaned_data['username']
+            email = reg_form.cleaned_data['email']
+            password = reg_form.cleaned_data['password']
+            user = User.objects.create_user(username, email, password)
+            user.save()
+            # 创建用户后自动登录
+            user = auth.authenticate(username=username, password=password)
+            auth.login(request, user)
+            return redirect(request.GET.get('from', reverse('dashboard')))  # reverse反向解析到doahboard的链接
+    else:   # 如果非post请求
+        reg_form = RegisterForm()
+
+    context = {}
+    context['reg_form'] = reg_form
+    return render(request, 'register.html', context)
+
+def login(request):
+    if request.method == 'POST':
+        login_form = LoginForm(request.POST)
+        if login_form.is_valid():   # is_valid方法会执行forms内的clean的方法
+            user = login_form.cleaned_data['user']
+            auth.login(request, user)
+            return redirect(request.GET.get('from', reverse('dashboard')))  # reverse反向解析到doahboard的链接
+    else:   # 如果非post请求
+        login_form = LoginForm()
+
+    context = {}
+    context['login_form'] = login_form
+    return render(request, 'login.html', context)
+
+def logout(request):
+    auth.logout(request)
+    return redirect(request.GET.get('from', reverse('dashboard')))  # reverse反向解析到doahboard的链接
 
 def dashboard(request):
     device_count = Device.objects.all().count()

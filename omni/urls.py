@@ -20,6 +20,9 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.dashboard, name='dashboard'),
+    path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
+    path('register', views.register, name='register'),
     path('device/', include('watchdog.urls')),
     path('inspect/', include('inspection.urls')),
     path('detail/<str:device_name>', views.device_detail, name='device_detail'),
