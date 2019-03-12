@@ -64,8 +64,10 @@ def search_ip(request):
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
         elif device_name != '':
             ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-        else:
+        elif ip_description != '':
             ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+        else:
+            ip_all_list = IpRecord.objects.all()
     else:
         context = {}
         context['ip_search_form'] = ip_search_form

@@ -10,8 +10,8 @@ class IPsearchForm(forms.Form):
         ip_address = cleaned_data.get('ip_address')
         device_name = cleaned_data.get('device_name')
         description = cleaned_data.get('description')
-        if ip_address == device_name == description == '':
-            raise forms.ValidationError('Please specify at least one claus.')
+        # if ip_address == device_name == description == '':
+        #     raise forms.ValidationError('Please specify at least one claus.')
         return self.cleaned_data
 
 class PortSearchForm(forms.Form):

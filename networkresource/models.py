@@ -34,4 +34,4 @@ class IpRecord(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
-        ordering = ['-record_time', 'device_ip']
+        ordering = ['id',]
