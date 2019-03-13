@@ -7,4 +7,5 @@ urlpatterns = [
     path('ip/', views.ip_list, name='ip_record'),
     path('ip/search/', views.search_ip, name='search_ip'),
     path('ip/download/', views.export_ip, name='export_ip'),
+    path('ip/allocate/', views.allocate_ip, name='allocate_ip'),
 ]

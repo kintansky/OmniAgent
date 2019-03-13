@@ -11,6 +11,10 @@
 
 {% block subheader %} Devices {% endblock %}
 
+{% block new_button_url %}
+    {% url 'add_device' %}
+{% endblock %}
+
 {% block search_form %}
     <form action="{% url 'search_device' %}" method="GET" class="form-inline">
         <div class="form-group">

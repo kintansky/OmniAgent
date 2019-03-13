@@ -11,7 +11,9 @@
 {% endblock %}
 
 {% block subheader %} IP Records {% endblock %}
-{% block new_button_active %}disabled{% endblock %}
+{% block new_button_url %}
+    {% url 'allocate_ip' %}
+{% endblock %}
 
 {% block search_form %}
     <form action="{% url 'search_ip' %}" method="GET" class="form-inline">

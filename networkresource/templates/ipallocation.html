@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block navbar_resource_active %}active{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br>
+        <ol class="breadcrumb">
+            <li><a href="{% url 'dashboard' %}">Home</a></li>
+            <li class="active">Resource</a></li>
+            <li><a href="{% url 'ip_record' %}">IP Records</a></li>
+            <li class="active">Allocate IP</li>
+        </ol>
+        <h2 class="sub-header">Allocate IP</h2>
+        {% if user.is_authenticated %}
+            {# user already login #}
+            <div class="row">
+                {% if status == -1 %}
+                    <div class="alert alert-danger" role="alert">
+                        <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+                        <strong>Failed! </strong>{{ ip_allocate_form.ip.value }} on device {{ ip_allocate_form.device_name.value }} can't be allocate.
+                    </div>
+                {% elif status == 1 %}
+                    <div class="alert alert-success" role="alert">
+                        <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+                        <strong>Done! </strong>{{ ip_allocate_form.ip.value }} on device {{ ip_allocate_form.device_name.value }} allocated.
+                    </div>
+                {% endif %}
+            </div>
+            <form action="#" method="POST" class="form-horizontal">
+                {% csrf_token %}
+                {% for field in ip_allocate_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                        <div class="col-sm-6">
+                            {{ field }}
+                        </div>
+                        <p class="text-danger">{{ field.errors.as_text }}</p>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-6">
+                        <button type="submit" class="btn btn-primary pull-right">Allocate</button>
+                    </div>
+                </div>
+            </form>
+ 
+        {% else %}
+            {# user no login #}
+            <div class="row">
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+                    Before allocating resource, please <a href="{% url 'login' %}?from={{ request.get_full_path }}"><strong>LOGIN</strong></a> first!
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+{% endblock %}

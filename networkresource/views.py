@@ -1,7 +1,7 @@
-from django.shortcuts import render, get_object_or_404
-from .models import IpmanResource
-from .models import IpRecord
-from .forms import IPsearchForm, PortSearchForm
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from .models import IpmanResource, IpRecord, PublicIpAllocation
+from .forms import IPsearchForm, PortSearchForm, IpAllocateForm
 from funcpack.funcs import pages, exportXls
 from django.http import FileResponse
 
@@ -106,3 +106,39 @@ def export_ip(request):
     # response['Content-Disposition'] = 'attachment; filename="iprecord_result.xls"'
     response = FileResponse(output, as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
     return response
+
+def allocate_ip(request):
+    context = {}
+    if request.method == 'GET':
+        context['ip_allocate_form'] = IpAllocateForm()
+        return render(request, 'ipallocation.html', context)
+    elif request.method == 'POST':
+        ip_allocate_form = IpAllocateForm(request.POST)
+        if ip_allocate_form.is_valid():
+            public_ip_allocation = PublicIpAllocation()
+            public_ip_allocation.ies = ip_allocate_form.cleaned_data['ies']
+            public_ip_allocation.order_num = ip_allocate_form.cleaned_data['order_num']    
+            public_ip_allocation.client_num = ip_allocate_form.cleaned_data['client_num']    
+            public_ip_allocation.product_num = ip_allocate_form.cleaned_data['product_num']
+            public_ip_allocation.ip = ip_allocate_form.cleaned_data['ip']
+            public_ip_allocation.mask = ip_allocate_form.cleaned_data['mask']
+            public_ip_allocation.gateway = ip_allocate_form.cleaned_data['gateway']
+            public_ip_allocation.link_tag = ip_allocate_form.cleaned_data['link_tag']
+            public_ip_allocation.device_name = ip_allocate_form.cleaned_data['device_name']
+            public_ip_allocation.logic_port = ip_allocate_form.cleaned_data['logic_port']
+            public_ip_allocation.svlan = ip_allocate_form.cleaned_data['svlan']
+            public_ip_allocation.cvlan = ip_allocate_form.cleaned_data['cvlan']
+            public_ip_allocation.access_type = ip_allocate_form.cleaned_data['access_type']
+            public_ip_allocation.olt_name = ip_allocate_form.cleaned_data['olt_name']
+            public_ip_allocation.client_name = ip_allocate_form.cleaned_data['client_name']
+            public_ip_allocation.ip_description = ip_allocate_form.cleaned_data['ip_description']
+            public_ip_allocation.up_brandwidth = ip_allocate_form.cleaned_data['up_brandwidth']
+            public_ip_allocation.down_brandwidth = ip_allocate_form.cleaned_data['down_brandwidth']
+            public_ip_allocation.alc_user = request.user    # 直接通过request获取当前操作用户
+            public_ip_allocation.save()
+            context['status'] = 1   # 操作状态
+        else:
+            context['status'] = -1
+
+        context['ip_allocate_form'] = ip_allocate_form
+        return render(request, 'ipallocation.html', context)

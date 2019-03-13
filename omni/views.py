@@ -28,6 +28,7 @@ def register(request):
             # 创建用户后自动登录
             user = auth.authenticate(username=username, password=password)
             auth.login(request, user)
+            # from 通过html的url设置的get请求获得
             return redirect(request.GET.get('from', reverse('dashboard')))  # reverse反向解析到doahboard的链接
     else:   # 如果非post请求
         reg_form = RegisterForm()
