@@ -51,7 +51,9 @@
                     <li class="{% block navbar_resource_active %}{% endblock %}">
                         <a href="#"  class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Resource <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="{% url 'ip_record' %}">IP Records</a></li>
+                            <li><a href="{% url 'ip_record' %}">IP Records(device log)</a></li>
+                            <li><a href="{% url 'allocated_public_ip_list' %}">公网IP(分配&查询)</a></li>
+                            <li><a href="{% url 'allocated_private_ip_list' %}">私网IP(分配&查询)</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="{% url 'port_resource_empty' %}">Port Utility</a></li>
                         </ul>

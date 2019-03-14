@@ -10,12 +10,19 @@
     <li class="active">IP Record</li>
 {% endblock %}
 
-{% block subheader %} IP Records {% endblock %}
+{% block subheader %} Allocated IP Records {% endblock %}
 {% block new_button_url %}
+    {% if public_ip == 1 %}
+        {% url 'allocate_public_ip' %}
+    {% elif public_ip == 0 %}
+        {% url 'allocate_private_ip' %}
+    {% endif %}
 {% endblock %}
 
 {% block search_form %}
-    <form action="{% url 'search_ip' %}" method="GET" class="form-inline">
+
+    {% if public_ip == 1 %}
+    <form action="{% url 'allocated_public_ip_search' %}" method="GET" class="form-inline">
         {% for field in ip_search_form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -25,6 +32,18 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
+    {% elif public_ip == 0 %}
+    <form action="{% url 'allocated_private_ip_search' %}" method="GET" class="form-inline">
+        {% for field in ip_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    {% endif %}
 {% endblock %}
 
 {% block export %}
@@ -43,34 +62,72 @@
 {% endblock %}
 
 {% block table_title %}
-    <th>IP</th>
-    <th>device_name</th>
-    <th>port</th>
-    <th>svlan</th>
-    <th>cvaln</th>
-    <th>description</th>
+    {% if public_ip == 1 %}
+        {# 公网地址 #}
+        <th>工单号</th>
+        <th>客户编号</th>
+        <th>产品号</th>
+        <th>ip</th>
+        <th>设备</th>
+        <th>子接口</th>
+        <th>接入方式</th>
+        <th>客户名</th>
+        <th>带宽(DOWN)</th>
+        <th>分配人</th>
+    {% elif public_ip == 0 %}
+        {# 私网地址 #}
+        <th>community</th>
+        <th>service_id</th>
+        <th>rd</th>
+        <th>rt</th>
+        <th>接入依据</th>
+        <th>客户名</th>
+        <th>客户编号</th>
+        <th>产品号</th>
+        <th>设备</th>
+        <th>子接口</th>
+        <th>ip</th>
+        <th>分配人</th>
+    {% endif %}
 {% endblock %}
 
 {% block table_body %}
-    {% for record in records %}
-        <tr>
-            <td>{{ record.device_ip }}</td>
-            <td>{{ record.device_name }}</td>
-            <td>{{ record.logic_port }}</td>
-            <td>{{ record.svlan }}</td>
-            <td>{{ record.cvlan }}</td>
-            <td>{{ record.ip_description|truncatechars:50 }}</td>
-        </tr>
-    {% empty %}
-        <tr>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-        </tr>
-    {% endfor %}
+    {% if public_ip == 1 %}
+    {# 公网地址 #}
+        {% for record in records %}
+            <tr>
+                <td>{{ record.order_num|truncatechars:15 }}</td>
+                <td>{{ record.client_num|truncatechars:15 }}</td>
+                <td>{{ record.product_num|truncatechars:15 }}</td>
+                <td>{{ record.ip }}</td>
+                <td>{{ record.device_name|truncatechars:15 }}</td>
+                <td>{{ record.logic_port }}</td>
+                <td>{{ record.access_type }}</td>
+                <td>{{ record.client_name|truncatechars:15 }}</td>
+                <td>{{ record.down_brandwidth }}</td>
+                <td>{{ record.alc_user.username }}</td>
+            </tr>
+        {% endfor %}
+    {% elif public_ip == 0 %}
+    {# 私网地址 #}
+        {% for record in records %}
+            <tr>
+                <td>{{ record.community|truncatechars:15 }}</td>
+                <td>{{ record.service_id }}</td>
+                <td>{{ record.rd }}</td>
+                <td>{{ record.rt }}</td>
+                <td>{{ record.order_num|truncatechars:15 }}</td>
+                <td>{{ record.client_name|truncatechars:15 }}</td>
+                <td>{{ record.client_num|truncatechars:15 }}</td>
+                <td>{{ record.product_num|truncatechars:15 }}</td>
+                <td>{{ record.device_name|truncatechars:15 }}</td>
+                <td>{{ record.logic_port }}</td>
+                <td>{{ record.ip }}</td>
+                <td>{{ record.alc_user.username }}</th>
+            </tr>
+        {% endfor %}
+    {% endif %}
+
 {% endblock %}
 
 {% block paginator %}
