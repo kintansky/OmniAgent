@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}添加设备{% endblock %}
-{% block navbar_device_list_active %}active{% endblock %}
+{% block navbar_inspect_active %}active{% endblock %}
 
 {% load static %}
 {% block header_extends %}
@@ -12,45 +12,56 @@
         <br>
         <ol class="breadcrumb">
             <li><a href="{% url 'dashboard' %}">Home</a></li>
+            <li><a href="">Inspect</a></li>
             <li><a href="{% url 'device_list' %}">Devices</a></li>
             <li class="active">Add Devices</li>
         </ol>
         <h2 class="sub-header">Add Devices</h2>
-        <div class="row">
-            {% if status == 0 %}
-                <div class="alert alert-info" role="alert">
-                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-                    <strong>Attention! </strong>Before submition please check your data first!
+        {% if user.is_authenticated %}
+            <div class="row">
+                {% if status == 0 %}
+                    <div class="alert alert-info" role="alert">
+                        <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                        <strong>Attention! </strong>Before submition please check your data first!
+                    </div>
+                {% elif status == -1 %}
+                    <div class="alert alert-danger" role="alert">
+                        <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+                        <strong>Failed! </strong>Device {{ add_device_form.device_name.value }} can't be added.
+                    </div>
+                {% elif status == 1 %}
+                    <div class="alert alert-success" role="alert">
+                        <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+                        <strong>Done! </strong>Find a new device.
+                    </div>
+                {% endif %}
+            </div>
+            <form action="#" method="POST" class="form-horizontal">
+                {% csrf_token %}
+                {% for field in add_device_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                        <div class="col-sm-6">
+                            {{ field }}
+                        </div>
+                        <p class="text-danger">{{ field.errors.as_text }}</p>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-6">
+                        <button type="submit" class="btn btn-primary pull-right">ADD</button>
+                    </div>
                 </div>
-            {% elif status == -1 %}
+            </form>
+        {% else %}
+        {# user no login #}
+            <div class="row">
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
-                    <strong>Failed! </strong>Device {{ add_device_form.device_name.value }} can't be added.
-                </div>
-            {% elif status == 1 %}
-                <div class="alert alert-success" role="alert">
-                    <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
-                    <strong>Done! </strong>Find a new device.
-                </div>
-            {% endif %}
-        </div>
-        <form action="#" method="POST" class="form-horizontal">
-            {% csrf_token %}
-            {% for field in add_device_form %}
-                <div class="form-group">
-                    <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
-                    <div class="col-sm-6">
-                        {{ field }}
-                    </div>
-                    <p class="text-danger">{{ field.errors.as_text }}</p>
-                </div>
-            {% endfor %}
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-6">
-                    <button type="submit" class="btn btn-primary pull-right">ADD</button>
+                    Before adding device, please <a href="{% url 'login' %}?from={{ request.get_full_path }}"><strong>LOGIN</strong></a> first!
                 </div>
             </div>
-        </form>
+        {% endif %}
     </div>
 
 {% endblock %}

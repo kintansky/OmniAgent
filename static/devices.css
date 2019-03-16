@@ -7,3 +7,6 @@ div.paginator {
 div.counter {
     text-align: left;
 }
+input.allocate {
+    margin-bottom: 1em;
+}

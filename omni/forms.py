@@ -17,10 +17,10 @@ class LoginForm(forms.Form):
         return self.cleaned_data
 
 class RegisterForm(forms.Form):
-    username = forms.CharField(min_length=5, max_length=30, label="User", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    email = forms.EmailField(label='Email', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(min_length=6, label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    password_again = forms.CharField(min_length=6, label="Password Again", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    username = forms.CharField(min_length=5, max_length=30, label="User", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'username'}))
+    email = forms.EmailField(label='Email', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'example@example.example'}))
+    password = forms.CharField(min_length=6, label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'at least 6 characters'}))
+    password_again = forms.CharField(min_length=6, label="Password Again", widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'at least 6 characters'}))
 
     def clean_username(self):
         username = self.cleaned_data['username']

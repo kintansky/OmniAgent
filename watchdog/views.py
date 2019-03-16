@@ -42,7 +42,6 @@ def search_device(request):
 
 def add_device(request):
     status = 0
-
     if request.method == 'POST':
         add_device_form = AddDeviceForm(request.POST)
         if add_device_form.is_valid():

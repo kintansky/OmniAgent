@@ -2,10 +2,11 @@
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} 设备列表 {% endblock %}
-{% block navbar_device_list_active %}active{% endblock %}
+{% block navbar_inspect_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
 {% block breadcrumb %}
+    <li><a href="">Inspect</a></li>
     <li class="active">Devices</li>
 {% endblock %}
 

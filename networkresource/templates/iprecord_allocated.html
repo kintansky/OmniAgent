@@ -6,23 +6,29 @@
 
 {# 下面对list_base.html进行扩展#}
 {% block breadcrumb %}
-    <li class="active">Resource</li>
+    <li><a href="">Resource</a></li>
     <li class="active">IP Record</li>
 {% endblock %}
 
-{% block subheader %} Allocated IP Records {% endblock %}
+{% block subheader %}
+    {% if public_ip == 1 %}
+        已分配的公网地址
+    {% elif public_ip == 0 %}
+        已分配的私网地址
+    {% endif %}
+{% endblock %}
+
 {% block new_button_url %}
     {% if public_ip == 1 %}
-        {% url 'allocate_public_ip' %}
+        {% url 'allocate_ip' 'public' %}
     {% elif public_ip == 0 %}
-        {% url 'allocate_private_ip' %}
+        {% url 'allocate_ip' 'private' %}
     {% endif %}
 {% endblock %}
 
 {% block search_form %}
-
     {% if public_ip == 1 %}
-    <form action="{% url 'allocated_public_ip_search' %}" method="GET" class="form-inline">
+    <form action="{% url 'search_allocated_ip' 'public' %}" method="GET" class="form-inline">
         {% for field in ip_search_form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -33,7 +39,7 @@
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
     {% elif public_ip == 0 %}
-    <form action="{% url 'allocated_private_ip_search' %}" method="GET" class="form-inline">
+    <form action="{% url 'search_allocated_ip' 'private' %}" method="GET" class="form-inline">
         {% for field in ip_search_form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>

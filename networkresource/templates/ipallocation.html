@@ -12,44 +12,50 @@
         <br>
         <ol class="breadcrumb">
             <li><a href="{% url 'dashboard' %}">Home</a></li>
-            <li class="active">Resource</a></li>
+            <li><a href="">Resource</a></li>
             <li><a href="{% url 'ip_record' %}">IP Records</a></li>
             <li class="active">Allocate IP</li>
         </ol>
-        <h2 class="sub-header">Allocate IP</h2>
+        {% if public_ip == 1 %}
+            <h2 class="sub-header">公网地址分配</h2>
+        {% elif public_ip == 0 %}
+            <h2 class="sub-header">私网地址分配</h2>
+        {% endif %}
         {% if user.is_authenticated %}
             {# user already login #}
             <div class="row">
                 {% if status == -1 %}
                     <div class="alert alert-danger" role="alert">
                         <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
-                        <strong>Failed! </strong>{{ ip_allocate_form.ip.value }} on device {{ ip_allocate_form.device_name.value }} can't be allocate.
+                        <strong>失败 ! </strong>{{ ip_allocate_form.device_name.value }} 上的 {{ ip_allocate_form.ip.value }} 分配登记失败
+                        <p>错误字段: {{ ip_allocate_form.errors.as_text }}</p>
                     </div>
                 {% elif status == 1 %}
                     <div class="alert alert-success" role="alert">
                         <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
-                        <strong>Done! </strong>{{ ip_allocate_form.ip.value }} on device {{ ip_allocate_form.device_name.value }} allocated.
+                        <strong>成功 ! </strong>{{ ip_allocate_form.device_name.value }}上的{{ ip_allocate_form.ip.value }}已登记分配
                     </div>
                 {% endif %}
             </div>
-            <form action="#" method="POST" class="form-horizontal">
+            <form action="" method="POST">
                 {% csrf_token %}
                 {% for field in ip_allocate_form %}
                     <div class="form-group">
-                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
-                        <div class="col-sm-6">
+                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label text-right">
+                            {{ field.label }}
+                        </label>
+                        <div class="col-sm-4">
                             {{ field }}
                         </div>
-                        <p class="text-danger">{{ field.errors.as_text }}</p>
+                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
                     </div>
                 {% endfor %}
                 <div class="form-group">
-                    <div class="col-sm-offset-2 col-sm-6">
-                        <button type="submit" class="btn btn-primary pull-right">Allocate</button>
+                    <div class="col-sm-offset-10 col-sm-2">
+                        <button type="submit" class="btn btn-primary pull-right" style="margin-bottom: 1em">Allocate</button>
                     </div>
                 </div>
             </form>
- 
         {% else %}
             {# user no login #}
             <div class="row">
