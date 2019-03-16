@@ -11,16 +11,16 @@
     <div class="jumbotron">
         <div class="container">
             <h1>OMNI AGENT</h1>
-            <p>Omni Agent is a tool set for administrator to keep eyes on the machine and check the status everywhere.</p>
+            <p>Omni Agent 是一个WATCHDOG程序，帮助用户实现设备值守和设备性能监控。</p>
         </div>
     </div>
 
     <div class="container">
         <div class="row">
             <div class="col-lg-4">
-                <h2>Devices</h2>
+                <h2>设备</h2>
                 <div class="alert alert-success" role="alert">
-                    <strong>{{ device_count }}</strong> devices recorded. 
+                    <strong>{{ device_count }}</strong> 台设备被记录在案. 
                 </div>
                 <ul class="list-group">
                     <li class="list-group-item">
@@ -39,62 +39,62 @@
                 <!-- <p><a class="btn btn-success pull-right" href="#" role="button">Check performance &raquo;</a></p> -->
                 <div class="btn-toolbar pull-right">
                     <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-success" href="{% url 'device_list' %}" role="button">View devices &raquo;</a>
+                        <a class="btn btn-success" href="{% url 'device_list' %}" role="button">清单 &raquo;</a>
                     </div>
                     <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-primary" href="#" role="button">Performance &raquo;</a>
+                        <a class="btn btn-primary" href="#" role="button">性能 &raquo;</a>
                     </div>
                     <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-warning" href="#" role="button">Utility &raquo;</a>
+                        <a class="btn btn-warning" href="{% url 'port_resource' %}" role="button">端口 &raquo;</a>
                     </div>
                 </div>
             </div>
             <div class="col-lg-4">
-                <h2>Optical Moudle Status</h2>
+                <h2>光模块情况</h2>
                 {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
                     <div class="alert alert-success" role="alert">
-                        Nothing has been changed in 24h.
+                        24 小时内未检测到变化.
                     </div>
                 {% else %}
                     {% if moudle_miss_count != 0 %}
                         <div class="alert alert-danger" role="alert">
-                            <strong>Danger! </strong>
+                            <strong>危险! </strong>
                             <a href="{% url 'search_moudle' %}?device_name=&status=MISS&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
-                                {{ moudle_miss_count }} moudles are missing.
+                                24 小时内 {{ moudle_miss_count }} 个模块丢失.
                             </a>
                         </div>
                     {% endif %}
                     {% if moudle_ch_count != 0 %}
                         <div class="alert alert-warning" role="alert">
-                            <strong>Notice! </strong>
+                            <strong>当心! </strong>
                             <a href="{% url 'search_moudle' %}?device_name=&status=CH&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
-                                {{ moudle_ch_count }} moudles are changed.
+                                24 小时内 {{ moudle_ch_count }} 个模块变更.
                             </a>
                         </div>
                     {% endif %}
                     {% if moudle_new_count != 0 %}
                         <div class="alert alert-info" role="alert">
-                            <strong>Info! </strong>
+                            <strong>注意! </strong>
                             <a href="{% url 'search_moudle' %}?device_name=&status=NEW&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
-                                {{ moudle_new_count }} new moudles are founded.
+                                24 小时内 {{ moudle_new_count }} 个新模块加入.
                             </a>
                         </div>
                     {% endif %}
                 {% endif %}
                 {# button显示部分 #}
                 {% if moudle_miss_count != 0 %}
-                    <p><a class="btn btn-danger pull-right" href="{% url 'moudle_list' %}" role="button">View details &raquo;</a></p>
+                    <p><a class="btn btn-danger pull-right" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
                 {% else %}
-                    <p><a class="btn btn-primary pull-right" href="{% url 'moudle_list' %}" role="button">View details &raquo;</a></p>
+                    <p><a class="btn btn-primary pull-right" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
                 {% endif %}
             </div>
 
             <div class="col-lg-4">
-                <h2>IP Records</h2>
+                <h2>IP记录</h2>
                 <div class="alert alert-success" role="alert">
-                    Walke through {{ device_ipman_count }} devices, found <strong>{{ ip_count }}</strong> ip records.
+                    巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
                 </div>
-                <p><a class="btn btn-primary pull-right" href="{% url 'ip_record' %}" role="button">View details &raquo;</a></p>
+                <p><a class="btn btn-primary pull-right" href="{% url 'ip_record' %}" role="button">详情 &raquo;</a></p>
             </div>
         </div>
     </div>

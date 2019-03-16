@@ -63,8 +63,8 @@
                             </ul>
                         </li>
                     {% else %}
-                        <li><a href="{% url 'login' %}?from={{ request.get_full_path }}">Login</a></li>
-                        <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">Register</a></li>
+                        <li><a href="{% url 'login' %}?from={{ request.get_full_path }}">登陆</a></li>
+                        <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">注册</a></li>
                     {% endif %}
 
                 </ul>
@@ -74,6 +74,11 @@
 
     {% block content %}{% endblock %}
 
+    <footer class="footer">
+        <div class="container">
+            <p class="text-muted text-right">Got problem or advice? Please contact QQ 357350686</p>
+        </div>
+    </footer>
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
