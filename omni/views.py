@@ -21,9 +21,10 @@ def register(request):
         reg_form = RegisterForm(request.POST)
         if reg_form.is_valid():   # is_valid方法会执行forms内的clean的方法
             username = reg_form.cleaned_data['username']
+            first_name = reg_form.cleaned_data['first_name']    # 中文名
             email = reg_form.cleaned_data['email']
             password = reg_form.cleaned_data['password']
-            user = User.objects.create_user(username, email, password)
+            user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name)
             user.save()
             # 创建用户后自动登录
             user = auth.authenticate(username=username, password=password)

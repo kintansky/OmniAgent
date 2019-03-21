@@ -17,7 +17,8 @@ class LoginForm(forms.Form):
         return self.cleaned_data
 
 class RegisterForm(forms.Form):
-    username = forms.CharField(min_length=5, max_length=30, label="User", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'username'}))
+    username = forms.CharField(min_length=5, max_length=30, label="User", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '姓名汉语拼音'}))
+    first_name = forms.CharField(label="ZH_Name", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '中文姓名'}))
     email = forms.EmailField(label='Email', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'example@example.example'}))
     password = forms.CharField(min_length=6, label="Password", widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'at least 6 characters'}))
     password_again = forms.CharField(min_length=6, label="Password Again", widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'at least 6 characters'}))

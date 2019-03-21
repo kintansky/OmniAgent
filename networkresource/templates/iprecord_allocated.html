@@ -84,8 +84,6 @@
         {# 私网地址 #}
         <th>community</th>
         <th>service_id</th>
-        <th>rd</th>
-        <th>rt</th>
         <th>接入依据</th>
         <th>客户名</th>
         <th>客户编号</th>
@@ -120,8 +118,6 @@
             <tr>
                 <td>{{ record.community|truncatechars:15 }}</td>
                 <td>{{ record.service_id }}</td>
-                <td>{{ record.rd }}</td>
-                <td>{{ record.rt }}</td>
                 <td>{{ record.order_num|truncatechars:15 }}</td>
                 <td>{{ record.client_name|truncatechars:15 }}</td>
                 <td>{{ record.client_num|truncatechars:15 }}</td>
