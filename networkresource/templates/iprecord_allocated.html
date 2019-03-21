@@ -109,7 +109,7 @@
                 <td>{{ record.access_type }}</td>
                 <td>{{ record.client_name|truncatechars:15 }}</td>
                 <td>{{ record.down_brandwidth }}</td>
-                <td>{{ record.alc_user.username }}</td>
+                <td>{{ record.alc_user.first_name }}</td>
             </tr>
         {% endfor %}
     {% elif public_ip == 0 %}
@@ -125,7 +125,7 @@
                 <td>{{ record.device_name|truncatechars:15 }}</td>
                 <td>{{ record.logic_port }}</td>
                 <td>{{ record.ip }}</td>
-                <td>{{ record.alc_user.username }}</th>
+                <td>{{ record.alc_user.first_name }}</th>
             </tr>
         {% endfor %}
     {% endif %}
