@@ -166,7 +166,7 @@ def search_allocated_ip(request, ip_type):
             context['public_ip'] = 0
         context['ip_search_form'] = ip_search_form
         return render(request, 'iprecord_allocated.html', context)
-   
+        
     page_of_objects, page_range = pages(request, ip_all_list)
 
     context['records'] = page_of_objects.object_list
