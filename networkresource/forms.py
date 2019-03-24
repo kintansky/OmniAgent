@@ -88,7 +88,7 @@ class IpAllocateForm(forms.Form):
                 self.cleaned_data['down_brandwidth'] = int(m.group(1))*1024
             return ip_description
         else:
-            raise forms.ValidationError('请规范化描述字段：带宽格式为(**M)或(**G)')
+            raise forms.ValidationError('请规范填写描述字段：如abcdefg(**M)或abcdefg(**G)，详见右下角填写帮助')
 
     def clean_logic_port(self):
         access_type = self.cleaned_data['access_type']
@@ -124,7 +124,7 @@ class IpAllocateForm(forms.Form):
                         self.cleaned_data['cvlan'] = int(m3.group(4))
                         return m3.group(1)
         # 其他额外情况
-        raise forms.ValidationError('子接口字段采用了自动识别，请按照以下规范填写子接口. 1.PTN接入子接口范例: lag-100:外层vlan 或 10/1/1:外层vlan; 2.GPON接入子接口范例: lag-10:外层vlan.内层vlan 或 Eth-Trunk100.外层vlan.内层vlan 或 10/1/1:外层vlan.内层vlan')
+        raise forms.ValidationError('请规范填写子接口，详见右下角填写帮助')
 
 class IpAdjustForm(forms.Form):
     adj_order = forms.CharField(label='client_name', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
