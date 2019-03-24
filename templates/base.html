@@ -79,12 +79,13 @@
             <p class="text-muted text-right">Got problem or advice? Please contact QQ 357350686</p>
         </div>
     </footer>
-    {% block base_script %}{% endblock %}
+
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="{% static 'jquery@1.12.4.min.js' %}"></script>
     <script src="{% static 'bootstrap@3.3.7/js/bootstrap.min.js' %}"></script>
+    {% block tail_script %}{% endblock %}
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <!-- <script src="{% static 'assets/css/ie10-viewport-bug-workaround.css' %}}"></script> -->
 </body>
