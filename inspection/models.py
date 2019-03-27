@@ -33,4 +33,5 @@ class PortErrorDiff(models.Model):
     record_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = 'networkresource'
         ordering = ['-record_time']
