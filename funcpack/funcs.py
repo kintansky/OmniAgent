@@ -2,6 +2,7 @@ from django.core.paginator import Paginator
 from django.conf import settings
 import xlwt
 from io import BytesIO
+from IPy import IP, IPSet
 
 def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
     paginator = Paginator(object_list, page_conf)
@@ -44,4 +45,6 @@ def exportXls(fieldlist, object_list):
     output.seek(0)
     return output
 
-
+def getSubNet(ip, mask):
+    subnet = IP(IP).make_net(mask)
+    return subnet

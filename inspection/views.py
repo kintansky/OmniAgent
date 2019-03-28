@@ -1,18 +1,24 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff
+from .models import OpticalMoudleDiff, PortErrorDiff
 import datetime
 from django.utils import timezone
 from .forms import MoudleSearchForm
 from funcpack.funcs import pages, exportXls
 from django.http import FileResponse
 
+def getDateRange(days):
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=days)  # 负数向前
+    return time_begin, time_end
+
 # Create your views here.
 def moudle_list(request):
     # 获取当天00:00至第二天00:00
-    today_time = timezone.datetime.now()
-    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-    time_begin = time_end + timezone.timedelta(days=-3)  # 展示前3天数据
-    moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=(time_begin, time_end))
+    # today_time = timezone.datetime.now()
+    # time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    # time_begin = time_end + timezone.timedelta(days=-3)  # 展示前3天数据
+    moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=getDateRange(-3))
     # moudle_all_list = OpticalMoudleDiff.objects.all()
 
     page_of_objects, page_range = pages(request, moudle_all_list)
@@ -83,3 +89,17 @@ def export_moudle(request):
     output = exportXls(OpticalMoudleDiff._meta.fields, moudle_all_list)
     response = FileResponse(output, as_attachment=True, filename="moudle_result.xls") # 使用Fileresponse替代以上两行
     return response
+
+
+def port_error_list(request):
+    # 获取当天00:00至第二天00:00
+    porterror_all_list = PortErrorDiff.objects.filter(record_time__range=getDateRange(-2))
+    page_of_objects, page_range = pages(request, porterror_all_list)
+
+    context = {}
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['count'] = PortErrorDiff.objects.all().count()
+    # context['moudle_search_form'] = MoudleSearchForm()
+    return render(request, 'port_error_list.html', context)

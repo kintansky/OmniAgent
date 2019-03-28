@@ -37,6 +37,13 @@ class IpRecord(models.Model):
     class Meta:
         ordering = ['id',]
 
+class PublicIpGateway(models.Model):
+    gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
+    mask = models.SmallIntegerField()
+
+    class Meta:
+        app_label = 'watchdog'
+
 class PublicIpAllocation(models.Model):
     ies = models.CharField(max_length=20, blank=True, null=True)   # 看是否能改成int
     order_num = models.CharField(max_length=255, blank=True, null=True)
