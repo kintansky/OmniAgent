@@ -145,12 +145,6 @@ class IpModForm(forms.Form):
             raise forms.ValidationError('调整单和销户单必填其一')
         return self.cleaned_data
 
-
-class IpcloseForm(forms.Form):
-    close_order = forms.CharField(label='停闭单号', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
-    # close_time = forms.DateTimeField(blank=True)  # 程序协助填充
-    # user取request.user
-
 class IpPrivateAllocateForm(forms.Form):
     service = forms.CharField(label='业务标识', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))   # 看是否能改成int
     community = forms.CharField(label='community', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFS_JiaHeIPPBX'}))
