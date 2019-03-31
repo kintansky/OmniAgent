@@ -129,8 +129,6 @@ class IpAllocateForm(forms.Form):
 class IpModForm(forms.Form):
     adj_order = forms.CharField(label='调整单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
     close_order = forms.CharField(label='停闭单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
-    # adj_time = forms.DateTimeField(blank=True)    # 程序协助填充
-    # user取request.user
 
     def clean(self):
         cleaned_data = super().clean()
