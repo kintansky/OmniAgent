@@ -1,4 +1,5 @@
 {% extends 'list_base.html' %}
+{% load static %}
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} 光模块记录 {% endblock %}
@@ -131,4 +132,23 @@
         </li>
     </ul>
 </div>
-{% endblock%}
+{% endblock %}
+
+{% block tail_script %}
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}" charset="UTF-8"></script>
+    <script>
+        $('.form_datetime').datetimepicker({
+            language:  'zh-CN',
+            format: 'yyyy-mm-dd hh:ii:ss',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            forceParse: 0,
+            showMeridian: 1
+            // pickerPosition: "bottom-left"
+        });
+    </script> 
+{% endblock %}

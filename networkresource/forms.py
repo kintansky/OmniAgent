@@ -126,13 +126,28 @@ class IpAllocateForm(forms.Form):
         # 其他额外情况
         raise forms.ValidationError('请规范填写子接口，详见右下角填写帮助')
 
-class IpAdjustForm(forms.Form):
-    adj_order = forms.CharField(label='client_name', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
+class IpModForm(forms.Form):
+    adj_order = forms.CharField(label='调整单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
+    close_order = forms.CharField(label='停闭单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
     # adj_time = forms.DateTimeField(blank=True)    # 程序协助填充
     # user取request.user
 
+    def clean(self):
+        cleaned_data = super().clean()
+        adj_order = cleaned_data.get('adj_order').strip()
+        close_order = cleaned_data.get('close_order').strip()
+        if all([adj_order, close_order]):
+            raise forms.ValidationError('调整单和销户单必填其一')
+        elif any([adj_order, close_order]):
+            self.cleaned_data['adj_order'] = adj_order
+            self.cleaned_data['close_order'] = close_order
+        else:
+            raise forms.ValidationError('调整单和销户单必填其一')
+        return self.cleaned_data
+
+
 class IpcloseForm(forms.Form):
-    close_order = forms.CharField(label='client_name', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
+    close_order = forms.CharField(label='停闭单号', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
     # close_time = forms.DateTimeField(blank=True)  # 程序协助填充
     # user取request.user
 
