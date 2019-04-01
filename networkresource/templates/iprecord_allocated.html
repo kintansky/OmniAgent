@@ -112,11 +112,20 @@
                 <td>{{ record.client_name|truncatechars:15 }}</td>
                 <td>{{ record.down_brandwidth }}</td>
                 <td>{{ record.alc_user.first_name }}</td>
-                <td>
-                    <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="public">
-                        <span class="glyphicon glyphicon-modal-window" aria-hidden="true"></span>
-                    </a>
-                </td>
+                {% if user.is_authenticated %}
+                    <td>
+                        <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="public">
+                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                        </a>
+                    </td>
+                {% else %}
+                {# user no login #}
+                    <td>
+                        <a href="{% url 'login' %}?from={{ request.get_full_path }}">
+                            <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                        </a>
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
     {% elif public_ip == 0 %}
@@ -133,11 +142,20 @@
                 <!-- <td>{{ record.logic_port }}</td> -->
                 <td>{{ record.ip }}</td>
                 <td>{{ record.alc_user.first_name }}</td>
-                <td>
-                    <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="private">
-                        <span class="glyphicon glyphicon-modal-window" aria-hidden="true"></span>
-                    </a>
-                </td>
+                {% if user.is_authenticated %}
+                    <td>
+                        <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="private">
+                            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                        </a>
+                    </td>
+                {% else %}
+                {# user no login #}
+                    <td>
+                        <a href="{% url 'login' %}?from={{ request.get_full_path }}">
+                            <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                        </a>
+                    </td>
+                {% endif %}
             </tr>
         {% endfor %}
     {% endif %}
