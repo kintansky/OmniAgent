@@ -80,6 +80,7 @@
         <th>客户名</th>
         <th>带宽(DOWN)</th>
         <th>分配人</th>
+        <th>状态</th>
         <th>操作</th>
     {% elif public_ip == 0 %}
         {# 私网地址 #}
@@ -93,6 +94,7 @@
         <!-- <th>子接口</th> -->
         <th>ip</th>
         <th>分配人</th>
+        <th>状态</th>
         <th>操作</th>
     {% endif %}
 {% endblock %}
@@ -101,7 +103,11 @@
     {% if public_ip == 1 %}
     {# 公网地址 #}
         {% for record in records %}
-            <tr>
+            {% if record.state == 'Close' %}
+                <tr class="danger">
+            {% else %}
+                <tr>
+            {% endif %}
                 <td>{{ record.order_num|truncatechars:15 }}</td>
                 <!-- <td>{{ record.client_num|truncatechars:15 }}</td> -->
                 <!-- <td>{{ record.product_num|truncatechars:15 }}</td> -->
@@ -112,6 +118,7 @@
                 <td>{{ record.client_name|truncatechars:15 }}</td>
                 <td>{{ record.down_brandwidth }}</td>
                 <td>{{ record.alc_user.first_name }}</td>
+                <td>{{ record.state }}</td>
                 {% if user.is_authenticated %}
                     <td>
                         <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="public">
@@ -131,7 +138,11 @@
     {% elif public_ip == 0 %}
     {# 私网地址 #}
         {% for record in records %}
-            <tr>
+            {% if record.state == 'Close' %}
+                <tr class="danger">
+            {% else %}
+                <tr>
+            {% endif %}
                 <td>{{ record.community|truncatechars:15 }}</td>
                 <!-- <td>{{ record.service_id }}</td> -->
                 <td>{{ record.order_num|truncatechars:15 }}</td>
@@ -142,6 +153,7 @@
                 <!-- <td>{{ record.logic_port }}</td> -->
                 <td>{{ record.ip }}</td>
                 <td>{{ record.alc_user.first_name }}</td>
+                <td>{{ record.state }}</td>
                 {% if user.is_authenticated %}
                     <td>
                         <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}" ip_type="private">
@@ -230,6 +242,7 @@
                 <div class="modal-body">
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">取消变更</button>
                     <button type="button" class="btn btn-danger modal_mod">变更/销户</button>
                 </div>
             </div>

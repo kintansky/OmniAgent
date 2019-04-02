@@ -38,6 +38,10 @@ class IpAllocateForm(forms.Form):
         ('GPON', 'GPON'),
         ('PTN', 'PTN'),
     )
+    CHOICES2 = (
+        ('InUse', 'InUse'),
+        ('Close', 'Close'),
+    )
     ies = forms.CharField(label='ies', max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '10000100'}))   # 看是否能改成int
     order_num = forms.CharField(label='工单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
     client_num = forms.CharField(label='集团客户编号 *', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '2000411***'}))
@@ -58,6 +62,8 @@ class IpAllocateForm(forms.Form):
     up_brandwidth = forms.IntegerField(label='带宽(UP)', required=False, widget=forms.NumberInput(attrs={'class': 'form-control allocate', 'placeholder': 20}))
     # down_brandwidth = forms.IntegerField(label='带宽(DOWN) *', widget=forms.NumberInput(attrs={'class': 'form-control allocate', 'placeholder': 20}))
     # alc_time = forms.DateTimeField(auto_now_add=True)   # 自动填充
+    state = forms.ChoiceField(label='状态 *', choices=CHOICES2, widget=forms.Select(attrs={'class': 'form-control allocate'}))
+
 
     def clean_device_name(self):
         device_name = self.cleaned_data['device_name'].strip()
@@ -97,13 +103,13 @@ class IpAllocateForm(forms.Form):
             m1 = re.match(r'lag-\d*:(\d*)', logic_port)
             if m1:
                 self.cleaned_data['svlan'] = int(m1.group(1))
-                self.cleaned_data['cvlan'] = -1
+                self.cleaned_data['cvlan'] = 0
                 return logic_port
             else:
                 m2 = re.match(r'(\d{1,2}/){1,}\d{1,2}:(\d*)', logic_port)
                 if m2:
                     self.cleaned_data['svlan'] = int(m2.group(2))
-                    self.cleaned_data['cvlan'] = -1
+                    self.cleaned_data['cvlan'] = 0
                     return logic_port
         elif access_type == 'GPON':
             m1 = re.match(r'lag-\d+:(\d*)\.(\d*)', logic_port)
@@ -126,43 +132,47 @@ class IpAllocateForm(forms.Form):
         # 其他额外情况
         raise forms.ValidationError('请规范填写子接口，详见右下角填写帮助')
 
+# 修改记录信息
 class IpModForm(forms.Form):
-    adj_order = forms.CharField(label='调整单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
-    close_order = forms.CharField(label='停闭单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
+    mod_order = forms.CharField(label='调整单号 *', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
+    mod_msg = forms.CharField(label='调整信息 *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '请简要填写调整的内容'}))
 
-    def clean(self):
-        cleaned_data = super().clean()
-        adj_order = cleaned_data.get('adj_order').strip()
-        close_order = cleaned_data.get('close_order').strip()
-        if all([adj_order, close_order]):
-            raise forms.ValidationError('调整单和销户单必填其一')
-        elif any([adj_order, close_order]):
-            self.cleaned_data['adj_order'] = adj_order
-            self.cleaned_data['close_order'] = close_order
+    def clean_mod_order(self):
+        mod_order = self.cleaned_data['mod_order'].strip()
+        if any(mod_order):
+            return mod_order
         else:
-            raise forms.ValidationError('调整单和销户单必填其一')
-        return self.cleaned_data
+            raise forms.ValidationError('变更或销户请填写变更单号')
+
+    def clean_mod_msg(self):
+        mod_msg = self.cleaned_data['mod_msg'].strip()
+        return mod_msg
 
 class IpPrivateAllocateForm(forms.Form):
+    CHOICES2 = (
+        ('InUse', 'InUse'),
+        ('Close', 'Close'),
+    )
     service = forms.CharField(label='业务标识', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))   # 看是否能改成int
     community = forms.CharField(label='community', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFS_JiaHeIPPBX'}))
     service_id = forms.CharField(label='service_id', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '20000100'}))
-    rd = forms.CharField(label='rd', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '65277:660001'}))
-    rt = forms.CharField(label='rt', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '65277:66000100'}))
+    rd = forms.CharField(label='rd *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '65277:660001'}))
+    rt = forms.CharField(label='rt *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '65277:66000100'}))
     order_num = forms.CharField(label='接入依据', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
-    client_name = forms.CharField(label='客户名', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '交通银行'}))
-    client_num = forms.CharField(label='集团客户编号', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '2000411***'}))
-    product_num = forms.CharField(label='集团产品号码', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '20401074***'}))
-    device_name = forms.CharField(label='SR/BNG/BRAS', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW'}))
-    logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'lag-10:1013.119'}))
-    svlan = forms.CharField(label='外层vlan', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1013'}))
-    cvlan = forms.CharField(label='内层vlan', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '119'}))
+    client_name = forms.CharField(label='客户名 *', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '交通银行'}))
+    client_num = forms.CharField(label='集团客户编号 *', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '2000411***'}))
+    product_num = forms.CharField(label='集团产品号码 *', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '20401074***'}))
+    device_name = forms.CharField(label='SR/BNG/BRAS *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW'}))
+    logic_port = forms.CharField(label='子接口 *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'lag-10:1013.119'}))
+    svlan = forms.CharField(label='外层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1013'}))
+    cvlan = forms.CharField(label='内层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '119'}))
     olt_name = forms.CharField(label='olt', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '佛山顺德容桂容奇邮局-OLT002-HW-MA5680T'}))
     access_type = forms.CharField(label='接入方式', max_length=10, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'PTN'}))
-    ip = forms.GenericIPAddressField(label='ip', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1.1.1.1'}))
+    ip = forms.GenericIPAddressField(label='ip *', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1.1.1.1'}))
     gateway = forms.GenericIPAddressField(label='网关', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '183.*.*.*'}))
     ipsegment = forms.CharField(label='地址段', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '183.*.*.*/24'}))
     ip_description = forms.CharField(label='描述', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'O-INTER-FS-JiaoTongYinHangGuFenYouXianGongSiFSFH(20M)'}))
+    state = forms.ChoiceField(label='状态 *', choices=CHOICES2, widget=forms.Select(attrs={'class': 'form-control allocate'}))
 
     def clean_ipsegment(self):
         ipsegment = self.cleaned_data['ipsegment']

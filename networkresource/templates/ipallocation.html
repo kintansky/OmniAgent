@@ -56,6 +56,24 @@
                     </div>
                 </div>
             </form>
+            <div class="row">
+                <div class="col-sm-12">
+                    <a tabindex="0" role="button" data-toggle="popover" data-trigger="hover" title="Tips" data-content="
+                    <ul>
+                        <li>带 * 必填</li>
+                        <li>
+                            子接口字段采用自动识别，填写规范如下
+                            <ul>
+                                <li>PTN接入子接口: lag-100:外层vlan 或 10/1/1:外层vlan</li>
+                                <li>GPON接入子接口: lag-10:外层vlan.内层vlan 或 Eth-Trunk100.外层vlan.内层vlan 或 10/1/1:外层vlan.内层vlan</li>
+                            </ul>
+                        </li>
+                        <li>描述字段: 带宽格式为(**M)或(**G)</li>
+                    </ul>">
+                        * 填写帮助
+                    </a>
+                </div>
+            </div>
         {% else %}
             {# user no login #}
             <div class="row">
@@ -66,20 +84,8 @@
             </div>
         {% endif %}
 
-        <a tabindex="0" role="button" data-toggle="popover" data-trigger="hover" title="Tips" data-content="
-        <ul>
-            <li>带 * 必填</li>
-            <li>
-                子接口字段采用自动识别，填写规范如下
-                <ul>
-                    <li>PTN接入子接口: lag-100:外层vlan 或 10/1/1:外层vlan</li>
-                    <li>GPON接入子接口: lag-10:外层vlan.内层vlan 或 Eth-Trunk100.外层vlan.内层vlan 或 10/1/1:外层vlan.内层vlan</li>
-                </ul>
-            </li>
-            <li>描述字段: 带宽格式为(**M)或(**G)</li>
-        </ul>">
-            * 填写帮助
-        </a>
+        
+
     </div>
 {% endblock %}
 

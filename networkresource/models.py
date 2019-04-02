@@ -64,20 +64,27 @@ class PublicIpAllocation(models.Model):
     up_brandwidth = models.SmallIntegerField(blank=True, null=True)
     down_brandwidth = models.SmallIntegerField()
     alc_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
-    alc_time = models.DateTimeField(auto_now_add=True)
-    # ip调整操作
-    adj_order = models.CharField(max_length=255, blank=True, null=True)
-    adj_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True, related_name='plcip_adj_user')
-    adj_time = models.DateTimeField(blank=True, null=True)
-    # ip销户操作
-    close_order = models.CharField(max_length=255, blank=True, null=True)
-    close_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True, related_name='plcip_close_user')
-    close_time = models.DateTimeField(blank=True, null=True)
+    # alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
+    alc_time = models.DateTimeField()   # 外部数据导入时使用
+    # 取消该模型内的调整记录，增加状态标记：在用、销户
+    state = models.CharField(max_length=10)
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['alc_time',]
+        ordering = ['-alc_time',]
 
+class PublicIpModRecord(models.Model):
+    mod_target = models.ForeignKey(PublicIpAllocation, on_delete=models.DO_NOTHING)
+    mod_order = models.CharField(max_length=255)
+    mod_msg = models.TextField()
+    mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='plcip_mod_user')
+    # record_time = models.DateTimeField()
+    record_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        ordering = ['-record_time',]
+    
 class PrivateIpAllocation(models.Model):
     service = models.CharField(max_length=50, blank=True, null=True)
     community = models.CharField(max_length=50, blank=True, null=True)   # 看是否能改成int
@@ -99,16 +106,22 @@ class PrivateIpAllocation(models.Model):
     ipsegment = models.CharField(max_length=100, null=True)    # 10.0.64.0/24
     ip_description = models.TextField(blank=True, null=True)
     alc_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_alc_user')
-    alc_time = models.DateTimeField(auto_now_add=True)
-    # ip调整操作
-    adj_order = models.CharField(max_length=255, blank=True, null=True)
-    adj_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True, related_name='prvip_adj_user')
-    adj_time = models.DateTimeField(blank=True, null=True)
-    # ip销户操作
-    close_order = models.CharField(max_length=255, blank=True, null=True)
-    close_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True, related_name='prvip_close_user')
-    close_time = models.DateTimeField(blank=True, null=True)
+    # alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
+    alc_time = models.DateTimeField()   # 外部数据导入时使用
+    state = models.CharField(max_length=10)
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['alc_time',]
+
+class PrivateIpModRecord(models.Model):
+    mod_target = models.ForeignKey(PrivateIpAllocation, on_delete=models.DO_NOTHING)
+    mod_order = models.CharField(max_length=255)
+    mod_msg = models.TextField()
+    mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
+    # record_time = models.DateTimeField()
+    record_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        ordering = ['-record_time',]
