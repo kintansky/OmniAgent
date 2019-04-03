@@ -1,4 +1,5 @@
 {% extends 'list_base.html' %}
+{% load static %}
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} 端口错包检查 {% endblock %}
@@ -14,7 +15,16 @@
 {% block new_button_active %}disabled{% endblock %}
 
 {% block search_form %}
-{# TODO: add serach form #}
+    <form action="{% url 'search_port_error' %}" method="GET" class="form-inline">
+        {% for field in porterror_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
 {% endblock %}
 
 {% block export %}
@@ -22,7 +32,13 @@
 {% endblock %}
 
 {% block alert_content %}
-{# TODO: add search alarm #}
+    {% if porterror_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ porterror_search_form.errors.as_text }}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block table_title %}
@@ -120,3 +136,22 @@
     </ul>
 </div>
 {% endblock%}
+
+{% block tail_script %}
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}" charset="UTF-8"></script>
+    <script>
+        $('.form_datetime').datetimepicker({
+            language:  'zh-CN',
+            format: 'yyyy-mm-dd hh:ii:ss',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            forceParse: 0,
+            showMeridian: 1
+            // pickerPosition: "bottom-left"
+        });
+    </script> 
+{% endblock %}

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff, PortErrorDiff
 import datetime
 from django.utils import timezone
-from .forms import MoudleSearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm
 from funcpack.funcs import pages, exportXls
 from django.http import FileResponse
 
@@ -101,5 +101,32 @@ def port_error_list(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['count'] = PortErrorDiff.objects.all().count()
-    # context['moudle_search_form'] = MoudleSearchForm()
+    context['porterror_search_form'] = PortErrorSearchForm()
+    return render(request, 'port_error_list.html', context)
+
+def search_port_error(request):
+    porterror_search_form = PortErrorSearchForm(request.GET)
+    if porterror_search_form.is_valid():
+        device_name = porterror_search_form.cleaned_data['device_name']
+        time_begin = porterror_search_form.cleaned_data['time_begin']
+        time_end = porterror_search_form.cleaned_data['time_end']
+        time_range = (time_begin, time_end)
+        if device_name != '':
+            porterror_all_list = PortErrorDiff.objects.filter(record_time__range=time_range)
+        else:
+            porterror_all_list = PortErrorDiff.objects.filter(device_name=device_name, record_time__range=time_range)
+    else:
+        context = {}
+        context['porterror_search_form'] = porterror_search_form
+        return render(request, 'port_error_list.html', context)
+
+    page_of_objects, page_range = pages(request, porterror_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['search_device_name'] = device_name
+    context['time_begin'] = datetime.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = datetime.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
+    context['porterror_search_form'] = porterror_search_form
     return render(request, 'port_error_list.html', context)
