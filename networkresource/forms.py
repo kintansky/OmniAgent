@@ -39,8 +39,9 @@ class IpAllocateForm(forms.Form):
         ('PTN', 'PTN'),
     )
     CHOICES2 = (
-        ('InUse', 'InUse'),
-        ('Close', 'Close'),
+        ('InUse', 'InUse'), # 在用
+        ('ShutDown', 'ShutDown'),   # 暂时关停
+        ('Delete', 'Delete'),   # 删除数据
     )
     ies = forms.CharField(label='ies', max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '10000100'}))   # 看是否能改成int
     order_num = forms.CharField(label='工单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
@@ -61,7 +62,6 @@ class IpAllocateForm(forms.Form):
     ip_description = forms.CharField(label='描述', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'O-INTER-FS-JiaoTongYinHangGuFenYouXianGongSiFSFH(20M)'}))
     up_brandwidth = forms.IntegerField(label='带宽(UP)', required=False, widget=forms.NumberInput(attrs={'class': 'form-control allocate', 'placeholder': 20}))
     # down_brandwidth = forms.IntegerField(label='带宽(DOWN) *', widget=forms.NumberInput(attrs={'class': 'form-control allocate', 'placeholder': 20}))
-    # alc_time = forms.DateTimeField(auto_now_add=True)   # 自动填充
     state = forms.ChoiceField(label='状态 *', choices=CHOICES2, widget=forms.Select(attrs={'class': 'form-control allocate'}))
 
 
@@ -149,9 +149,15 @@ class IpModForm(forms.Form):
         return mod_msg
 
 class IpPrivateAllocateForm(forms.Form):
+    CHOICES = (
+        ('GPON', 'GPON'),
+        ('PTN', 'PTN'),
+        ('VPN', 'VPN'),
+    )
     CHOICES2 = (
         ('InUse', 'InUse'),
-        ('Close', 'Close'),
+        ('ShutDown', 'ShutDown'),
+        ('Delete', 'Delete'),
     )
     service = forms.CharField(label='业务标识', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))   # 看是否能改成int
     community = forms.CharField(label='community', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFS_JiaHeIPPBX'}))
@@ -163,24 +169,58 @@ class IpPrivateAllocateForm(forms.Form):
     client_num = forms.CharField(label='集团客户编号 *', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '2000411***'}))
     product_num = forms.CharField(label='集团产品号码 *', max_length=100, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '20401074***'}))
     device_name = forms.CharField(label='SR/BNG/BRAS *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW'}))
+    access_type = forms.ChoiceField(label='接入方式', choices=CHOICES, widget=forms.Select(attrs={'class': 'form-control allocate'}))
     logic_port = forms.CharField(label='子接口 *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'lag-10:1013.119'}))
-    svlan = forms.CharField(label='外层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1013'}))
-    cvlan = forms.CharField(label='内层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '119'}))
+    # svlan = forms.CharField(label='外层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1013'}))
+    # cvlan = forms.CharField(label='内层vlan *', max_length=30, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '119'}))
     olt_name = forms.CharField(label='olt', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '佛山顺德容桂容奇邮局-OLT002-HW-MA5680T'}))
-    access_type = forms.CharField(label='接入方式', max_length=10, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'PTN'}))
     ip = forms.GenericIPAddressField(label='ip *', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '1.1.1.1'}))
     gateway = forms.GenericIPAddressField(label='网关', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '183.*.*.*'}))
     ipsegment = forms.CharField(label='地址段', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '183.*.*.*/24'}))
-    ip_description = forms.CharField(label='描述', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'O-INTER-FS-JiaoTongYinHangGuFenYouXianGongSiFSFH(20M)'}))
+    ip_description = forms.CharField(label='描述 *', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'I-VPN-FS-SS_XiNanAoYingGuangChang_OLT002_FoShanGongDianJu'}))
     state = forms.ChoiceField(label='状态 *', choices=CHOICES2, widget=forms.Select(attrs={'class': 'form-control allocate'}))
 
     def clean_ipsegment(self):
         ipsegment = self.cleaned_data['ipsegment']
-        exp = r'(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5]).){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])/[0-9]{1,2}'
-        if re.match(exp, ipsegment):
-            return ipsegment
-        else:
-            raise forms.ValidationError('ipsegment input error.')
+        if any(ipsegment):
+            exp = r'(([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5]).){3}([1-9]?\d|1\d{2}|2[0-4]\d|25[0-5])/[0-9]{1,2}'
+            if re.match(exp, ipsegment):
+                return ipsegment
+            else:
+                raise forms.ValidationError('ipsegment input error.')
 
-    # def clean_ip(self): # TODO:验证IP是否已经分配出去
-    #     pass
+    def clean_logic_port(self):
+        access_type = self.cleaned_data['access_type']
+        logic_port = self.cleaned_data['logic_port'].strip()
+        if access_type == 'PTN':
+            m1 = re.match(r'lag-\d*:(\d*)', logic_port)
+            if m1:
+                self.cleaned_data['svlan'] = int(m1.group(1))
+                self.cleaned_data['cvlan'] = 0
+                return logic_port
+            else:
+                m2 = re.match(r'(\d{1,2}/){1,}\d{1,2}:(\d*)', logic_port)
+                if m2:
+                    self.cleaned_data['svlan'] = int(m2.group(2))
+                    self.cleaned_data['cvlan'] = 0
+                    return logic_port
+        elif access_type == 'GPON' or access_type == 'VPN':
+            m1 = re.match(r'lag-\d+:(\d*)\.(\d*)', logic_port)
+            if m1:
+                self.cleaned_data['svlan'] = int(m1.group(1))
+                self.cleaned_data['cvlan'] = int(m1.group(2))
+                return logic_port
+            else:
+                m2 = re.match(r'(Eth-Trunk\d*\.(\d*))\.(\d*)', logic_port)
+                if m2:
+                    self.cleaned_data['svlan'] = int(m2.group(2))
+                    self.cleaned_data['cvlan'] = int(m2.group(3))
+                    return m2.group(1)
+                else:
+                    m3 = re.match(r'((\d{1,2}/){1,}\d{1,2}):(\d*).(\d*)', logic_port)
+                    if m3:
+                        self.cleaned_data['svlan'] = int(m3.group(3))
+                        self.cleaned_data['cvlan'] = int(m3.group(4))
+                        return m3.group(1)
+        # 其他额外情况
+        raise forms.ValidationError('请规范填写子接口，详见右下角填写帮助')

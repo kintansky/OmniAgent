@@ -444,8 +444,6 @@ def ip_allocation_mod(request, ip_type):
                 target_record.state = ip_allocate_form.cleaned_data['state']
                 target_record.save()
 
-                
-
                 data['status'] = 'success'   # 操作状态
             else:
                 data['status'] = 'error'
