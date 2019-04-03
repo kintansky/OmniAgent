@@ -12,7 +12,8 @@ class IPsearchForm(forms.Form):
         device_name = cleaned_data.get('device_name')
         description = cleaned_data.get('description')
         # if ip_address == device_name == description == '':
-        #     raise forms.ValidationError('Please specify at least one claus.')
+        #     raise forms.ValidationError('搜索字段：至少指定一个字段')
+        # 不再限制，什么都不提供返回全部内容
         return self.cleaned_data
 
 class PortSearchForm(forms.Form):
@@ -27,12 +28,20 @@ class PortSearchForm(forms.Form):
         slot = cleaned_data.get('slot') # slot是数字类型，如果没有，则返回None，非''
         port = cleaned_data.get('port')
         port_description = cleaned_data.get('port_description')
+        # 数据太多无法返回所有内容，必须指定
         if slot is None and port == port_description == '':
-            raise forms.ValidationError('Please specify Device_name and one of (Slot, Port, Description)')
+            raise forms.ValidationError('搜索字段：设备名必填，slot、port、描述选填其一')
             
         return self.cleaned_data
 
 # IP 分配操作相关
+class IPAllocateSearchForm(forms.Form):
+    ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1', 'style':'width:150px'}))
+    client_name = forms.CharField(label='ClientName', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '**公司', 'style':'width:300px'}))
+
+    def clean_client_name(self):
+        return self.cleaned_data['client_name'].strip()
+        
 class IpAllocateForm(forms.Form):
     CHOICES = (
         ('GPON', 'GPON'),

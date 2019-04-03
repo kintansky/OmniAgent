@@ -28,18 +28,10 @@
 
 {% block search_form %}
     {% if public_ip == 1 %}
-    <form action="{% url 'search_allocated_ip' 'public' %}" method="GET" class="form-inline">
-        {% for field in ip_search_form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
-            </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
+        <form action="{% url 'search_allocated_ip' 'public' %}" method="GET" class="form-inline">
     {% elif public_ip == 0 %}
-    <form action="{% url 'search_allocated_ip' 'private' %}" method="GET" class="form-inline">
+        <form action="{% url 'search_allocated_ip' 'private' %}" method="GET" class="form-inline">
+    {% endif %}
         {% for field in ip_search_form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -49,12 +41,11 @@
         {% endfor %}
         <button type="submit" class="btn btn-primary">Search</button>
     </form>
-    {% endif %}
 {% endblock %}
 
 {% block export %}
     {# 将form的搜索条件传到views.export_ip #}
-    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&ip_description={{ search_description }}" role="button">Export</a>
+    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&client_name={{ search_client_name }}" role="button">Export</a>
 {% endblock %}
 
 {% block alert_content %}
@@ -103,8 +94,10 @@
     {% if public_ip == 1 %}
     {# 公网地址 #}
         {% for record in records %}
-            {% if record.state == 'Close' %}
+            {% if record.state == 'Delete' %}
                 <tr class="danger">
+            {% elif record.state == 'Close' %}
+                <tr class="warning">
             {% else %}
                 <tr>
             {% endif %}
@@ -138,8 +131,10 @@
     {% elif public_ip == 0 %}
     {# 私网地址 #}
         {% for record in records %}
-            {% if record.state == 'Close' %}
+            {% if record.state == 'Delete' %}
                 <tr class="danger">
+            {% elif record.state == 'Close' %}
+                <tr class="warning">
             {% else %}
                 <tr>
             {% endif %}
@@ -181,8 +176,8 @@
         <li>
             {% if page_of_objects.has_previous %}
                 {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
-                {% if search_device_name or search_ip_address or search_description %}
-                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                {% if search_ip_address or search_client_name %}
+                    <a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 {% else %}
@@ -202,8 +197,8 @@
                 {% if page_num == '...' %}
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
-                    {% if search_device_name or search_ip_address or search_description %}
-                        <li><a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_num }}">{{ page_num }}</a></li>
+                    {% if search_ip_address or search_client_name %}
+                        <li><a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&page={{ page_num }}">{{ page_num }}</a></li>
                     {% else %}
                         <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
                     {% endif %}
@@ -213,8 +208,8 @@
         {# 下一页 #}
         <li>
             {% if page_of_objects.has_next %}
-                {% if search_device_name or search_ip_address or search_description %}
-                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_num }}">{{ page_num }}
+                {% if search_ip_address or search_client_name %}
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&client_name={{ search_client_name }}&page={{ page_num }}">{{ page_num }}
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 {% else %}

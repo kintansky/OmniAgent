@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord
-from .forms import IPsearchForm, PortSearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm
+from .forms import IPsearchForm, PortSearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm
 from funcpack.funcs import pages, exportXls
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -43,7 +43,9 @@ def search_device_ports(request):
     return render(request, 'resource.html', context)
 
 
-# iprecord views
+'''
+device iprecord log
+'''
 def ip_list(request):
     ip_all_list = IpRecord.objects.all()
     page_of_objects, page_range = pages(request, ip_all_list)
@@ -109,57 +111,48 @@ def export_ip(request):
     response = FileResponse(output, as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
     return response
 
+'''
+ IP分配记录
+'''
 def allocate_ip_list(request, ip_type):
+    context = {}
     if ip_type == 'public':
         ip_all_list = PublicIpAllocation.objects.all()
         page_of_objects, page_range = pages(request, ip_all_list)
-
-        context = {}
         context['public_ip'] = 1
-        context['records'] = page_of_objects.object_list
-        context['page_of_objects'] = page_of_objects
-        context['page_range'] = page_range
         context['count'] = PublicIpAllocation.objects.all().count()
-        context['ip_search_form'] = IPsearchForm()
-        return render(request, 'iprecord_allocated.html', context)
     elif ip_type == 'private':
         ip_all_list = PrivateIpAllocation.objects.all()
         page_of_objects, page_range = pages(request, ip_all_list)
-
-        context = {}
         context['public_ip'] = 0
-        context['records'] = page_of_objects.object_list
-        context['page_of_objects'] = page_of_objects
-        context['page_range'] = page_range
         context['count'] = PrivateIpAllocation.objects.all().count()
-        context['ip_search_form'] = IPsearchForm()
-        return render(request, 'iprecord_allocated.html', context)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['ip_search_form'] = IPAllocateSearchForm()
+    return render(request, 'iprecord_allocated.html', context)
 
 def search_allocated_ip(request, ip_type):
     context = {}
-    ip_search_form = IPsearchForm(request.GET)
+    ip_search_form = IPAllocateSearchForm(request.GET)
     if ip_search_form.is_valid():
         ip_address = ip_search_form.cleaned_data['ip_address']
-        device_name = ip_search_form.cleaned_data['device_name']
-        ip_description = ip_search_form.cleaned_data['description']
+        client_name = ip_search_form.cleaned_data['client_name']
         if ip_type == 'public': # 公网地址
             context['public_ip'] = 1
             if ip_address != '':
-                ip_all_list =  PublicIpAllocation.objects.filter(ip=ip_address)
-            elif device_name != '':
-                ip_all_list =  PublicIpAllocation.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-            elif ip_description != '':
-                ip_all_list =  PublicIpAllocation.objects.filter(ip_description__icontains=ip_description)
+                ip_all_list =  PublicIpAllocation.objects.filter(ip=ip_address, client_name__icontains=client_name)
+            elif client_name != '':
+                ip_all_list =  PublicIpAllocation.objects.filter(client_name__icontains=client_name)
             else:
                 ip_all_list =  PublicIpAllocation.objects.all()
         elif ip_type == 'private':  # 私网地址
             context['public_ip'] = 0
             if ip_address != '':
-                ip_all_list = PrivateIpAllocation.objects.filter(ip=ip_address)
-            elif device_name != '':
-                ip_all_list = PrivateIpAllocation.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-            elif ip_description != '':
-                ip_all_list = PrivateIpAllocation.objects.filter(ip_description__icontains=ip_description)
+                ip_all_list = PrivateIpAllocation.objects.filter(ip=ip_address, client_name__icontains=client_name)
+            elif client_name != '':
+                ip_all_list = PrivateIpAllocation.objects.filter(client_name__icontains=client_name)
             else:
                 ip_all_list = PrivateIpAllocation.objects.all()
     else:
@@ -176,8 +169,7 @@ def search_allocated_ip(request, ip_type):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['search_ip_address'] = ip_address
-    context['search_device_name'] = device_name
-    context['search_description'] = ip_description
+    context['search_client_name'] = client_name
     context['ip_search_form'] = ip_search_form
     return render(request, 'iprecord_allocated.html', context)
 
@@ -264,7 +256,7 @@ def ajax_locate_ip(request, ip_type):
     if ip_type == 'public':
         try:
             record = PublicIpAllocation.objects.get(id=rid)
-            data = objectDataSerializer(record, data)
+            data = objectDataSerializer(record, data)   # 序列化单个模型的字段，输出json
             if data['access_type'] == 'PTN':
                 pass
             elif data['access_type'] == 'GPON':
@@ -280,16 +272,16 @@ def ajax_locate_ip(request, ip_type):
                         if m3:
                             data['logic_port'] = data['logic_port']+':'+str(data['svlan'])+'.'+str(data['cvlan'])
             allocation_form = IpAllocateForm(data)
-            data = formHtmlCallBack(allocation_form, data, ip_type)
+            data = formHtmlCallBack(allocation_form, data, ip_type) # 用于ajax回调函数填充网页
         except ObjectDoesNotExist as err:
             data['status'] = 'error'
             data['error_info'] = str(err)
     elif ip_type == 'private':
         try:
             record = PrivateIpAllocation.objects.get(id=rid)
-            data = objectDataSerializer(record, data)
+            data = objectDataSerializer(record, data)   # 序列化单个模型的字段，输出json
             allocation_form = IpPrivateAllocateForm(data)
-            data = formHtmlCallBack(allocation_form, data, ip_type)
+            data = formHtmlCallBack(allocation_form, data, ip_type) # 用于ajax回调函数填充网页
         except ObjectDoesNotExist as err:
             data['status'] = 'error'
             data['error_info'] = str(err)
