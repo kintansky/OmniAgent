@@ -81,6 +81,26 @@ class PublicIpModRecord(models.Model):
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
 
+    # 本次修改前的分配信息，用于记录备份
+    ever_ies = models.CharField(max_length=20, blank=True, null=True)   # 看是否能改成int
+    ever_client_num = models.CharField(max_length=100, null=True)
+    ever_product_num = models.CharField(max_length=100, null=True)
+    ever_ip = models.GenericIPAddressField(protocol='both', null=True)
+    ever_mask = models.SmallIntegerField(null=True)
+    ever_gateway = models.CharField(max_length=100, null=True)
+    ever_link_tag = models.SmallIntegerField(blank=True, null=True)
+    ever_device_name = models.CharField(max_length=255, null=True)
+    ever_logic_port = models.CharField(max_length=40, null=True)
+    ever_svlan = models.CharField(max_length=30, null=True)
+    ever_cvlan = models.CharField(max_length=30, blank=True, null=True)
+    ever_access_type = models.CharField(max_length=10, blank=True, null=True)
+    ever_olt_name = models.CharField(max_length=255, blank=True, null=True)
+    ever_client_name = models.CharField(max_length=255, null=True)
+    ever_ip_description = models.TextField(blank=True, null=True)
+    ever_up_brandwidth = models.SmallIntegerField(blank=True, null=True)
+    ever_down_brandwidth = models.SmallIntegerField(null=True)
+    ever_state = models.CharField(max_length=10, null=True)
+
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-record_time',]
@@ -112,7 +132,7 @@ class PrivateIpAllocation(models.Model):
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['alc_time',]
+        ordering = ['-alc_time',]
 
 class PrivateIpModRecord(models.Model):
     mod_target = models.ForeignKey(PrivateIpAllocation, on_delete=models.DO_NOTHING)
@@ -121,6 +141,26 @@ class PrivateIpModRecord(models.Model):
     mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
+    # 本次修改前的分配信息，用于记录备份
+    ever_service = models.CharField(max_length=50, blank=True, null=True)
+    ever_community = models.CharField(max_length=50, blank=True, null=True)   # 看是否能改成int
+    ever_service_id = models.CharField(max_length=50, blank=True, null=True)
+    ever_rd = models.CharField(max_length=50, blank=True, null=True)
+    ever_rt = models.CharField(max_length=50, blank=True, null=True)
+    ever_client_name = models.CharField(max_length=255, null=True)
+    ever_client_num = models.CharField(max_length=100, null=True)
+    ever_product_num = models.CharField(max_length=100, null=True)
+    ever_device_name = models.CharField(max_length=255, null=True)
+    ever_logic_port = models.CharField(max_length=40, null=True)
+    ever_svlan = models.CharField(max_length=30, null=True)
+    ever_cvlan = models.CharField(max_length=30, null=True)
+    ever_olt_name = models.CharField(max_length=255, blank=True, null=True)
+    ever_access_type = models.CharField(max_length=10, blank=True, null=True)
+    ever_ip = models.GenericIPAddressField(protocol='both', null=True)
+    ever_gateway = models.GenericIPAddressField(protocol='both', null=True)   # 10.0.64.1
+    ever_ipsegment = models.CharField(max_length=100, null=True)    # 10.0.64.0/24
+    ever_ip_description = models.TextField(blank=True, null=True)
+    ever_state = models.CharField(max_length=10, null=True)
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk

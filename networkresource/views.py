@@ -303,16 +303,6 @@ def objectDataSerializer(obj, data):    # 序列化单个模型的字段，输�
     return data
 
 def formHtmlCallBack(allocation_form, data, ip_type):   # 用于ajax回调函数填充网页
-    # h = '<div class="row"><form class="modal_form" action="" method="POST" rid="{}" ip_type="{}">'.format(data['id'], ip_type)
-    # for f in allocation_form:
-    #     h += '<div class="form-group"><label for="{}" class="col-sm-2 control-label">{}</label><div class="col-sm-4">{}</div></div>'.format(f.id_for_label, f.label, f)
-    # ip_mod_form = IpModForm()
-    # for f in ip_mod_form:
-    #     h += '<div class="form-group"><label for="{}" class="col-sm-2 control-label">{}</label><div class="col-sm-4">{}</div></div>'.format(f.id_for_label, f.label, f)
-    # h += '</form></div>'
-    # data['status'] = 'success'
-    # data['allocation_form'] = h
-
     h = '<div class="row"><form class="modal_form" action="" method="POST" rid="{}" ip_type="{}">'.format(data['id'], ip_type)
     for f in allocation_form:
         h += '<div class="form-group"><label for="{}" class="col-sm-2 control-label">{}</label><div class="col-sm-4">{}</div></div>'.format(f.id_for_label, f.label, f)
@@ -337,6 +327,33 @@ def ip_allocation_mod(request, ip_type):
             ip_mod_form = IpModForm(request.POST)
             ip_allocate_form = IpAllocateForm(request.POST)
             if ip_allocate_form.is_valid() and ip_mod_form.is_valid():
+                # 备份旧数据
+                mod_record = PublicIpModRecord()
+                mod_record.ever_ies = target_record.ies
+                mod_record.ever_client_num = target_record.client_num
+                mod_record.ever_product_num = target_record.product_num
+                mod_record.ever_ip = target_record.ip
+                mod_record.ever_mask = target_record.mask
+                mod_record.ever_gateway = target_record.gateway
+                mod_record.ever_link_tag = target_record.link_tag
+                mod_record.ever_device_name = target_record.device_name
+                mod_record.ever_logic_port = target_record.logic_port
+                mod_record.ever_svlan = target_record.svlan
+                mod_record.ever_cvlan = target_record.cvlan
+                mod_record.ever_access_type = target_record.access_type
+                mod_record.ever_olt_name = target_record.olt_name
+                mod_record.ever_client_name = target_record.client_name
+                mod_record.ever_ip_description = target_record.ip_description
+                mod_record.ever_up_brandwidth = target_record.up_brandwidth
+                mod_record.ever_down_brandwidth = target_record.down_brandwidth
+                mod_record.ever_state = target_record.state
+                # 调整单号
+                mod_record.mod_target = target_record
+                mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
+                mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
+                mod_record.mod_user = request.user
+                mod_record.save()
+                # 新数据
                 target_record.ies = ip_allocate_form.cleaned_data['ies']
                 target_record.order_num = ip_allocate_form.cleaned_data['order_num']    
                 target_record.client_num = ip_allocate_form.cleaned_data['client_num']    
@@ -358,16 +375,10 @@ def ip_allocation_mod(request, ip_type):
                 target_record.state = ip_allocate_form.cleaned_data['state']
                 target_record.save()
 
-                mod_record = PublicIpModRecord()
-                mod_record.mod_target = target_record
-                mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
-                mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
-                mod_record.mod_user = request.user
-                mod_record.save()
-
                 data['status'] = 'success'   # 操作状态
             else:
                 data['status'] = 'error'
+                # 返回给js回调函数的错误信息
                 error_info = ''
                 error1Dict = ip_allocate_form.errors.as_data()  # dict
                 for f in error1Dict:
@@ -383,6 +394,34 @@ def ip_allocation_mod(request, ip_type):
             ip_mod_form = IpModForm(request.POST)
             ip_allocate_form = IpPrivateAllocateForm(request.POST)
             if ip_allocate_form.is_valid() and ip_mod_form.is_valid():
+                mod_record = PrivateIpModRecord()
+                # 备份数据
+                mod_record.ever_service = target_record.service
+                mod_record.ever_community = target_record.community
+                mod_record.ever_service_id = target_record.service_id
+                mod_record.ever_rd = target_record.rd
+                mod_record.ever_rt = target_record.rt
+                mod_record.ever_client_name = target_record.client_name
+                mod_record.ever_client_num = target_record.client_num
+                mod_record.ever_product_num = target_record.product_num
+                mod_record.ever_device_name = target_record.device_name
+                mod_record.ever_logic_port = target_record.logic_port
+                mod_record.ever_svlan = target_record.svlan
+                mod_record.ever_cvlan = target_record.cvlan
+                mod_record.ever_olt_name = target_record.olt_name
+                mod_record.ever_access_type = target_record.access_type
+                mod_record.ever_ip = target_record.ip
+                mod_record.ever_gateway = target_record.gateway
+                mod_record.ever_ipsegment = target_record.ipsegment
+                mod_record.ever_ip_description = target_record.ip_description
+                mod_record.ever_state = target_record.state
+                # 修改信息
+                mod_record.mod_target = target_record
+                mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
+                mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
+                mod_record.mod_user = request.user
+                mod_record.save()
+                # 新信息
                 target_record.service = ip_allocate_form.cleaned_data['service']
                 target_record.community = ip_allocate_form.cleaned_data['community']    
                 target_record.service_id = ip_allocate_form.cleaned_data['service_id']    
@@ -405,12 +444,7 @@ def ip_allocation_mod(request, ip_type):
                 target_record.state = ip_allocate_form.cleaned_data['state']
                 target_record.save()
 
-                mod_record = PrivateIpModRecord()
-                mod_record.mod_target = target_record
-                mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
-                mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
-                mod_record.mod_user = request.user
-                mod_record.save()
+                
 
                 data['status'] = 'success'   # 操作状态
             else:
