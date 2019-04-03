@@ -28,8 +28,10 @@ class PortErrorDiff(models.Model):
         ('increase', 'INCREASING'),
         ('fair', 'fair'),
     )
-    stateCRC = models.CharField(max_length=20, choices=STATE_CHOICES)
-    stateIpv4HeadError = models.CharField(max_length=20, choices=STATE_CHOICES)
+    stateCRC = models.FloatField()
+    stateIpv4HeadError = models.FloatField()
+    # stateCRC = models.CharField(max_length=20, choices=STATE_CHOICES)
+    # stateIpv4HeadError = models.CharField(max_length=20, choices=STATE_CHOICES)
     record_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
