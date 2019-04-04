@@ -23,12 +23,12 @@
                 <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
             </div>
         {% endfor %}
-        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="btn btn-primary">搜索</button>
     </form>
 {% endblock %}
 
 {% block export %}
-{# TODO: add export buttom #}
+    <a class="btn btn-success" href="{% url 'export_porterror' %}?device_name={{ search_device_name }}&time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">导出</a>
 {% endblock %}
 
 {% block alert_content %}

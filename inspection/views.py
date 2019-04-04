@@ -130,3 +130,23 @@ def search_port_error(request):
     context['time_end'] = datetime.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
     context['porterror_search_form'] = porterror_search_form
     return render(request, 'port_error_list.html', context)
+
+def export_porterror(request):
+    device_name = request.GET.get('device_name', '')
+    time_begin = request.GET.get('time_begin', '')
+    time_end = request.GET.get('time_end', '')
+    if time_begin == '' or time_end == '':
+        today_time = timezone.datetime.now()
+        time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-1)  # 默认下载当天的数据
+    else:
+        time_begin = datetime.datetime.strptime(time_begin, '%Y-%m-%d+%H:%M:%S')
+        time_end = datetime.datetime.strptime(time_end, '%Y-%m-%d+%H:%M:%S')
+    time_range = (time_begin, time_end)
+    if device_name == '':
+        porterror_all_list = PortErrorDiff.objects.filter(record_time__range=time_range)
+    else:
+        porterror_all_list = PortErrorDiff.objects.filter(device_name__icontains=device_name, record_time__range=time_range)
+    output = exportXls(PortErrorDiff._meta.fields, porterror_all_list)
+    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
+    return response

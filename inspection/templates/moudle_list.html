@@ -23,12 +23,12 @@
                 <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
             </div>
         {% endfor %}
-        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="btn btn-primary">搜索</button>
     </form>
 {% endblock %}
 
 {% block export %}
-    <a class="btn btn-success" href="{% url 'export_moudle' %}?device_name={{ search_device_name }}&status={{ search_status }}&time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">Export</a>
+    <a class="btn btn-success" href="{% url 'export_moudle' %}?device_name={{ search_device_name }}&status={{ search_status }}&time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">导出</a>
 {% endblock %}
 
 {% block alert_content %}
@@ -42,12 +42,12 @@
 {% endblock %}
 
 {% block table_title %}
-    <th>device_name</th>
-    <th>port</th>
-    <th>now_moudle</th>
-    <th>ever_moudle</th>
-    <th>status</th>
-    <th>record_time</th>
+    <th>设备</th>
+    <th>端口</th>
+    <th>当前模块</th>
+    <th>昨日模块</th>
+    <th>状态</th>
+    <th>记录时间</th>
 {% endblock %}
 
 {% block table_body %}

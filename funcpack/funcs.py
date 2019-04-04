@@ -36,17 +36,25 @@ def exportXls(fieldlist, object_list):
     for t in titles:
         sheet.write(0, col, t)
         col += 1
+    # 错误写法
+    # row = 1
+    # for datas in object_list.values():    # 在返回的object_list是filter多条的时候，实例化时是全部一起实例化，导致网页超时
+    #     col = 0 
+    #     for t in titles:
+    #         sheet.write(row, col, datas[t])
+    #         col += 1
+    #     row += 1
     row = 1
-    for datas in object_list.values():
-        col = 0 
+    qs = object_list.values()
+    for i in range(object_list.count()):
+        col = 0
         for t in titles:
-            sheet.write(row, col, datas[t])
+            sheet.write(row, col, qs[i][t]) # 逐条实例化
             col += 1
         row += 1
-    print(BASE_DIR)
     save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
-    print('保存位置：', save_path)
+    # print('保存位置：', save_path)
     # output = BytesIO()
     # book.save(output)
     # output.seek(0)

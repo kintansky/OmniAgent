@@ -7,4 +7,5 @@ urlpatterns = [
     path('moudle/download/', views.export_moudle, name='export_moudle'),
     path('porterror/', views.port_error_list, name='port_error_list'),
     path('porterror/search/', views.search_port_error, name='search_port_error'),
+    path('porterror/download/', views.export_porterror, name='export_porterror'),
 ]

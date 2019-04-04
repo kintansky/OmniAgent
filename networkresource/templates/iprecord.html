@@ -23,13 +23,13 @@
                 <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
             </div>
         {% endfor %}
-        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="btn btn-primary">搜索</button>
     </form>
 {% endblock %}
 
 {% block export %}
     {# 将form的搜索条件传到views.export_ip #}
-    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&ip_description={{ search_description }}" role="button">Export</a>
+    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&ip_description={{ search_description }}" role="button">导出</a>
 {% endblock %}
 
 {% block alert_content %}
@@ -44,11 +44,11 @@
 
 {% block table_title %}
     <th>IP</th>
-    <th>device_name</th>
-    <th>port</th>
-    <th>svlan</th>
-    <th>cvaln</th>
-    <th>description</th>
+    <th>设备</th>
+    <th>端口</th>
+    <th>外层Vlan</th>
+    <th>内层Vlan</th>
+    <th>描述</th>
 {% endblock %}
 
 {% block table_body %}
