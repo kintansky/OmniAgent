@@ -36,4 +36,4 @@ class PortErrorDiff(models.Model):
 
     class Meta:
         app_label = 'networkresource'
-        ordering = ['-record_time']
+        ordering = ['-record_time', '-stateIpv4HeadError', '-stateCRC']
