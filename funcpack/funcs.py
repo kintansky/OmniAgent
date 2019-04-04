@@ -1,8 +1,11 @@
 from django.core.paginator import Paginator
 from django.conf import settings
 import xlwt
-from io import BytesIO
+import os
+# from io import BytesIO
 from IPy import IP, IPSet
+from omni.settings.base import BASE_DIR
+import datetime
 
 def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
     paginator = Paginator(object_list, page_conf)
@@ -40,10 +43,14 @@ def exportXls(fieldlist, object_list):
             sheet.write(row, col, datas[t])
             col += 1
         row += 1
-    output = BytesIO()
-    book.save(output)
-    output.seek(0)
-    return output
+    print(BASE_DIR)
+    save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S%f')))
+    book.save(save_path)
+    print('保存位置：', save_path)
+    # output = BytesIO()
+    # book.save(output)
+    # output.seek(0)
+    return save_path
 
 def getSubNet(ip, mask):
     subnet = IP(IP).make_net(mask)

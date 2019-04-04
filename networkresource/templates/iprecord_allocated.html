@@ -43,11 +43,6 @@
     </form>
 {% endblock %}
 
-{% block export %}
-    {# 将form的搜索条件传到views.export_ip #}
-    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&client_name={{ search_client_name }}" role="button">Export</a>
-{% endblock %}
-
 {% block alert_content %}
     {% if ip_search_form.errors %}
         <br>
@@ -62,8 +57,6 @@
     {% if public_ip == 1 %}
         {# 公网地址 #}
         <th>工单号</th>
-        <!-- <th>客户编号</th> -->
-        <!-- <th>产品号</th> -->
         <th>ip</th>
         <th>设备</th>
         <th>子接口</th>
@@ -76,13 +69,9 @@
     {% elif public_ip == 0 %}
         {# 私网地址 #}
         <th>community</th>
-        <!-- <th>service_id</th> -->
         <th>接入依据</th>
         <th>客户名</th>
-        <!-- <th>客户编号</th> -->
-        <!-- <th>产品号</th> -->
         <th>设备</th>
-        <!-- <th>子接口</th> -->
         <th>ip</th>
         <th>分配人</th>
         <th>状态</th>
@@ -102,8 +91,6 @@
                 <tr>
             {% endif %}
                 <td>{{ record.order_num|truncatechars:15 }}</td>
-                <!-- <td>{{ record.client_num|truncatechars:15 }}</td> -->
-                <!-- <td>{{ record.product_num|truncatechars:15 }}</td> -->
                 <td>{{ record.ip }}</td>
                 <td>{{ record.device_name|truncatechars:15 }}</td>
                 <td>{{ record.logic_port }}</td>
@@ -139,13 +126,9 @@
                 <tr>
             {% endif %}
                 <td>{{ record.community|truncatechars:15 }}</td>
-                <!-- <td>{{ record.service_id }}</td> -->
                 <td>{{ record.order_num|truncatechars:15 }}</td>
                 <td>{{ record.client_name|truncatechars:15 }}</td>
-                <!-- <td>{{ record.client_num|truncatechars:15 }}</td> -->
-                <!-- <td>{{ record.product_num|truncatechars:15 }}</td> -->
                 <td>{{ record.device_name|truncatechars:15 }}</td>
-                <!-- <td>{{ record.logic_port }}</td> -->
                 <td>{{ record.ip }}</td>
                 <td>{{ record.alc_user.first_name }}</td>
                 <td>{{ record.state }}</td>

@@ -108,7 +108,7 @@ def export_ip(request):
 
     # response = HttpResponse(output.getvalue(), content_type='application/vnd.ms-excel')
     # response['Content-Disposition'] = 'attachment; filename="iprecord_result.xls"'
-    response = FileResponse(output, as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
+    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
     return response
 
 '''

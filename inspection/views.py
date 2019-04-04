@@ -87,7 +87,7 @@ def export_moudle(request):
         else:
             moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=time_range)
     output = exportXls(OpticalMoudleDiff._meta.fields, moudle_all_list)
-    response = FileResponse(output, as_attachment=True, filename="moudle_result.xls") # 使用Fileresponse替代以上两行
+    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="moudle_result.xls") # 使用Fileresponse替代以上两行
     return response
 
 
