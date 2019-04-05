@@ -49,6 +49,15 @@ class PublicIpGateway(models.Model):
     class Meta:
         app_label = 'watchdog'
 
+class PublicIpSegment(models.Model):
+    ip_segment = models.GenericIPAddressField(protocol='both')
+    mask = models.IntegerField()
+
+    class Meta:
+        unique_together = (('ip_segment', 'mask'),)
+        ordering = ['id',]
+        app_label = 'watchdog'
+
 class PublicIpAllocation(models.Model):
     ies = models.CharField(max_length=20, blank=True, null=True)   # 看是否能改成int
     order_num = models.CharField(max_length=255, blank=True, null=True)

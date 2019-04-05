@@ -104,8 +104,11 @@ def export_ip(request):
     device_name = request.GET.get('device_name', '')
     ip_description = request.GET.get('ip_description', '')
     ip_type = request.GET.get('ip_type', '')
+    print(ip_address, device_name, ip_description, ip_type)
     if ip_address == device_name == ip_description == '':
-        ip_all_list = IpRecord.objects.filter(ip_type=ip_type)
+        file = os.path.join(BASE_DIR, 'collected_static/downloads/files/iprecord_all.xls')
+        response = FileResponse(open(file, 'rb'), as_attachment=True, filename="iprecord_all.xls")
+        return response
     elif ip_type == 'all':
         if ip_address != '':
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
@@ -113,26 +116,15 @@ def export_ip(request):
             ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
         elif ip_description != '':
             ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
-        else:
-            # ip_all_list = IpRecord.objects.all()
-            # 此处相当于全量导出，先提前生成全量文件，请求时直接提供下载
-            # TODO: 新建文件夹files，后台提前生成三个文件
-            file = os.path.join(BASE_DIR, 'collected_static/downloads/files/all_ip.xls')
-            response = FileResponse(open(file, 'rb'), as_attachment=True, filename="all_ip.xls")
-            return response
+
     else:
         if ip_address != '':
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
         elif device_name != '':
             ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
-        else:
-            # ip_all_list = IpRecord.objects.filter(ip_type=ip_type, ip_description__icontains=ip_description)
-            file = os.path.join(BASE_DIR, 'collected_static/downloads/files/all_ip_{}.xls'.format(ip_type))
-            response = FileResponse(open(file, 'rb'), as_attachment=True, filename="all_ip_{}.xls".format(ip_type))
-            return response
     
     output = exportXls(IpRecord._meta.fields, ip_all_list, 'record_time')
-    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
+    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="iprecord__search_result.xls") # 使用Fileresponse替代以上两行
     return response
 
 '''
