@@ -1,11 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord
 from .forms import IPsearchForm, PortSearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm
-from funcpack.funcs import pages, exportXls
+from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
-import datetime
 import re
+from omni.settings.base import BASE_DIR
+import os
 
 # Create your views here.
 # port views
@@ -54,7 +55,6 @@ def ip_list(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['count'] = IpRecord.objects.all().count()
     context['ip_search_form'] = IPsearchForm()
     return render(request, 'iprecord.html', context)
 
@@ -64,14 +64,23 @@ def search_ip(request):
         ip_address = ip_search_form.cleaned_data['ip_address']
         device_name = ip_search_form.cleaned_data['device_name']
         ip_description = ip_search_form.cleaned_data['description']
+        ip_type = ip_search_form.cleaned_data['ip_type']
         if ip_address != '':
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
-        elif device_name != '':
-            ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-        elif ip_description != '':
-            ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+        elif ip_type == 'all':
+            if device_name != '':
+                ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
+            elif ip_description != '':
+                ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+            else:
+                ip_all_list = IpRecord.objects.all()
         else:
-            ip_all_list = IpRecord.objects.all()
+            if device_name != '':
+                ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
+            elif ip_description != '':
+                ip_all_list = IpRecord.objects.filter(ip_type=ip_type, ip_description__icontains=ip_description)
+            else:
+                ip_all_list = IpRecord.objects.filter(ip_type=ip_type)
     else:
         context = {}
         context['ip_search_form'] = ip_search_form
@@ -83,10 +92,10 @@ def search_ip(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['count'] = IpRecord.objects.all().count()
     context['search_ip_address'] = ip_address
     context['search_device_name'] = device_name
     context['search_description'] = ip_description
+    context['search_ip_type'] = ip_type
     context['ip_search_form'] = ip_search_form
     return render(request, 'iprecord.html', context)
 
@@ -94,20 +103,34 @@ def export_ip(request):
     ip_address = request.GET.get('ip_address', '')
     device_name = request.GET.get('device_name', '')
     ip_description = request.GET.get('ip_description', '')
+    ip_type = request.GET.get('ip_type', '')
     if ip_address == device_name == ip_description == '':
-        ip_all_list = IpRecord.objects.all()
-    else:
+        ip_all_list = IpRecord.objects.filter(ip_type=ip_type)
+    elif ip_type == 'all':
         if ip_address != '':
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
         elif device_name != '':
             ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
-        else:
+        elif ip_description != '':
             ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
+        else:
+            # ip_all_list = IpRecord.objects.all()
+            # 此处相当于全量导出，先提前生成全量文件，请求时直接提供下载
+            file = os.path.join(BASE_DIR, 'collected_static/downloads/files/all_ip.xls')
+            response = FileResponse(open(file, 'rb'), as_attachment=True, filename="all_ip.xls")
+            return response
+    else:
+        if ip_address != '':
+            ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
+        elif device_name != '':
+            ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
+        else:
+            # ip_all_list = IpRecord.objects.filter(ip_type=ip_type, ip_description__icontains=ip_description)
+            file = os.path.join(BASE_DIR, 'collected_static/downloads/files/all_ip_{}.xls'.format(ip_type))
+            response = FileResponse(open(file, 'rb'), as_attachment=True, filename="all_ip_{}.xls".format(ip_type))
+            return response
     
-    output = exportXls(IpRecord._meta.fields, ip_all_list)
-
-    # response = HttpResponse(output.getvalue(), content_type='application/vnd.ms-excel')
-    # response['Content-Disposition'] = 'attachment; filename="iprecord_result.xls"'
+    output = exportXls(IpRecord._meta.fields, ip_all_list, 'record_time')
     response = FileResponse(open(output, 'rb'), as_attachment=True, filename="iprecord_result.xls") # 使用Fileresponse替代以上两行
     return response
 
@@ -279,20 +302,13 @@ def ajax_locate_ip(request, ip_type):
     elif ip_type == 'private':
         try:
             record = PrivateIpAllocation.objects.get(id=rid)
-            data = objectDataSerializer(record, data)   # 序列化单个模型的字段，输出json
+            data = objectDataSerializer(record, data)   # 序列化单个模型的字段，输出dict
             allocation_form = IpPrivateAllocateForm(data)
             data = formHtmlCallBack(allocation_form, data, ip_type) # 用于ajax回调函数填充网页
         except ObjectDoesNotExist as err:
             data['status'] = 'error'
             data['error_info'] = str(err)
     return JsonResponse(data)
-
-def objectDataSerializer(obj, data):    # 序列化单个模型的字段，输出json
-    for f in obj._meta.fields:
-        key = f.attname
-        val = obj.serializable_value(key)
-        data[key] = val
-    return data
 
 def formHtmlCallBack(allocation_form, data, ip_type):   # 用于ajax回调函数填充网页
     h = '<div class="row"><form class="modal_form" action="" method="POST" rid="{}" ip_type="{}">'.format(data['id'], ip_type)

@@ -35,7 +35,7 @@ class MoudleSearchForm(forms.Form):
         return self.cleaned_data
 
 class PortErrorSearchForm(forms.Form):
-    device_name = forms.CharField(label='Device', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:230px'}))
+    # device_name = forms.CharField(label='Device', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:230px'}))
     time_begin = forms.DateTimeField(label='From', widget=forms.TextInput(attrs={'class': 'form-control form_datetime', 'placeholder': '2018-01-01 00:00:00', 'style':'width:160px', 'readonly': True}))
     time_end = forms.DateTimeField(label='to', widget=forms.TextInput(attrs={'class': 'form-control form_datetime', 'placeholder': '2018-01-11 23:59:59', 'style':'width:160px', 'readonly': True}))
 

@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block subheader %} IP Records {% endblock %}
+{% block new_button_active %}disabled{% endblock %}
 {% block new_button_url %}
 {% endblock %}
 
@@ -29,7 +30,7 @@
 
 {% block export %}
     {# 将form的搜索条件传到views.export_ip #}
-    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&ip_description={{ search_description }}" role="button">导出</a>
+    <a class="btn btn-success" href="{% url 'export_ip' %}?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&ip_description={{ search_description }}&ip_type={{ search_ip_type }}" role="button">导出</a>
 {% endblock %}
 
 {% block alert_content %}
@@ -39,17 +40,24 @@
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
         </div>
+    {% else %}
+        <br>
+        <div class="alert alert-info alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            * 搜索优先级：<strong>IP</strong> > <strong>Device</strong>;
+        </div>
     {% endif %}
 {% endblock %}
 
 {% block table_title %}
     <th>IP</th>
     <th>设备</th>
-    <th>端口</th>
+    <th>接口</th>
     <th>外层Vlan</th>
     <th>内层Vlan</th>
     <th>描述</th>
     <th>记录时间</th>
+    <th>类型</th>
 {% endblock %}
 
 {% block table_body %}
@@ -60,11 +68,13 @@
             <td>{{ record.logic_port }}</td>
             <td>{{ record.svlan }}</td>
             <td>{{ record.cvlan }}</td>
-            <td>{{ record.ip_description|truncatechars:50 }}</td>
+            <td>{{ record.ip_description|truncatechars:40 }}</td>
             <td>{{ record.record_time|date:"Y-m-d" }}</td>
+            <td>{{ record.ip_type }}</td>
         </tr>
     {% empty %}
         <tr>
+            <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>
@@ -84,7 +94,7 @@
             {% if page_of_objects.has_previous %}
                 {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
                 {% if search_device_name or search_ip_address or search_description %}
-                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 {% else %}
@@ -105,7 +115,7 @@
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
                     {% if search_device_name or search_ip_address or search_description %}
-                        <li><a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_num }}">{{ page_num }}</a></li>
+                        <li><a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_num }}">{{ page_num }}</a></li>
                     {% else %}
                         <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
                     {% endif %}
@@ -116,7 +126,7 @@
         <li>
             {% if page_of_objects.has_next %}
                 {% if search_device_name or search_ip_address or search_description %}
-                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&page={{ page_num }}">{{ page_num }}
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_num }}">{{ page_num }}
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 {% else %}

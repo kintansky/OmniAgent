@@ -26,12 +26,17 @@ class IpmanResource(models.Model):
         ]
 
 class IpRecord(models.Model):
+    CHOICES = (
+        ('public', 'Public'),
+        ('private', 'Private'),
+    )
     device_ip = models.GenericIPAddressField(protocol='both')
     device_name = models.CharField(max_length=255)
     logic_port = models.CharField(max_length=40)
     svlan = models.CharField(max_length=30)
     cvlan = models.CharField(max_length=30)
     ip_description = models.TextField(blank=True)
+    ip_type = models.CharField(max_length=10, choices=CHOICES)
     record_time = models.DateTimeField()
 
     class Meta:
