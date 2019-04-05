@@ -116,6 +116,7 @@ def export_ip(request):
         else:
             # ip_all_list = IpRecord.objects.all()
             # 此处相当于全量导出，先提前生成全量文件，请求时直接提供下载
+            # TODO: 新建文件夹files，后台提前生成三个文件
             file = os.path.join(BASE_DIR, 'collected_static/downloads/files/all_ip.xls')
             response = FileResponse(open(file, 'rb'), as_attachment=True, filename="all_ip.xls")
             return response
