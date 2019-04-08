@@ -60,8 +60,8 @@
             <td>{{ record.port }}</td>
             <td>{{ record.nowCRC }}</td>
             <td>{{ record.nowIpv4HeaderError }}</td>
-            <td>{{ record.stateCRC|floatformat:1 }}</td>
-            <td>{{ record.stateIpv4HeadError|floatformat:1 }}</td>
+            <td>{{ record.stateCRC|floatformat }}</td>
+            <td>{{ record.stateIpv4HeadError|floatformat }}</td>
             <td>{{ record.port_description|truncatechars:20 }}</td>
             <td>{{ record.port_status }}</td>
             <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
