@@ -78,8 +78,8 @@ class PublicIpAllocation(models.Model):
     up_brandwidth = models.SmallIntegerField(blank=True, null=True)
     down_brandwidth = models.SmallIntegerField()
     alc_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
-    # alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
-    alc_time = models.DateTimeField()   # 外部数据导入时使用
+    alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
+    # alc_time = models.DateTimeField()   # 外部数据导入时使用
     # 取消该模型内的调整记录，增加状态标记：在用、销户
     state = models.CharField(max_length=10)
 
@@ -153,8 +153,8 @@ class PrivateIpModRecord(models.Model):
     mod_order = models.CharField(max_length=255)
     mod_msg = models.TextField()
     mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
-    # record_time = models.DateTimeField()
-    record_time = models.DateTimeField(auto_now_add=True)
+    record_time = models.DateTimeField()
+    # record_time = models.DateTimeField(auto_now_add=True)
     # 本次修改前的分配信息，用于记录备份
     ever_service = models.CharField(max_length=50, blank=True, null=True)
     ever_community = models.CharField(max_length=50, blank=True, null=True)   # 看是否能改成int
