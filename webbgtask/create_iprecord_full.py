@@ -90,7 +90,7 @@ if __name__ == "__main__":
     tableInfo['db'] = 'cmdb'
     tableInfo['tb'] = 'networkresource_iprecord'
     IPTable = SqlTable(**tableInfo)
-    cmd = 'select device_ip, device_name, logic_port, svlan, cvlan, ip_description from {}'.format(IPTable._tb)
+    cmd = 'select device_ip, ip_mask, device_name, logic_port, svlan, cvlan, ip_description from {}'.format(IPTable._tb)
     ips = IPTable.queryResult(cmd)
     public_ips, private_ips = [], []
     for ip in ips:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     bk = xlwt.Workbook()
     publicip_sheet = bk.add_sheet('公网地址')
     privateip_sheet = bk.add_sheet('私网地址')
-    titles = ('ip', '设备', '逻辑端口', '外层vlan', '内层vlan', '描述')
+    titles = ('ip', '掩码', '设备', '逻辑端口', '外层vlan', '内层vlan', '描述')
     col = 0
     for t in titles:
         publicip_sheet.write(0, col, t)
