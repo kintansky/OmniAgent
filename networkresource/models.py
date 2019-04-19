@@ -38,7 +38,7 @@ class IpRecord(models.Model):
     svlan = models.CharField(max_length=30)
     cvlan = models.CharField(max_length=30)
     ip_description = models.TextField(blank=True)
-    ip_type = models.CharField(max_length=10, choices=CHOICES)
+    ip_type = models.CharField(max_length=20, choices=CHOICES)
     record_time = models.DateTimeField()
 
     class Meta:
