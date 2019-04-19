@@ -31,6 +31,7 @@ class IpRecord(models.Model):
         ('private', 'Private'),
     )
     device_ip = models.GenericIPAddressField(protocol='both')
+    ip_mask = models.IntegerField(null=True)
     device_name = models.CharField(max_length=255)
     logic_port = models.CharField(max_length=40)
     svlan = models.CharField(max_length=30)
