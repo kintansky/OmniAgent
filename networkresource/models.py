@@ -51,8 +51,14 @@ class PublicIpGateway(models.Model):
         app_label = 'watchdog'
 
 class PublicIpSegment(models.Model):
+    TYPE_CHOICES = (
+        (1, '公网外部使用'),
+        (2, '公网内部使用'),
+        (3, '私网')
+    )
     ip_segment = models.GenericIPAddressField(protocol='both')
     mask = models.IntegerField()
+    segment_type = models.IntegerField(default=1, choices=TYPE_CHOICES)
 
     class Meta:
         unique_together = (('ip_segment', 'mask'),)

@@ -82,22 +82,48 @@ if __name__ == "__main__":
     SegmentTable = SqlTable(**tableInfo)
     cmd = 'select * from {}'.format(SegmentTable._tb)
     segdata = SegmentTable.queryResult(cmd)
-    s = IPSet()
+    ipsetDict = {}  # 地址段类型: IPSet(...)
     for gw in segdata:
+        if gw[3] not in ipsetDict:
+            ipsetDict[str(gw[3])] = IPSet()
         subnet = getSubnet(gw[1], gw[2])
-        s.add(subnet)
+        ipsetDict[str(gw[3])].add(subnet)
+
+    # s = IPSet()
+    # for gw in segdata:
+    #     subnet = getSubnet(gw[1], gw[2])
+    #     s.add(subnet)
     # IP 清单
     tableInfo['db'] = 'cmdb'
     tableInfo['tb'] = 'networkresource_iprecord'
     IPTable = SqlTable(**tableInfo)
     cmd = 'select device_ip, ip_mask, device_name, logic_port, svlan, cvlan, ip_description from {}'.format(IPTable._tb)
     ips = IPTable.queryResult(cmd)
-    public_ips, private_ips = [], []
+    idx = {'1': 'public_outer', '2': 'public_inner', '3':'private'}
+    result = {}
+    for segment_type in ipsetDict:
+        result[idx[segment_type]] = []
     for ip in ips:
-        if IP(ip[0]) in s:
-            public_ips.append(ip)
-        else:
-            private_ips.append(ip)
+        public = True
+        for segment_type in ipsetDict:
+            s = ipsetDict[segment_type]
+            if IP(ip[0]) in s:
+                result[idx[segment_type]].append(ip)
+                public = False
+                break
+        if public is False:
+            result['private'].append(ip)
+    public_ips = result['public_outer']
+    private_ips = result['private']
+    print(result['public_inner'])
+            
+
+    # public_ips, private_ips = [], []
+    # for ip in ips:
+    #     if IP(ip[0]) in s:
+    #         public_ips.append(ip)
+    #     else:
+    #         private_ips.append(ip)
     # 写入
     bk = xlwt.Workbook()
     publicip_sheet = bk.add_sheet('公网地址')
