@@ -50,7 +50,7 @@
 {% endblock %}
 
 {% block table_title %}
-    <th>IP</th>
+    <th>主机地址</th>
     <th>设备</th>
     <th>接口</th>
     <th>外层Vlan</th>
@@ -63,7 +63,7 @@
 {% block table_body %}
     {% for record in records %}
         <tr>
-            <td>{{ record.device_ip }}</td>
+            <td>{{ record.device_ip }}/{{ record.ip_mask }}</td>
             <td>{{ record.device_name }}</td>
             <td>{{ record.logic_port }}</td>
             <td>{{ record.svlan }}</td>
