@@ -52,9 +52,9 @@ class PublicIpGateway(models.Model):
 
 class PublicIpSegment(models.Model):
     TYPE_CHOICES = (
+        (-1, '私网'),
         (1, '公网外部使用'),
         (2, '公网内部使用'),
-        (3, '私网')
     )
     ip_segment = models.GenericIPAddressField(protocol='both')
     mask = models.IntegerField()
