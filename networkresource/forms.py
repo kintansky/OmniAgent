@@ -3,7 +3,8 @@ import re
 
 class IPsearchForm(forms.Form):
     CHOICES = (
-        ('public', '公网'),
+        ('public_outer', '公网外部使用'),
+        ('public_inner', '公网内部使用'),
         ('private', '私网'),
         ('all', '所有'),
     )

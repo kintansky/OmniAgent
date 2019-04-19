@@ -27,8 +27,9 @@ class IpmanResource(models.Model):
 
 class IpRecord(models.Model):
     CHOICES = (
-        ('public', 'Public'),
         ('private', 'Private'),
+        ('public_outer', 'PublicOuter'),
+        ('public_inner', 'PublicInner'),
     )
     device_ip = models.GenericIPAddressField(protocol='both')
     ip_mask = models.IntegerField(null=True)
