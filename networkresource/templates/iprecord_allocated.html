@@ -220,7 +220,26 @@
                 <div class="modal-body">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default pull-left" data-dismiss="modal">取消变更</button>
+                    <div class="row pull-left">
+                        <div class="col-sm-12">
+                            <a tabindex="0" role="button" data-toggle="popover" data-trigger="hover" title="Tips" data-content="
+                            <ul>
+                                <li>带 * 必填</li>
+                                <li>
+                                    子接口字段采用自动识别，填写规范如下
+                                    <ul>
+                                        <li>PTN接入子接口: lag-100:外层vlan 或 10/1/1:外层vlan</li>
+                                        <li>GPON接入子接口: lag-10:外层vlan.内层vlan 或 Eth-Trunk100.外层vlan.内层vlan 或 10/1/1:外层vlan.内层vlan</li>
+                                    </ul>
+                                </li>
+                                <li>描述字段: 带宽格式为(**M)或(**G)</li>
+                                <li>状态: InUse在用, ShutDown暂时停闭, Delete数据删除</li>
+                            </ul>">
+                                * 修改帮助
+                            </a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消变更</button>
                     <button type="button" class="btn btn-danger modal_mod">变更/销户</button>
                 </div>
             </div>
@@ -231,12 +250,17 @@
 {% block tail_script %}
 <script>
     $(document).ready(function(){
+        $('[data-toggle="popover"]').popover({
+            html: true
+        });
+    });
+    $(document).ready(function(){
         // 公私网分开处理
         var ip_type = $(".modal_form_trigger").attr('ip_type');
         if(ip_type == "public"){
-            var ip_url = "{% url 'ajax_locate_ip' 'public'%}";
+            var ip_url = "{% url 'ajax_locate_ip' 'public' %}";
         }else{
-            var ip_url = "{% url 'ajax_locate_ip' 'private'%}";
+            var ip_url = "{% url 'ajax_locate_ip' 'private' %}";
         }
         $(".modal_form_trigger").click(function(){
             $.ajax({

@@ -66,79 +66,82 @@
         
     </div>
 
-    <script type="text/javascript">
-        // 基于准备好的dom，初始化echarts实例
-        var userPie = echarts.init(document.getElementById('usermain'));
-        userPie.showLoading();
-        // 指定图表的配置项和数据
-        var option = {
-            title: {
-                text: '设备用户数',
-                x: 'center'
-            },
-            tooltip: {
-                trigger: 'item',
-                formatter: "{a} <br/>{b} : {c} ({d}%)"
-            },
-            series: [
-                {
-                    name: '设备用户数',
-                    type: 'pie',
-                    radius : '55%',
-                    center: ['50%', '60%'],
-                    data:[
-                        {value:335, name:'Home User'},
-                        {value:310, name:'OTV User'},
-                        {value:234, name:'IMS User'},
-                        {value:135, name:'ITMS User'},
-                    ],
-                    itemStyle: {
-                        emphasis: {
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowColor: 'rgba(0, 0, 0, 0.5)'
-                        }
-                    }
-                }
-            ]
-        };
 
-        // 使用刚指定的配置项和数据显示图表。
-        userPie.hideLoading();
-        userPie.setOption(option);
-
-        var perfBar = echarts.init(document.getElementById('perfmain'));
-        perfBar.showLoading();
-        // 指定图表的配置项和数据
-        var option = {
-            title: {
-                text: '设备性能',
-                x: 'center'
-            },
-            xAxis: {
-                type: 'category',
-                data: ['CPU', 'Memory']
-            },
-            yAxis: {
-                type: 'value',
-                min: '0',
-                max: '100'
-            },
-            tooltip: {
-                trigger: 'item',
-                formatter: "{b} : {c}%"
-            },
-            series: [
-                {
-                    data: [20, 87],
-                    type: 'bar'
-                }
-            ]
-        };
-        // 使用刚指定的配置项和数据显示图表。
-        perfBar.hideLoading();
-        perfBar.setOption(option);
-
-    </script>
 {% endblock %}
 
+{% block tail_script %}
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var userPie = echarts.init(document.getElementById('usermain'));
+    userPie.showLoading();
+    // 指定图表的配置项和数据
+    var option = {
+        title: {
+            text: '设备用户数',
+            x: 'center'
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: "{a} <br/>{b} : {c} ({d}%)"
+        },
+        series: [
+            {
+                name: '设备用户数',
+                type: 'pie',
+                radius : '55%',
+                center: ['50%', '60%'],
+                data:[
+                    {value:335, name:'Home User'},
+                    {value:310, name:'OTV User'},
+                    {value:234, name:'IMS User'},
+                    {value:135, name:'ITMS User'},
+                ],
+                itemStyle: {
+                    emphasis: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }
+        ]
+    };
+
+    // 使用刚指定的配置项和数据显示图表。
+    userPie.hideLoading();
+    userPie.setOption(option);
+
+    var perfBar = echarts.init(document.getElementById('perfmain'));
+    perfBar.showLoading();
+    // 指定图表的配置项和数据
+    var option = {
+        title: {
+            text: '设备性能',
+            x: 'center'
+        },
+        xAxis: {
+            type: 'category',
+            data: ['CPU', 'Memory']
+        },
+        yAxis: {
+            type: 'value',
+            min: '0',
+            max: '100'
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: "{b} : {c}%"
+        },
+        series: [
+            {
+                data: [20, 87],
+                type: 'bar'
+            }
+        ]
+    };
+    // 使用刚指定的配置项和数据显示图表。
+    perfBar.hideLoading();
+    perfBar.setOption(option);
+
+</script>
+{% endblock %}

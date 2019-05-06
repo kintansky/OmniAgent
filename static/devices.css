@@ -13,6 +13,13 @@ input.allocate {
 select.allocate {
     margin-bottom: 1em;
 }
+div.container-fluid {
+    padding-left: 4em;
+    padding-right: 4em;
+}
+div.popover {
+    width: 500px;
+}
 
 /* Sticky footer styles
 -------------------------------------------------- */
