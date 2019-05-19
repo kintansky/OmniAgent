@@ -3,18 +3,12 @@ from django.contrib import auth
 from django.urls import reverse
 from .forms import LoginForm, RegisterForm
 from django.contrib.auth.models import User
-# 将路径加入sys.path, 否则找不到models
-# import sys
-# from os.path import abspath, join, dirname
-# sys.path.insert(0, join(abspath(dirname('omni')), 'watchdog'))
-# sys.path.insert(0, join(abspath(dirname('omni')), 'inspection'))
-# sys.path.insert(0, join(abspath(dirname('omni')), 'networkresource'))
 from watchdog.models import Device
 from inspection.models import OpticalMoudleDiff
 from networkresource.models import IpmanResource, IpRecord
 import datetime
 from django.utils import timezone
-from django.db.models import Count
+from django.db.models import Count, Q
 
 def register(request):
     if request.method == 'POST':
@@ -86,15 +80,29 @@ def dashboard(request):
 
 def device_detail(request, device_name):
     device = get_object_or_404(Device, device_name=device_name)
-    # device_ports = IpmanResource.objects.filter(device_name=device_name, slot__range=(7, 10))
-    slot_brief = IpmanResource.objects.filter(device_name=device_name).values_list('slot').annotate(Count('slot')).order_by('slot')
+    # slot_brief = IpmanResource.objects.filter(device_name=device_name).values_list('slot').annotate(allports=Count('slot'), upports=Count('port_status', filter=Q(port_status='Up'))).order_by('slot')
+    rawQueryCmd = "SELECT nt.id, nt.slot, COUNT(nt.slot) AS allports, \
+                    COUNT(case when nt.port_status = 'Up' then nt.port_status else NULL END ) AS upports, \
+                    SUM(case when nt.stateCRC > 0 then nt.stateCRC ELSE 0 END ) AS crc \
+                FROM (\
+                    SELECT ni.id, ni.slot, ni.port, ni.brand_width, \
+                        ni.port_status, ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
+                    FROM networkresource_ipmanresource AS ni \
+                    LEFT JOIN networkresource_porterrordiff as np \
+                    ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s AND %s \
+                    WHERE ni.device_name = %s) AS nt \
+                GROUP BY nt.slot"
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=-1)
+    rawQueryData = (time_begin, time_end, device_name)
+    slot_brief = IpmanResource.objects.raw(rawQueryCmd, rawQueryData)
     port_up_count = IpmanResource.objects.filter(device_name=device_name, port_status__icontains='up').count()
     port_down_count = IpmanResource.objects.filter(device_name=device_name).count() - port_up_count
-    # 关系查询需要修改model的建立外键关系
+    # 关系查询需要修改model的建立外键关系，或者使用raw query
     context = {}
     context['device'] = device
     context['slot_brief'] = slot_brief
-    # context['device_ports'] = device_ports
     context['port_up_count'] = port_up_count
     context['port_down_count'] = port_down_count
     return render(request, 'device_detail.html', context)

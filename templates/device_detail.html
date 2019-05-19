@@ -13,7 +13,10 @@
             <h1 class="text-center">{{ device.device_name }}<small> / {{ device.device_ip }}</small></h1>
         </div>
         <div class="page-header">
-            <h3 class="text-left">Performance <small>test data</small></h3>
+            <h3 class="text-left">
+                <span class="glyphicon glyphicon-triangle-bottom pull-left" aria-hidden="true"></span>
+                设备性能 <small>test data</small>
+            </h3>
         </div>
         <div class="row">
             <div class="col-md-6">
@@ -25,36 +28,38 @@
         </div>
         
         <div class="page-header">
-            <h3 class="text-left">Port Utility <small>{{ port_up_count }} ports up, {{ port_down_count }} ports down</small></h3>
+            <h3 class="text-left">
+                <span class="glyphicon glyphicon-triangle-bottom pull-left" aria-hidden="true"></span>
+                端口情况 <small>{{ port_up_count }} 端口UP，{{ port_down_count }} 端口DOWN</small>
+            </h3>
         </div>
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
             {% for sl in slot_brief %}
                 <div class="panel panel-success">
-                    <div class="panel-heading" role="tab" id="heading{{ sl.0 }}">
+                    <div class="panel-heading" role="tab" id="heading{{ sl.slot }}">
                         <h3 class="panel-title">
-                            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.0 }}" aria-expanded="true" aria-controls="collapse{{ sl.0 }}">
-                                <strong>    Slot {{ sl.0 }}</strong><small> / {{ sl.1 }} </small>
-                                <span class="glyphicon glyphicon-list pull-right" aria-hidden="true"></span>
+                            <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot }}">
+                                <strong> 板卡 NO.{{ sl.slot }}</strong>
+                                <small> &laquo; 状态：共有 {{ sl.allports }} 个端口，其中 {{ sl.upports }} 个UP &laquo; 端口质量：{{ sl.crc }} CRC/h</small>
+                                <span class="glyphicon glyphicon-sort pull-right" aria-hidden="true"></span>
                             </a>
                         </h3>
                     </div>
-                    <div id="collapse{{ sl.0 }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ sl.0 }}">
+                    <div id="collapse{{ sl.slot }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ sl.slot }}">
                         <div class="panel-body">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
-                                        <th>Slot Type</th>
-                                        <th>Mda</th>
-                                        <th>Port</th>
-                                        <th>Brand Width</th>
-                                        <th>Port Status</th>
-                                        <th>Phy Status</th>
-                                        <th>LogicPort</th>
-                                        <th>LogicPort Des</th>
-                                        <th>Port Des</th>
+                                        <th>端口</th>
+                                        <th>带宽</th>
+                                        <th>状态</th>
+                                        <th>物理状态</th>
+                                        <th>逻辑口</th>
+                                        <th>描述</th>
+                                        <th>CRC增速</th>
                                     </thead>
-                                    <tbody>
-                                        
+                                    <tbody class='ports_body'>
+                                    <!-- ajax填充 -->
                                     </tbody>
                                 </table>
                             </div>
@@ -143,5 +148,28 @@
     perfBar.hideLoading();
     perfBar.setOption(option);
 
+    // ajax 请求板卡信息
+    $(document).ready(function(){
+        $(".slot_trigger").click(function(){
+            $.ajax({
+                url: "{% url 'ajax_search_slot_ports' %}",  // 异步请求的地址
+                type: 'GET',    // 请求方式
+                data: {device_name: "{{ device.device_name }}", slot: $(this).attr('aria-controls')},   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        $(".ports_body").html(data['ports_table']);
+                    }else{
+                        console.log(data);
+                        alert('没有找到相关对象');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+    });
 </script>
 {% endblock %}

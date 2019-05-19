@@ -18,11 +18,11 @@
     {% endif %}
 {% endblock %}
 
-{% block new_button_url %}
+{% block new_button %}
     {% if public_ip == 1 %}
-        {% url 'allocate_ip' 'public' %}
+        <a class="btn btn-success" href="{% url 'allocate_ip' 'public' %}" role="button">新增</a>
     {% elif public_ip == 0 %}
-        {% url 'allocate_ip' 'private' %}
+        <a class="btn btn-success" href="{% url 'allocate_ip' 'private' %}" role="button">新增</a>
     {% endif %}
 {% endblock %}
 
@@ -254,6 +254,8 @@
             html: true
         });
     });
+    
+    // ajax 请求
     $(document).ready(function(){
         // 公私网分开处理
         var ip_type = $(".modal_form_trigger").attr('ip_type');

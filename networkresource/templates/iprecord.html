@@ -11,8 +11,18 @@
 {% endblock %}
 
 {% block subheader %} IP Records {% endblock %}
-{% block new_button_active %}disabled{% endblock %}
-{% block new_button_url %}
+
+{% block new_button %}
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        新增
+        <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+        <li><a href="{% url 'allocate_ip' 'public' %}">分配公网地址</a></li>
+        <li><a href="{% url 'allocate_ip' 'private' %}">分配私网地址</a></li>
+    </ul>
+</div>
 {% endblock %}
 
 {% block search_form %}

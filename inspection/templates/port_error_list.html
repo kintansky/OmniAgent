@@ -12,7 +12,10 @@
 {% endblock %}
 
 {% block subheader %} Port's Error {% endblock %}
-{% block new_button_active %}disabled{% endblock %}
+
+{% block new_button %}
+<a class="btn btn-success disabled" href="" role="button">新增</a>
+{% endblock %}
 
 {% block search_form %}
     <form action="{% url 'search_port_error' %}" method="GET" class="form-inline">

@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import re
 from omni.settings.base import BASE_DIR
 import os
+from django.utils import timezone
 
 # Create your views here.
 # port views
@@ -42,6 +43,44 @@ def search_device_ports(request):
     context['target_ports'] = target_ports
     context['port_search_form'] = port_search_form
     return render(request, 'resource.html', context)
+
+def ajax_search_slot_ports(request):
+    data = {}
+    device_name = request.GET.get('device_name')
+    slot = int(request.GET.get('slot').replace('collapse', ''))
+    target_ports = IpmanResource.objects.filter(device_name=device_name, slot=slot)
+    rawQueryCmd = 'SELECT ni.id, ni.port, ni.brand_width, ni.port_status, \
+                ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
+                FROM networkresource_ipmanresource AS ni LEFT JOIN networkresource_porterrordiff as np \
+                ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s \
+                WHERE ni.device_name = %s AND ni.slot = %s'
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=-1)
+    rawQueryData = (time_begin, time_end, device_name, slot)
+    target_ports = IpmanResource.objects.raw(rawQueryCmd, rawQueryData)
+    data = formHtmlCallBack_slot(target_ports, data)
+    return JsonResponse(data)
+    
+def formHtmlCallBack_slot(target_ports, data):
+    # 生成表给内容填充回去前端
+    h = ''
+    td = '<td>{}</td>'
+    for tp in target_ports:
+        port = td.format(tp.port)
+        bw = td.format(tp.brand_width)
+        ps = td.format(tp.port_status)
+        phs = td.format(tp.port_phy_status)
+        lp = td.format(tp.logic_port)
+        p_des = td.format(tp.port_description)
+        if tp.stateCRC == 0 or tp.stateCRC is None:
+            crc = td.format(tp.stateCRC)
+        else:
+            crc = '<td class="danger">{}</td>'.format(tp.stateCRC)
+        h += '<tr>{}{}{}{}{}{}{}</tr>'.format(port, bw, ps, phs, lp, p_des, crc)
+    data['ports_table'] = h
+    data['status'] = 'success'
+    return data
 
 
 '''

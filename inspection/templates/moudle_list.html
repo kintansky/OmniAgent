@@ -12,7 +12,10 @@
 {% endblock %}
 
 {% block subheader %} Optical Moudle {% endblock %}
-{% block new_button_active %}disabled{% endblock %}
+
+{% block new_button %}
+<a class="btn btn-success disabled" href="" role="button">新增</a>
+{% endblock %}
 
 {% block search_form %}
     <form action="{% url 'search_moudle' %}" method="GET" class="form-inline">

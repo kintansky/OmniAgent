@@ -12,8 +12,8 @@
 
 {% block subheader %} Devices {% endblock %}
 
-{% block new_button_url %}
-    {% url 'add_device' %}
+{% block new_button %}
+<a class="btn btn-success" href="{% url 'add_device' %}" role="button">新增</a>
 {% endblock %}
 
 {% block search_form %}

@@ -44,16 +44,16 @@
                     <li class="{% block navbar_resource_active %}{% endblock %}">
                         <a href="#"  class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">资源分配<span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="{% url 'ip_record' %}">IP地址记录(设备)</a></li>
-                            <li><a href="{% url 'allocated_ip_list' 'public' %}">* 公网IP(分配&查询)</a></li>
-                            <li><a href="{% url 'allocated_ip_list' 'private' %}">* 私网IP(分配&查询)</a></li>
+                            <li><a href="{% url 'ip_record' %}">业务IP信息</a></li>
+                            <li><a href="{% url 'allocated_ip_list' 'public' %}">公网IP分配记录</a></li>
+                            <li><a href="{% url 'allocated_ip_list' 'private' %}">私网IP分配记录</a></li>
                             <li role="separator" class="divider"></li>
                             <!-- <li class="dropdown-header">Operation</li> -->
                             <li><a href="{% url 'port_resource_empty' %}">端口占用情况</a></li>
                         </ul>
                     </li>
                 </ul>
-
+                
                 <ul class="nav navbar-nav navbar-right">
                     {% if user.is_authenticated %}
                         <li class="dropdown">
@@ -66,8 +66,14 @@
                         <li><a href="{% url 'login' %}?from={{ request.get_full_path }}">登陆</a></li>
                         <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">注册</a></li>
                     {% endif %}
-
+                    
                 </ul>
+
+                <form class="navbar-form navbar-right" action="{% url 'search_device' %}" method="GET">
+                    <input type="text" name="device_name" class="form-control" placeholder="BNG01-BJ">
+                    <button type="submit" class="btn btn-success">搜索</button>
+                </form>
+
             </div><!--/.nav-collapse -->
         </div>
     </nav>
