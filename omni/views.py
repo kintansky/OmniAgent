@@ -82,10 +82,10 @@ def dashboard(request):
     context['ip_private_ratio'] = ip_private_count/ip_count*100
     context['ip_public_ratio'] = ip_public_count/ip_count*100
     # 端口错包信息
-    crc_port_count = PortErrorDiff.objects.filter(stateCRC__gt=0, record_time__range=(time_begin, time_end)).count()
-    crc_max_speed = PortErrorDiff.objects.filter(record_time__range=(time_begin, time_end)).aggregate(Max('stateCRC'))
-    ipv4head_port_count = PortErrorDiff.objects.filter(stateIpv4HeadError__gt=0, record_time__range=(time_begin, time_end)).count()
-    ipv4head_max_speed = PortErrorDiff.objects.filter(record_time__range=(time_begin, time_end)).aggregate(Max('stateIpv4HeadError'))
+    crc_port_count = PortErrorDiff.objects.filter(stateCRC__gt=0, record_time__range=(time_end+ timezone.timedelta(days=-2), time_end)).count()
+    crc_max_speed = PortErrorDiff.objects.filter(record_time__range=(time_end+ timezone.timedelta(days=-2), time_end)).aggregate(Max('stateCRC'))
+    ipv4head_port_count = PortErrorDiff.objects.filter(stateIpv4HeadError__gt=0, record_time__range=(time_end+ timezone.timedelta(days=-2), time_end)).count()
+    ipv4head_max_speed = PortErrorDiff.objects.filter(record_time__range=(time_end+ timezone.timedelta(days=-2), time_end)).aggregate(Max('stateIpv4HeadError'))
     context['crc_port_count'] = crc_port_count
     context['crc_max_speed'] = crc_max_speed
     context['ipv4head_port_count'] = ipv4head_port_count
