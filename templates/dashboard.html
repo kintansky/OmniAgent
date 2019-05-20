@@ -16,44 +16,76 @@
     </div>
 
     <div class="container-fluid">
+        <!-- 基础信息部分 -->
         <div class="row">
-            <div class="col-lg-4">
-                <h2>设备清单</h2>
+            <div class="col-lg-5 col-lg-offset-1">
+                <h2><span class="glyphicon glyphicon-triangle-right"></span> 设备清单</h2>
                 <div class="alert alert-success" role="alert">
                     <strong>{{ device_count }}</strong> 台设备被记录在案. 
                 </div>
                 <ul class="list-group">
                     <li class="list-group-item">
-                        <span class="badge">{{ device_ipman_count }}</span>
-                        IPMAN
+                        <span class="badge">{{ device_ipman_count }} 台</span>
+                        城域网
                     </li>
                     <li class="list-group-item">
-                        <span class="badge">{{ device_cmnet_count }}</span>
-                        CMNET
+                        <span class="badge">{{ device_cmnet_count }} 台</span>
+                        承载网
                     </li>
                     <li class="list-group-item">
-                        <span class="badge">{{ device_oth_count }}</span>
-                        OTHERS
+                        <span class="badge">{{ device_oth_count }} 台</span>
+                        其 他
                     </li>
                 </ul>
-                <!-- <p><a class="btn btn-success pull-right" href="#" role="button">Check performance &raquo;</a></p> -->
-                <div class="btn-toolbar pull-right">
-                    <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-success" href="{% url 'device_list' %}" role="button">清单 &raquo;</a>
+                <div class="btn-toolbar">
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-success" href="{% url 'device_list' %}" role="button">设备清单 &raquo;</a>
                     </div>
-                    <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-primary" href="#" role="button">性能 &raquo;</a>
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-primary" href="" role="button" data-toggle="modal" data-target="#deviceModal">设备详情 &raquo;</a>
                     </div>
-                    <div class="btn-group" role="group" aria-label="...">
-                        <a class="btn btn-warning" href="{% url 'port_resource' %}" role="button">端口 &raquo;</a>
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-danger" href="" role="button">备份 &raquo;</a>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <h2>光模块监控</h2>
+            <div class="col-lg-5">
+                <h2><span class="glyphicon glyphicon-triangle-right"></span> 业务IP</h2>
+                <div class="alert alert-success" role="alert">
+                    巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
+                </div>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{ ip_public_ratio }}" aria-valuemin="0" aria-valuemax="100" style="min-width: 6em; width: {{ ip_public_ratio }}%">
+                        公网 {{ ip_public_count }} 个
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" aria-valuenow="{{ ip_private_ratio }}" aria-valuemin="0" aria-valuemax="100" style="min-width: 6em; width: {{ ip_private_ratio }}%;">
+                        私网 {{ ip_private_count }} 个
+                    </div>
+                </div>
+                <div class="btn-toolbar">
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">详情 &raquo;</a>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-success" href="{% url 'allocate_ip' 'public' %}" role="button">分配公网IP &raquo;</a>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-danger" href="{% url 'allocate_ip' 'private' %}" role="button">分配私网IP &raquo;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 监控部分 -->
+        <div class="row">
+            <div class="col-lg-5 col-lg-offset-1">
+                <h2><span class="glyphicon glyphicon-triangle-right"></span> 光模块监控</h2>
                 {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
                     <div class="alert alert-success" role="alert">
-                        24 小时内未检测到变化.
+                        <span class="glyphicon glyphicon-thumbs-up"></span>
+                        24 小时内无光模块变化.
                     </div>
                 {% else %}
                     {% if moudle_miss_count != 0 %}
@@ -83,20 +115,80 @@
                 {% endif %}
                 {# button显示部分 #}
                 {% if moudle_miss_count != 0 %}
-                    <p><a class="btn btn-danger pull-right" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
+                    <p><a class="btn btn-danger" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
                 {% else %}
-                    <p><a class="btn btn-primary pull-right" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
+                    <p><a class="btn btn-primary" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
                 {% endif %}
             </div>
-
-            <div class="col-lg-4">
-                <h2>IP记录</h2>
-                <div class="alert alert-success" role="alert">
-                    巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
+            <div class="col-lg-5">
+                <h2><span class="glyphicon glyphicon-triangle-right"></span> 端口质量监控</h2>
+                {% if crc_port_count != 0 or ipv4head_port_count != 0 %}
+                <div class="alert alert-danger" role="alert">
+                    巡检 {{ device_ipman_count }} 台设备，发现以下质量问题：
                 </div>
-                <p><a class="btn btn-primary pull-right" href="{% url 'ip_record' %}" role="button">详情 &raquo;</a></p>
+                {% else %}
+                <div class="alert alert-success" role="alert">
+                    巡检 {{ device_ipman_count }} 台设备，未发现问题
+                </div>
+                {% endif %}
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ crc_port_count }}</span>
+                        CRC端口数
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ crc_max_speed.stateCRC__max|floatformat }} 个/h</span>
+                        CRC最快增速
+                    </li>
+                </ul>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ ipv4head_port_count }}</span>
+                        IPv4头错误端口数
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ ipv4head_max_speed.stateIpv4HeadError__max|floatformat }} 个/h</span>
+                        IPv4头错误增速
+                    </li>
+                </ul>
+                <p><a class="btn btn-primary" href="{% url 'port_error_list' %}" role="button">详情 &raquo;</a></p>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Device Detail Modal -->
+    <div class="modal fade" id="deviceModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">请指定设备</h4>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'search_device' %}" method="GET">
+                        <div class="form-group">
+                            <label for="IPInput">设备IP</label>
+                            <input type="text" name="ip_address" class="form-control" id="IPInput" placeholder="1.1.1.1">
+                        </div>
+                        <p class="text-center"><strong> OR </strong></p>
+                        <div class="form-group">
+                            <label for="deviceInput">设备名</label>
+                            <input type="text" name="device_name" class="form-control" id="deviceInput" placeholder="DS...">
+                        </div>
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    
+{% endblock %}
+
+{% block tail_script %}
+<script>
+    $('#deviceModal').on('shown.bs.modal', function () {
+        $('#myInput').focus()
+    })
+
+</script>
 {% endblock %}

@@ -35,7 +35,6 @@
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">监控<span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="{% url 'device_list' %}">设备清单</a></li>
-                            <li><a href="{% url 'add_device' %}">* 添加设备</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="{% url 'moudle_list' %}">光模块检查</a></li>
                             <li><a href="{% url 'port_error_list' %}">端口错包检查</a></li>
@@ -49,7 +48,7 @@
                             <li><a href="{% url 'allocated_ip_list' 'private' %}">私网IP分配记录</a></li>
                             <li role="separator" class="divider"></li>
                             <!-- <li class="dropdown-header">Operation</li> -->
-                            <li><a href="{% url 'port_resource_empty' %}">端口占用情况</a></li>
+                            <!-- <li><a href="{% url 'port_resource_empty' %}">端口占用情况</a></li> -->
                         </ul>
                     </li>
                 </ul>
@@ -70,8 +69,12 @@
                 </ul>
 
                 <form class="navbar-form navbar-right" action="{% url 'search_device' %}" method="GET">
-                    <input type="text" name="device_name" class="form-control" placeholder="BNG01-BJ">
-                    <button type="submit" class="btn btn-success">搜索</button>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-addon"><span class="glyphicon glyphicon-search"></span></div>
+                            <input type="text" class="form-control" name="device_name" placeholder="快速定位：BNG01-BJ">
+                        </div>
+                    </div>
                 </form>
 
             </div><!--/.nav-collapse -->
@@ -82,7 +85,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p class="text-muted text-right">Got problem or advice? Please contact QQ 357350686</p>
+            <p class="text-muted text-right">如有问题或使用建议，请联系QQ 357350686</p>
         </div>
     </footer>
 

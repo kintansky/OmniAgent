@@ -4,7 +4,6 @@
 {% load static %}
 {% block header_extends %}
     <link rel="stylesheet" href="{% static 'devices.css' %}">
-    <script src="{% static 'echarts.common.min.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -30,12 +29,28 @@
         <div class="page-header">
             <h3 class="text-left">
                 <span class="glyphicon glyphicon-triangle-bottom pull-left" aria-hidden="true"></span>
+                网络拓扑
+            </h3>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div id="networktree" style="width:800px;height:400px;"></div>
+            </div>
+        </div>
+
+        <div class="page-header">
+            <h3 class="text-left">
+                <span class="glyphicon glyphicon-triangle-bottom pull-left" aria-hidden="true"></span>
                 端口情况 <small>{{ port_up_count }} 端口UP，{{ port_down_count }} 端口DOWN</small>
             </h3>
         </div>
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
             {% for sl in slot_brief %}
+            {% if sl.crc is None %}
                 <div class="panel panel-success">
+            {% else %}
+                <div class="panel panel-danger">
+            {% endif %}
                     <div class="panel-heading" role="tab" id="heading{{ sl.slot }}">
                         <h3 class="panel-title">
                             <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot }}">
@@ -75,7 +90,8 @@
 {% endblock %}
 
 {% block tail_script %}
-<script type="text/javascript">
+<script src="{% static 'echarts.common.min.js' %}"></script>
+<script>
     // 基于准备好的dom，初始化echarts实例
     var userPie = echarts.init(document.getElementById('usermain'));
     userPie.showLoading();
@@ -171,5 +187,7 @@
             });
         });
     });
+    // 网络拓扑
+
 </script>
 {% endblock %}

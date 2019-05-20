@@ -6,6 +6,7 @@ import os
 from IPy import IP, IPSet
 from omni.settings.base import BASE_DIR
 from django.utils import timezone
+import json
 
 def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
     paginator = Paginator(object_list, page_conf)
@@ -104,3 +105,12 @@ def getDateRange(days):
     time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
     time_begin = time_end + timezone.timedelta(days=days)  # 负数向前
     return time_begin, time_end
+
+def dumpOlt2Json(olts, device_name):
+    d = {}
+    d['name'] = device_name
+    d['children'] = []
+    for olt in olts:
+        d['children'].append({'name': olt, 'value':10})
+    result = json.dumps(d)
+    return result
