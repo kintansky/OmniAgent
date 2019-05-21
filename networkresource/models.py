@@ -43,6 +43,9 @@ class IpRecord(models.Model):
 
     class Meta:
         ordering = ['id',]
+        indexes = [
+            models.Index(fields=['device_ip']),
+        ]
 
 class PublicIpGateway(models.Model):
     gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
