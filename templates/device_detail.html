@@ -53,7 +53,7 @@
             {% endif %}
                     <div class="panel-heading" role="tab" id="heading{{ sl.slot }}">
                         <h3 class="panel-title">
-                            <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot }}">
+                            <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot|floatformat:'0' }}">
                                 <strong> 板卡 NO.{{ sl.slot|floatformat:"0" }}</strong>
                                 <small> &laquo; 状态：共有 {{ sl.allports|floatformat:"0" }} 个端口，其中 {{ sl.upports|floatformat:"0" }} 个UP &laquo; 端口质量：{{ sl.crc|floatformat }} CRC/h</small>
                                 <span class="glyphicon glyphicon-sort pull-right" aria-hidden="true"></span>
