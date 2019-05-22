@@ -108,14 +108,14 @@ def search_ip(request):
             ip_all_list = IpRecord.objects.filter(device_ip=ip_address)
         elif ip_type == 'all':
             if device_name != '':
-                ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_description__icontains=ip_description)
+                ip_all_list = IpRecord.objects.filter(device_name__icontains=device_name, ip_description__icontains=ip_description)
             elif ip_description != '':
                 ip_all_list = IpRecord.objects.filter(ip_description__icontains=ip_description)
             else:
                 ip_all_list = IpRecord.objects.all()
         else:
             if device_name != '':
-                ip_all_list = IpRecord.objects.filter(device_name=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
+                ip_all_list = IpRecord.objects.filter(device_name__icontains=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
             elif ip_description != '':
                 ip_all_list = IpRecord.objects.filter(ip_type=ip_type, ip_description__icontains=ip_description)
             else:
