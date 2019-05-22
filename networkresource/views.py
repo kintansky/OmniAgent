@@ -56,7 +56,7 @@ def ajax_search_slot_ports(request):
                 WHERE ni.device_name = %s AND ni.slot = %s'
     today_time = timezone.datetime.now()
     time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-    time_begin = time_end + timezone.timedelta(days=-1)
+    time_begin = time_end + timezone.timedelta(days=-2)
     rawQueryData = (time_begin, time_end, device_name, slot)
     target_ports = IpmanResource.objects.raw(rawQueryCmd, rawQueryData)
     data = formHtmlCallBack_slot(target_ports, data)

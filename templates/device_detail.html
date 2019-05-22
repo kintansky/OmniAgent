@@ -55,7 +55,7 @@
                         <h3 class="panel-title">
                             <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot }}">
                                 <strong> 板卡 NO.{{ sl.slot }}</strong>
-                                <small> &laquo; 状态：共有 {{ sl.allports }} 个端口，其中 {{ sl.upports }} 个UP &laquo; 端口质量：{{ sl.crc }} CRC/h</small>
+                                <small> &laquo; 状态：共有 {{ sl.allports|floatformat:"0" }} 个端口，其中 {{ sl.upports }} 个UP &laquo; 端口质量：{{ sl.crc|floatformat }} CRC/h</small>
                                 <span class="glyphicon glyphicon-sort pull-right" aria-hidden="true"></span>
                             </a>
                         </h3>
