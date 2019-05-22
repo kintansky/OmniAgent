@@ -113,7 +113,7 @@ def device_detail(request, device_name):
                 GROUP BY nt.slot"
     today_time = timezone.datetime.now()
     time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-    time_begin = time_end + timezone.timedelta(days=-1)
+    time_begin = time_end + timezone.timedelta(days=-2)
     rawQueryData = (time_begin, time_end, device_name)
     slot_brief = IpmanResource.objects.raw(rawQueryCmd, rawQueryData)
     port_up_count = IpmanResource.objects.filter(device_name=device_name, port_status__icontains='up').count()
