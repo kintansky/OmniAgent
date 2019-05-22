@@ -110,7 +110,7 @@ def device_detail(request, device_name):
                     LEFT JOIN networkresource_porterrordiff as np \
                     ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s AND %s \
                     WHERE ni.device_name = %s) AS nt \
-                GROUP BY nt.slot"
+                GROUP BY nt.slot ORDER BY nt.slot"
     today_time = timezone.datetime.now()
     time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
     time_begin = time_end + timezone.timedelta(days=-2)
