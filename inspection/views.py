@@ -90,13 +90,23 @@ PORTERROR_QUERY = 'SELECT np.*, \
                     ON np.device_name = ni.device_name AND np.port = ni.port'
 
 def port_error_list(request):
-    porterror_all_list = PortErrorDiff.objects.raw(PORTERROR_QUERY)
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=-1)
+    time_range = (time_begin, time_end)
+    porterror_all_list = PortErrorDiff.objects.raw(
+        PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+    )
+
+    # porterror_all_list = PortErrorDiff.objects.raw(PORTERROR_QUERY)
     page_of_objects, page_range = pages(request, porterror_all_list)
 
     context = {}
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(time_range[0], '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(time_range[1], '%Y-%m-%d+%H:%M:%S')
     context['porterror_search_form'] = PortErrorSearchForm()
     return render(request, 'port_error_list.html', context)
 
