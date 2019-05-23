@@ -192,9 +192,9 @@ class PrivateIpModRecord(models.Model):
         ordering = ['-record_time',]
 
 class ZxClientInfo(models.Model):
-    group_id = models.IntegerField(null=True)
+    group_id = models.BigIntegerField(null=True)
     client_name = models.CharField(max_length=255, null=True)
-    product_id = models.IntegerField(null=True)
+    product_id = models.BigIntegerField(null=True)
     device1 = models.CharField(max_length=255, null=True)
     device1_port = models.CharField(max_length=40, null=True)
     device2 = models.CharField(max_length=255, null=True)
