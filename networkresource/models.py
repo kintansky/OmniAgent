@@ -35,6 +35,7 @@ class IpRecord(models.Model):
     ip_mask = models.IntegerField(null=True)
     device_name = models.CharField(max_length=255)
     logic_port = models.CharField(max_length=40)
+    logic_port_num = models.CharField(max_length=40, null=True)
     svlan = models.CharField(max_length=30)
     cvlan = models.CharField(max_length=30)
     ip_description = models.TextField(blank=True)
