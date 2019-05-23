@@ -90,9 +90,7 @@ PORTERROR_QUERY = 'SELECT np.*, \
                     ON np.device_name = ni.device_name AND np.port = ni.port'
 
 def port_error_list(request):
-    today_time = timezone.datetime.now()
-    time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-    time_begin = time_end + timezone.timedelta(days=-1)
+    time_begin, time_end = getDateRange(-2)
     time_range = (time_begin, time_end)
     porterror_all_list = PortErrorDiff.objects.raw(
         PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
