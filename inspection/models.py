@@ -37,3 +37,32 @@ class PortErrorDiff(models.Model):
     class Meta:
         app_label = 'networkresource'
         ordering = ['-id']
+        indexes = [
+            models.Index(fields=['device_name']),
+        ]
+
+class PortPerf(models.Model):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=30)
+
+    tx_now_power = models.FloatField()
+    tx_high_warm = models.FloatField()
+    tx_low_warm = models.FloatField()
+    tx_state = models.IntegerField()
+
+    rx_now_power = models.FloatField()
+    rx_high_warm = models.FloatField()
+    rx_low_warm = models.FloatField()
+    rx_state = models.IntegerField()
+    
+    utility_in = models.FloatField()
+    utility_out = models.FloatField()
+    record_time = models.DateTimeField()
+
+    class Meta:
+        app_label = 'networkresource'
+        ordering = ['-record_time']
+        indexes = [
+            models.Index(fields=['device_name']),
+            models.Index(fields=['port']),
+        ]
