@@ -190,3 +190,21 @@ class PrivateIpModRecord(models.Model):
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-record_time',]
+
+class ZxClientInfo(models.Model):
+    group_id = models.IntegerField(null=True)
+    client_name = models.CharField(max_length=255, null=True)
+    product_id = models.IntegerField(null=True)
+    device1 = models.CharField(max_length=255, null=True)
+    device1_port = models.CharField(max_length=40, null=True)
+    device2 = models.CharField(max_length=255, null=True)
+    device2_port = models.CharField(max_length=40, null=True)
+    gateway = models.CharField(max_length=255, null=True)
+    address = models.TextField(null=True)
+    ip = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        ordering = ['id']
+        indexes = [
+            models.Index(fields=['ip']),
+        ]
