@@ -66,8 +66,8 @@
             <td>{{ record.port }}</td>
             <!-- <td>{{ record.nowCRC }}</td>
             <td>{{ record.nowIpv4HeaderError }}</td> -->
-            <td>{{ record.stateCRC|floatformat }}</td>
-            <td>{{ record.stateIpv4HeadError|floatformat }}</td>
+            <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
+            <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
             <td>{{ record.port_description|truncatechars:30 }}</td>
             <td>{{ record.port_status }}</td>
             {% if record.tx_state == 0 %}
