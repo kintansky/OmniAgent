@@ -146,8 +146,8 @@ def search_port_error(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(time_range[0], '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(time_range[1], '%Y-%m-%d+%H:%M:%S')
+    context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
     context['porterror_search_form'] = porterror_search_form
     return render(request, 'port_error_list.html', context)
 
