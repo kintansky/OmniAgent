@@ -70,22 +70,22 @@
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
             <td>{{ record.port_description|truncatechars:30 }}</td>
             <td>{{ record.port_status }}</td>
-            {% if record.tx_state == '0' or record.tx_state == None %}
-                <td class="danger">
-                    {{ record.tx_now_power }}/异常
+            {% if record.tx_state == 1 %}
+                <td>
+                    {{ record.tx_now_power }}
                 </td>
             {% else %}
-                <td>
-                    {{ record.tx_now_power }}/正常
+                <td class="danger">
+                    {{ record.tx_now_power }}(异常)
                 </td>
             {% endif %}
-            {% if record.rx_state == '0' or record.rx_state == None %}
-                <td class="danger">
-                    {{ record.rx_now_power }}/异常
+            {% if record.rx_state == 1 %}
+                <td>
+                    {{ record.rx_now_power }}
                 </td>
             {% else %}
-                <td>
-                    {{ record.rx_now_power }}/正常
+                <td class="danger">
+                    {{ record.rx_now_power }}(异常)
                 </td>
             {% endif %}
             <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
