@@ -34,16 +34,19 @@
                     <li class="{% block navbar_inspect_active %}{% endblock %}">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">监控<span class="caret"></span></a>
                         <ul class="dropdown-menu">
+                            <li role="separator" class="divider"></li>
                             <li><a href="{% url 'device_list' %}">设备清单</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a href="{% url 'moudle_list' %}">光模块检查</a></li>
                             <li><a href="{% url 'port_error_list' %}">端口错包检查</a></li>
-                            <li><a href="{% url 'oneway_list' %}">单通设备检查</a></li>
+                            <li><a href="{% url 'oneway_list' %}">单通隐患检查</a></li>
+                            <li role="separator" class="divider"></li>
                         </ul>
                     </li>
                     <li class="{% block navbar_resource_active %}{% endblock %}">
                         <a href="#"  class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">资源分配<span class="caret"></span></a>
                         <ul class="dropdown-menu">
+                            <li role="separator" class="divider"></li>
                             <li><a href="{% url 'ip_record' %}">业务IP信息</a></li>
                             <li><a href="{% url 'allocated_ip_list' 'public' %}">公网IP分配记录</a></li>
                             <li><a href="{% url 'allocated_ip_list' 'private' %}">私网IP分配记录</a></li>
@@ -73,7 +76,7 @@
                     <div class="form-group">
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-search"></span></div>
-                            <input type="text" class="form-control" name="device_name" placeholder="快速定位：BNG01-BJ">
+                            <input type="text" class="form-control" name="device_name" placeholder="快速定位：BJ">
                         </div>
                     </div>
                 </form>

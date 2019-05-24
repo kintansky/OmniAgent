@@ -26,6 +26,10 @@
                 <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
             </div>
         {% endfor %}
+        <!-- 通过隐藏参数将order字段传给form -->
+        <div class="form-group">
+            <input type="hidden" name="order_field" class="form-control" value='{{ order_field }}'>
+        </div>
         <button type="submit" class="btn btn-primary">搜索</button>
     </form>
 {% endblock %}
@@ -47,36 +51,40 @@
 {% block table_title %}
     <th>设备名</th>
     <th>端口</th>
-    <!-- <th>忙时CRC数</th>
-    <th>忙时IPv4头错误数</th> -->
-    <th>CRC增速(h)</th>
-    <th>头错误增速(h)</th>
-    <th>端口描述</th>
+    <th>
+        CRC增速(h) 
+        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
+    </th>
+    <th>
+        头错误增速(h) 
+        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
+    </th>
     <th>端口状态</th>
     <th>BNG发光dBm</th>
     <th>BNG收光dBm</th>
     <th>时间</th>
     <th>影响范围</th>
+    <th>操作</th>
 {% endblock %}
 
 {% block table_body %}
     {% for record in records %}
         <tr>
             <td>{{ record.device_name }}</td>
-            <td>{{ record.port }}</td>
-            <!-- <td>{{ record.nowCRC }}</td>
-            <td>{{ record.nowIpv4HeaderError }}</td> -->
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.port_description }}">
+                {{ record.port }}
+            </td>
             <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
-            <td>{{ record.port_description|truncatechars:30 }}</td>
             <td>{{ record.port_status }}</td>
             {% if record.tx_state == 1 %}
                 <td>
                     {{ record.tx_now_power }}
                 </td>
             {% else %}
-                <td class="danger">
-                    {{ record.tx_now_power }}(异常)
+                <td class="danger" data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
+                    {{ record.tx_now_power }}
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
             {% endif %}
             {% if record.rx_state == 1 %}
@@ -84,15 +92,20 @@
                     {{ record.rx_now_power }}
                 </td>
             {% else %}
-                <td class="danger">
-                    {{ record.rx_now_power }}(异常)
+                <td class="danger" data-toggle="tooltip" data-placement="top" title="范围[{{ record.rx_low_warm|default:'0' }}, {{ record.rx_high_warm|default:'0' }}]">
+                    {{ record.rx_now_power }}
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
             {% endif %}
             <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
             <td>
                 <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    查看
+                    <strong>检查</strong>
+                </a>
+            </td>
+            <td>
+                <a href="">
+                    <span class="glyphicon glyphicon-edit"></span>
                 </a>
             </td>
         </tr>
@@ -100,15 +113,13 @@
         <tr>
             <td>Null</td>
             <td>Null</td>
-            <!-- <td>Null</td>
-            <td>Null</td> -->
-            <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>NULL</td>
             <td>Null</td>
+            <td>NULL</td>
             <td>NULL</td>
         </tr>
     {% endfor %}
@@ -122,7 +133,7 @@
             {% if page_of_objects.has_previous %}
                 {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
                 {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 {% else %}
@@ -143,7 +154,7 @@
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
                     {% if time_begin and time_end %}
-                        <li><a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&page={{ page_num }}">{{ page_num }}</a></li>
+                        <li><a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_num }}">{{ page_num }}</a></li>
                     {% else %}
                         <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
                     {% endif %}
@@ -154,7 +165,7 @@
         <li>
             {% if page_of_objects.has_next %}
                 {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&page={{ page_of_objects.next_page_number }}" aria-label="Next">
+                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.next_page_number }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 {% else %}

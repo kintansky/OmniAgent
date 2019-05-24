@@ -18,7 +18,7 @@
     <div class="container-fluid">
         <!-- 基础信息部分 -->
         <div class="row">
-            <div class="col-lg-5 col-lg-offset-1">
+            <div class="col-md-4">
                 <h2><span class="glyphicon glyphicon-triangle-right"></span> 设备清单</h2>
                 <div class="alert alert-success" role="alert">
                     <strong>{{ device_count }}</strong> 台设备被记录在案. 
@@ -49,7 +49,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-5">
+            <div class="col-md-4">
                 <h2><span class="glyphicon glyphicon-triangle-right"></span> 业务IP</h2>
                 <div class="alert alert-success" role="alert">
                     巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
@@ -80,7 +80,7 @@
 
         <!-- 监控部分 -->
         <div class="row">
-            <div class="col-lg-5 col-lg-offset-1">
+            <div class="col-md-4">
                 <h2><span class="glyphicon glyphicon-triangle-right"></span> 光模块监控</h2>
                 {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
                     <div class="alert alert-success" role="alert">
@@ -120,8 +120,41 @@
                     <p><a class="btn btn-primary" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
                 {% endif %}
             </div>
-            <div class="col-lg-5">
+            <div class="col-md-4">
                 <h2><span class="glyphicon glyphicon-triangle-right"></span> 端口质量监控</h2>
+                {% if crc_port_count != 0 or ipv4head_port_count != 0 %}
+                <div class="alert alert-danger" role="alert">
+                    巡检 {{ device_ipman_count }} 台设备，发现以下质量问题：
+                </div>
+                {% else %}
+                <div class="alert alert-success" role="alert">
+                    巡检 {{ device_ipman_count }} 台设备，未发现问题
+                </div>
+                {% endif %}
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ crc_port_count }}</span>
+                        CRC端口数
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ crc_max_speed.stateCRC__max|floatformat }} 个/h</span>
+                        CRC最快增速
+                    </li>
+                </ul>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ ipv4head_port_count }}</span>
+                        IPv4头错误端口数
+                    </li>
+                    <li class="list-group-item">
+                        <span class="badge">{{ ipv4head_max_speed.stateIpv4HeadError__max|floatformat }} 个/h</span>
+                        IPv4头错误增速
+                    </li>
+                </ul>
+                <p><a class="btn btn-danger" href="{% url 'port_error_list' %}" role="button">详情 &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h2><span class="glyphicon glyphicon-triangle-right"></span> 单通隐患检查</h2>
                 {% if crc_port_count != 0 or ipv4head_port_count != 0 %}
                 <div class="alert alert-danger" role="alert">
                     巡检 {{ device_ipman_count }} 台设备，发现以下质量问题：
