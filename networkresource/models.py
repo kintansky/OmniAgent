@@ -23,6 +23,7 @@ class IpmanResource(models.Model):
         indexes = [
             models.Index(fields=['slot']),
             models.Index(fields=['mda']),
+            models.Index(fields=['logic_port']),
         ]
 
 class IpRecord(models.Model):
@@ -46,6 +47,7 @@ class IpRecord(models.Model):
         ordering = ['id',]
         indexes = [
             models.Index(fields=['device_ip']),
+            models.Index(fields=['logic_port_num']),
         ]
 
 class PublicIpGateway(models.Model):
