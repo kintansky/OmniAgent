@@ -8,4 +8,5 @@ urlpatterns = [
     path('porterror/', views.port_error_list, name='port_error_list'),
     path('porterror/search/', views.search_port_error, name='search_port_error'),
     path('porterror/download/', views.export_porterror, name='export_porterror'),
+    path('oneway/', views.oneway_list, name='oneway_list'),
 ]

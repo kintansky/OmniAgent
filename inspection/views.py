@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
 from django.utils import timezone
 from .forms import MoudleSearchForm, PortErrorSearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
@@ -171,3 +171,17 @@ def export_porterror(request):
     output = rawQueryExportXls(porterror_all_list.columns, porterror_all_list, 'record_time')
     response = FileResponse(open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
+
+def oneway_list(request):
+    time_begin, time_end = getDateRange(-2)
+    time_range = (time_begin, time_end)
+    oneway_all_list = OneWayDevice.objects.filter(record_time__range=time_range)
+    page_of_objects, page_range = pages(request, oneway_all_list)
+    context = {}
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
+    # context['porterror_search_form'] = PortErrorSearchForm()
+    return render(request, 'oneway_list.html', context)
