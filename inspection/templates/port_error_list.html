@@ -53,8 +53,10 @@
     <th>头错误增速(h)</th>
     <th>端口描述</th>
     <th>端口状态</th>
+    <th>BNG发光dBm</th>
+    <th>BNG收光dBm</th>
     <th>时间</th>
-    <th>受影响客户</th>
+    <th>影响范围</th>
 {% endblock %}
 
 {% block table_body %}
@@ -66,12 +68,31 @@
             <td>{{ record.nowIpv4HeaderError }}</td> -->
             <td>{{ record.stateCRC|floatformat }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat }}</td>
-            <td>{{ record.port_description|truncatechars:20 }}</td>
+            <td>{{ record.port_description|truncatechars:30 }}</td>
             <td>{{ record.port_status }}</td>
+            {% if record.tx_state == 0 %}
+                <td class="danger">
+                    {{ record.tx_now_power }}/异常
+                </td>
+            {% else %}
+                <td>
+                    {{ record.tx_now_power }}/正常
+                </td>
+            {% endif %}
+            {% if record.rx_state == 0 %}
+                <td class="danger">
+                    {{ record.rx_now_power }}/异常
+                </td>
+            {% else %}
+                <td>
+                    {{ record.rx_now_power }}/正常
+                </td>
+            {% endif %}
             <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
             <td>
                 <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger">
                     <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    查看
                 </a>
             </td>
         </tr>
@@ -85,6 +106,8 @@
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>
+            <td>Null</td>
+            <td>NULL</td>
             <td>Null</td>
             <td>NULL</td>
         </tr>
@@ -146,6 +169,25 @@
     </ul>
 </div>
 {% endblock%}
+
+{% block other_content %}
+{# modal #}
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">影响范围</h4>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
 {% block tail_script %}
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>

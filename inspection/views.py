@@ -88,14 +88,32 @@ PORTERROR_QUERY = 'SELECT np.*, \
                     ni.port_description, ni.port_status \
                     FROM networkresource_porterrordiff as np LEFT JOIN networkresource_ipmanresource AS ni \
                     ON np.device_name = ni.device_name AND np.port = ni.port'
-
+PORTERROR_QUERY2 = "\
+    SELECT error_info.*, npp.* FROM (\
+        SELECT np.*, ni.port_description, ni.port_status \
+            FROM networkresource_porterrordiff as np \
+            LEFT JOIN networkresource_ipmanresource AS ni \
+            ON np.device_name = ni.device_name AND np.port = ni.port \
+            WHERE np.record_time between %s AND %s\
+        ) AS error_info \
+    LEFT JOIN (\
+        SELECT device_name, `port`, tx_now_power, tx_state, rx_now_power, rx_state \
+            FROM cmdb.networkresource_portperf \
+            WHERE record_time BETWEEN %s AND %s\
+        ) AS npp \
+    ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
+    ORDER BY -error_info.stateCRC \
+    "
+    
 def port_error_list(request):
     time_begin, time_end = getDateRange(-2)
     time_range = (time_begin, time_end)
+    # porterror_all_list = PortErrorDiff.objects.raw(
+    #     PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+    # )
     porterror_all_list = PortErrorDiff.objects.raw(
-        PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+        PORTERROR_QUERY2, (time_begin, time_end, time_begin, time_end)
     )
-
     # porterror_all_list = PortErrorDiff.objects.raw(PORTERROR_QUERY)
     page_of_objects, page_range = pages(request, porterror_all_list)
 

@@ -55,7 +55,7 @@
                         <h3 class="panel-title">
                             <a role="button" class="slot_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ sl.slot }}" aria-expanded="true" aria-controls="collapse{{ sl.slot|default:'0' }}">
                                 <strong> 板卡 NO.{{ sl.slot|default:'0' }}</strong>
-                                <small> &laquo; 状态：共有 {{ sl.allports|floatformat:"0" }} 个端口，其中 {{ sl.upports|floatformat:"0" }} 个UP &laquo; 端口质量：{{ sl.crc|floatformat }} CRC/h</small>
+                                <small> &laquo; 状态：共有 {{ sl.allports|floatformat:"0" }} 个端口，其中 {{ sl.upports|floatformat:"0" }} 个UP &laquo; 端口质量：{{ sl.crc|floatformat|default:'0' }} CRC/h</small>
                                 <span class="glyphicon glyphicon-sort pull-right" aria-hidden="true"></span>
                             </a>
                         </h3>
@@ -93,76 +93,78 @@
 <script src="{% static 'echarts.common.min.js' %}"></script>
 <script>
     // 基于准备好的dom，初始化echarts实例
-    var userPie = echarts.init(document.getElementById('usermain'));
-    userPie.showLoading();
-    // 指定图表的配置项和数据
-    var option = {
-        title: {
-            text: '设备用户数',
-            x: 'center'
-        },
-        tooltip: {
-            trigger: 'item',
-            formatter: "{a} <br/>{b} : {c} ({d}%)"
-        },
-        series: [
-            {
-                name: '设备用户数',
-                type: 'pie',
-                radius : '55%',
-                center: ['50%', '60%'],
-                data:[
-                    {value:335, name:'Home User'},
-                    {value:310, name:'OTV User'},
-                    {value:234, name:'IMS User'},
-                    {value:135, name:'ITMS User'},
-                ],
-                itemStyle: {
-                    emphasis: {
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+    $(document).ready(function(){
+        var userPie = echarts.init(document.getElementById('usermain'));
+        userPie.showLoading();
+        // 指定图表的配置项和数据
+        var option = {
+            title: {
+                text: '设备用户数',
+                x: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            series: [
+                {
+                    name: '设备用户数',
+                    type: 'pie',
+                    radius : '55%',
+                    center: ['50%', '60%'],
+                    data:[
+                        {value:335, name:'Home User'},
+                        {value:310, name:'OTV User'},
+                        {value:234, name:'IMS User'},
+                        {value:135, name:'ITMS User'},
+                    ],
+                    itemStyle: {
+                        emphasis: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
                     }
                 }
-            }
-        ]
-    };
+            ]
+        };
+        
+        // 使用刚指定的配置项和数据显示图表。
+        userPie.hideLoading();
+        userPie.setOption(option);
 
-    // 使用刚指定的配置项和数据显示图表。
-    userPie.hideLoading();
-    userPie.setOption(option);
-
-    var perfBar = echarts.init(document.getElementById('perfmain'));
-    perfBar.showLoading();
-    // 指定图表的配置项和数据
-    var option = {
-        title: {
-            text: '设备性能',
-            x: 'center'
-        },
-        xAxis: {
-            type: 'category',
-            data: ['CPU', 'Memory']
-        },
-        yAxis: {
-            type: 'value',
-            min: '0',
-            max: '100'
-        },
-        tooltip: {
-            trigger: 'item',
-            formatter: "{b} : {c}%"
-        },
-        series: [
-            {
-                data: [20, 87],
-                type: 'bar'
-            }
-        ]
-    };
-    // 使用刚指定的配置项和数据显示图表。
-    perfBar.hideLoading();
-    perfBar.setOption(option);
+        var perfBar = echarts.init(document.getElementById('perfmain'));
+        perfBar.showLoading();
+        // 指定图表的配置项和数据
+        var option = {
+            title: {
+                text: '设备性能',
+                x: 'center'
+            },
+            xAxis: {
+                type: 'category',
+                data: ['CPU', 'Memory']
+            },
+            yAxis: {
+                type: 'value',
+                min: '0',
+                max: '100'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: "{b} : {c}%"
+            },
+            series: [
+                {
+                    data: [20, 87],
+                    type: 'bar'
+                }
+            ]
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        perfBar.hideLoading();
+        perfBar.setOption(option);
+    });
 
     // ajax 请求板卡信息
     $(document).ready(function(){
