@@ -66,3 +66,14 @@ class PortPerf(models.Model):
             models.Index(fields=['device_name']),
             models.Index(fields=['port']),
         ]
+
+class OneWayDevice(models.Model):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    port_status = models.CharField(max_length=10)
+    port_phy_status = models.CharField(max_length=10)
+    port_des = models.CharField(max_length=255)
+    record_time = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-record_time']
