@@ -77,3 +77,7 @@ class OneWayDevice(models.Model):
 
     class Meta:
         ordering = ['-record_time']
+        indexes = [
+            models.Index(fields=['device_name']),
+            models.Index(fields=['port']),
+        ]
