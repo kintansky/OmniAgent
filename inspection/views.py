@@ -162,9 +162,12 @@ def export_porterror(request):
         time_begin = timezone.datetime.strptime(time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
     time_range = (time_begin, time_end)
+    # porterror_all_list = PortErrorDiff.objects.raw(
+    #     PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+    # )   # 返回的事RawQuerySet对象，原有的导出函数不适用
     porterror_all_list = PortErrorDiff.objects.raw(
-        PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
-    )   # 返回的事RawQuerySet对象，原有的导出函数不适用
+        PORTERROR_QUERY2, (time_begin, time_end, time_begin, time_end)
+    )
     output = rawQueryExportXls(porterror_all_list.columns, porterror_all_list, 'record_time')
     response = FileResponse(open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
