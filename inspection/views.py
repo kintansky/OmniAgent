@@ -88,6 +88,7 @@ PORTERROR_QUERY = 'SELECT np.*, \
                     ni.port_description, ni.port_status \
                     FROM networkresource_porterrordiff as np LEFT JOIN networkresource_ipmanresource AS ni \
                     ON np.device_name = ni.device_name AND np.port = ni.port'
+# PORTERROR_QUERY2 用于请求CRC+光功率的信息
 PORTERROR_QUERY2 = "\
     SELECT error_info.*, npp.* FROM (\
         SELECT np.*, ni.port_description, ni.port_status \
@@ -108,9 +109,6 @@ PORTERROR_QUERY2 = "\
 def port_error_list(request):
     time_begin, time_end = getDateRange(-2)
     time_range = (time_begin, time_end)
-    # porterror_all_list = PortErrorDiff.objects.raw(
-    #     PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
-    # )
     porterror_all_list = PortErrorDiff.objects.raw(
         PORTERROR_QUERY2, (time_begin, time_end, time_begin, time_end)
     )
@@ -132,9 +130,12 @@ def search_port_error(request):
     if porterror_search_form.is_valid():
         time_begin = porterror_search_form.cleaned_data['time_begin']
         time_end = porterror_search_form.cleaned_data['time_end']
-        time_range = (time_begin, time_end)
+        # time_range = (time_begin, time_end)
+        # porterror_all_list = PortErrorDiff.objects.raw(
+        #     PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+        # )
         porterror_all_list = PortErrorDiff.objects.raw(
-            PORTERROR_QUERY + ' WHERE np.record_time between %s and %s', time_range
+            PORTERROR_QUERY2, (time_begin, time_end, time_begin, time_end)
         )
     else:
         context['porterror_search_form'] = porterror_search_form
