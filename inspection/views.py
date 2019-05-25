@@ -202,9 +202,8 @@ def export_porterror(request):
         open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
 
+
 # 单通设备检查模块
-
-
 def oneway_list(request):
     time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)

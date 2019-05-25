@@ -2,12 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
+
+
 class IpmanResource(models.Model):
     device_name = models.CharField(max_length=255)
-    # slot = models.CharField(max_length=4)
     slot = models.SmallIntegerField()
     slot_type = models.CharField(max_length=40)
-    # mda = models.CharField(max_length=4)
     mda = models.SmallIntegerField()
     mda_type = models.CharField(max_length=40)
     port = models.CharField(max_length=30)
@@ -25,6 +25,7 @@ class IpmanResource(models.Model):
             models.Index(fields=['mda']),
             models.Index(fields=['logic_port']),
         ]
+
 
 class IpRecord(models.Model):
     CHOICES = (
@@ -44,11 +45,12 @@ class IpRecord(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
-        ordering = ['id',]
+        ordering = ['id', ]
         indexes = [
             models.Index(fields=['device_ip']),
             models.Index(fields=['logic_port_num']),
         ]
+
 
 class PublicIpGateway(models.Model):
     gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
@@ -56,6 +58,7 @@ class PublicIpGateway(models.Model):
 
     class Meta:
         app_label = 'watchdog'
+
 
 class PublicIpSegment(models.Model):
     TYPE_CHOICES = (
@@ -69,8 +72,9 @@ class PublicIpSegment(models.Model):
 
     class Meta:
         unique_together = (('ip_segment', 'mask'),)
-        ordering = ['id',]
+        ordering = ['id', ]
         app_label = 'watchdog'
+
 
 class PublicIpAllocation(models.Model):
     ies = models.CharField(max_length=20, blank=True, null=True)   # 看是否能改成int
@@ -91,7 +95,8 @@ class PublicIpAllocation(models.Model):
     ip_description = models.TextField(blank=True, null=True)
     up_brandwidth = models.SmallIntegerField(blank=True, null=True)
     down_brandwidth = models.SmallIntegerField()
-    alc_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
+    alc_user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
     alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
     # alc_time = models.DateTimeField()   # 外部数据导入时使用
     # 取消该模型内的调整记录，增加状态标记：在用、销户
@@ -99,18 +104,22 @@ class PublicIpAllocation(models.Model):
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['-alc_time',]
+        ordering = ['-alc_time', ]
+
 
 class PublicIpModRecord(models.Model):
-    mod_target = models.ForeignKey(PublicIpAllocation, on_delete=models.DO_NOTHING)
+    mod_target = models.ForeignKey(
+        PublicIpAllocation, on_delete=models.DO_NOTHING)
     mod_order = models.CharField(max_length=255)
     mod_msg = models.TextField()
-    mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='plcip_mod_user')
+    mod_user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, related_name='plcip_mod_user')
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
 
     # 本次修改前的分配信息，用于记录备份
-    ever_ies = models.CharField(max_length=20, blank=True, null=True)   # 看是否能改成int
+    ever_ies = models.CharField(
+        max_length=20, blank=True, null=True)   # 看是否能改成int
     ever_client_num = models.CharField(max_length=100, null=True)
     ever_product_num = models.CharField(max_length=100, null=True)
     ever_ip = models.GenericIPAddressField(protocol='both', null=True)
@@ -131,11 +140,13 @@ class PublicIpModRecord(models.Model):
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['-record_time',]
-    
+        ordering = ['-record_time', ]
+
+
 class PrivateIpAllocation(models.Model):
     service = models.CharField(max_length=50, blank=True, null=True)
-    community = models.CharField(max_length=50, blank=True, null=True)   # 看是否能改成int
+    community = models.CharField(
+        max_length=50, blank=True, null=True)   # 看是否能改成int
     service_id = models.CharField(max_length=50, blank=True, null=True)
     rd = models.CharField(max_length=50, blank=True, null=True)
     rt = models.CharField(max_length=50, blank=True, null=True)
@@ -150,28 +161,34 @@ class PrivateIpAllocation(models.Model):
     olt_name = models.CharField(max_length=255, blank=True, null=True)
     access_type = models.CharField(max_length=10, blank=True, null=True)
     ip = models.GenericIPAddressField(protocol='both')
-    gateway = models.GenericIPAddressField(protocol='both', null=True)   # 10.0.64.1
+    gateway = models.GenericIPAddressField(
+        protocol='both', null=True)   # 10.0.64.1
     ipsegment = models.CharField(max_length=100, null=True)    # 10.0.64.0/24
     ip_description = models.TextField(blank=True, null=True)
-    alc_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_alc_user')
+    alc_user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, related_name='prvip_alc_user')
     alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
     # alc_time = models.DateTimeField()   # 外部数据导入时使用
     state = models.CharField(max_length=10)
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['-alc_time',]
+        ordering = ['-alc_time', ]
+
 
 class PrivateIpModRecord(models.Model):
-    mod_target = models.ForeignKey(PrivateIpAllocation, on_delete=models.DO_NOTHING)
+    mod_target = models.ForeignKey(
+        PrivateIpAllocation, on_delete=models.DO_NOTHING)
     mod_order = models.CharField(max_length=255)
     mod_msg = models.TextField()
-    mod_user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
+    mod_user = models.ForeignKey(
+        User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
     # 本次修改前的分配信息，用于记录备份
     ever_service = models.CharField(max_length=50, blank=True, null=True)
-    ever_community = models.CharField(max_length=50, blank=True, null=True)   # 看是否能改成int
+    ever_community = models.CharField(
+        max_length=50, blank=True, null=True)   # 看是否能改成int
     ever_service_id = models.CharField(max_length=50, blank=True, null=True)
     ever_rd = models.CharField(max_length=50, blank=True, null=True)
     ever_rt = models.CharField(max_length=50, blank=True, null=True)
@@ -185,14 +202,17 @@ class PrivateIpModRecord(models.Model):
     ever_olt_name = models.CharField(max_length=255, blank=True, null=True)
     ever_access_type = models.CharField(max_length=10, blank=True, null=True)
     ever_ip = models.GenericIPAddressField(protocol='both', null=True)
-    ever_gateway = models.GenericIPAddressField(protocol='both', null=True)   # 10.0.64.1
-    ever_ipsegment = models.CharField(max_length=100, null=True)    # 10.0.64.0/24
+    ever_gateway = models.GenericIPAddressField(
+        protocol='both', null=True)   # 10.0.64.1
+    ever_ipsegment = models.CharField(
+        max_length=100, null=True)    # 10.0.64.0/24
     ever_ip_description = models.TextField(blank=True, null=True)
     ever_state = models.CharField(max_length=10, null=True)
 
     class Meta:
         app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
-        ordering = ['-record_time',]
+        ordering = ['-record_time', ]
+
 
 class ZxClientInfo(models.Model):
     group_id = models.BigIntegerField(null=True)

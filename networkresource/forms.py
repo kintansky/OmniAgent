@@ -23,23 +23,6 @@ class IPsearchForm(forms.Form):
         # 不再限制，什么都不提供返回全部内容
         return self.cleaned_data
 
-class PortSearchForm(forms.Form):
-    device_name = forms.CharField(label='Device', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW'}))
-    slot = forms.IntegerField(label='Slot', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 1}))
-    port = forms.CharField(label='Port', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1/1/1'}))
-    port_description = forms.CharField(label='Description', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '..NanHai...'}))
-
-    def clean(self):
-        cleaned_data = super().clean()
-        device_name = cleaned_data.get('device_name')
-        slot = cleaned_data.get('slot') # slot是数字类型，如果没有，则返回None，非''
-        port = cleaned_data.get('port')
-        port_description = cleaned_data.get('port_description')
-        # 数据太多无法返回所有内容，必须指定
-        if slot is None and port == port_description == '':
-            raise forms.ValidationError('搜索字段：设备名必填，slot、port、描述选填其一')
-            
-        return self.cleaned_data
 
 # IP 分配操作相关
 class IPAllocateSearchForm(forms.Form):
