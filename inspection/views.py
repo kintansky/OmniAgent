@@ -1,15 +1,18 @@
 from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse
 
 
 # Create your views here.
+
+# 光模块检查模块
 def moudle_list(request):
     # 默认展示前3天数据
-    moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=getDateRange(-3))
+    moudle_all_list = OpticalMoudleDiff.objects.filter(
+        record_time__range=getDateRange(-3))
     # moudle_all_list = OpticalMoudleDiff.objects.all()
 
     page_of_objects, page_range = pages(request, moudle_all_list)
@@ -21,6 +24,7 @@ def moudle_list(request):
     context['moudle_search_form'] = MoudleSearchForm()
     return render(request, 'moudle_list.html', context)
 
+
 def search_moudle(request):
     moudle_search_form = MoudleSearchForm(request.GET)
     if moudle_search_form.is_valid():
@@ -30,16 +34,18 @@ def search_moudle(request):
         time_end = moudle_search_form.cleaned_data['time_end']
         time_range = (time_begin, time_end)
         if device_name != '':
-            moudle_all_list = OpticalMoudleDiff.objects.filter(device_name__icontains=device_name, status__contains=status, record_time__range=time_range)
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                device_name__icontains=device_name, status__contains=status, record_time__range=time_range)
         elif status != '':
-            moudle_all_list = OpticalMoudleDiff.objects.filter(status=status, record_time__range=time_range)
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                status=status, record_time__range=time_range)
         else:
-            moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=time_range)
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                record_time__range=time_range)
     else:
         context = {}
         context['moudle_search_form'] = moudle_search_form
         return render(request, 'moudle_list.html', context)
-
     page_of_objects, page_range = pages(request, moudle_all_list)
 
     context = {}
@@ -48,11 +54,14 @@ def search_moudle(request):
     context['page_range'] = page_range
     context['search_device_name'] = device_name
     context['search_status'] = status
-    context['time_begin'] = timezone.datetime.strftime(time_range[0], '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(time_range[1], '%Y-%m-%d+%H:%M:%S')
+    context['time_begin'] = timezone.datetime.strftime(
+        time_range[0], '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_range[1], '%Y-%m-%d+%H:%M:%S')
     context['moudle_search_form'] = moudle_search_form
-    
+
     return render(request, 'moudle_list.html', context)
+
 
 def export_moudle(request):
     device_name = request.GET.get('device_name', '')
@@ -66,23 +75,32 @@ def export_moudle(request):
         # 默认下载前一天的数据
         time_range = getDateRange(-1)
     else:
-        time_begin = timezone.datetime.strptime(time_begin, '%Y-%m-%d %H:%M:%S')
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
         time_range = (time_begin, time_end)
         print(time_range)
     if device_name == status == '':
-        moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=time_range)
+        moudle_all_list = OpticalMoudleDiff.objects.filter(
+            record_time__range=time_range)
     else:
         if device_name != '':   # device_name != '' status == ''
-            moudle_all_list = OpticalMoudleDiff.objects.filter(device_name__icontains=device_name, record_time__range=time_range)
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                device_name__icontains=device_name, record_time__range=time_range)
         elif status != '':  # device_name == '' status != ''
-            moudle_all_list = OpticalMoudleDiff.objects.filter(status=status, record_time__range=time_range)
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                status=status, record_time__range=time_range)
         else:
-            moudle_all_list = OpticalMoudleDiff.objects.filter(record_time__range=time_range)
-    output = exportXls(OpticalMoudleDiff._meta.fields, moudle_all_list, 'record_time')
-    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="moudle_result.xls") # 使用Fileresponse替代以上两行
+            moudle_all_list = OpticalMoudleDiff.objects.filter(
+                record_time__range=time_range)
+    output = exportXls(OpticalMoudleDiff._meta.fields,
+                       moudle_all_list, 'record_time')
+    response = FileResponse(open(output, 'rb'), as_attachment=True,
+                            filename="moudle_result.xls")  # 使用Fileresponse替代以上两行
     return response
 
+
+# 端口质量模块
 # port error 采用rawquery做连接查询，取出其他关联信息 用于请求CRC+光功率的信息
 __PORTERROR_QUERY = "\
     SELECT error_info.*, npp.* FROM (\
@@ -101,16 +119,18 @@ __PORTERROR_QUERY = "\
     AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
 "
 
+
 def __queryline(order_field):
     if order_field == 'crc':
-        porterror_query = __PORTERROR_QUERY+'ORDER BY -error_info.stateCRC'
+        porterror_query = __PORTERROR_QUERY + 'ORDER BY -error_info.stateCRC'
     elif order_field == 'head':
-        porterror_query = __PORTERROR_QUERY+'ORDER BY -error_info.stateIpv4HeadError'
+        porterror_query = __PORTERROR_QUERY + 'ORDER BY -error_info.stateIpv4HeadError'
     return porterror_query
+
 
 def port_error_list(request):
     order_field = request.GET.get('order_field', 'crc')
-    time_begin, time_end = getDateRange(-60)
+    time_begin, time_end = getDateRange(-60)    # 默认-2
     time_range = (time_begin, time_end)
     porterror_query = __queryline(order_field)
     porterror_all_list = PortErrorDiff.objects.raw(
@@ -122,11 +142,14 @@ def port_error_list(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(time_range[0], '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(time_range[1], '%Y-%m-%d+%H:%M:%S')
+    context['time_begin'] = timezone.datetime.strftime(
+        time_range[0], '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_range[1], '%Y-%m-%d+%H:%M:%S')
     context['order_field'] = order_field
     context['porterror_search_form'] = PortErrorSearchForm()
     return render(request, 'port_error_list.html', context)
+
 
 def search_port_error(request):
     context = {}
@@ -148,40 +171,100 @@ def search_port_error(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
+    context['time_begin'] = timezone.datetime.strftime(
+        time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_end, '%Y-%m-%d+%H:%M:%S')
     context['order_field'] = order_field
     context['porterror_search_form'] = porterror_search_form
     return render(request, 'port_error_list.html', context)
+
 
 def export_porterror(request):
     time_begin = request.GET.get('time_begin', '')
     time_end = request.GET.get('time_end', '')
     if time_begin == '' or time_end == '':
         today_time = timezone.datetime.now()
-        time_end = timezone.datetime(year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
-        time_begin = time_end + timezone.timedelta(days=-1)  # 默认下载当天的数据
+        time_end = timezone.datetime(
+            year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-2)  # 默认下载当天的数据
     else:
-        time_begin = timezone.datetime.strptime(time_begin, '%Y-%m-%d %H:%M:%S')
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
     porterror_query = __queryline('crc')
     porterror_all_list = PortErrorDiff.objects.raw(
         porterror_query, (time_begin, time_end, time_begin, time_end)
     )
-    output = rawQueryExportXls(porterror_all_list.columns, porterror_all_list, 'record_time')
-    response = FileResponse(open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
+    output = rawQueryExportXls(
+        porterror_all_list.columns, porterror_all_list, 'record_time')
+    response = FileResponse(
+        open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
 
+# 单通设备检查模块
+
+
 def oneway_list(request):
-    time_begin, time_end = getDateRange(-2)
+    time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)
-    oneway_all_list = OneWayDevice.objects.filter(record_time__range=time_range)
+    oneway_all_list = OneWayDevice.objects.filter(
+        record_time__range=time_range)
     page_of_objects, page_range = pages(request, oneway_all_list)
     context = {}
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
-    # context['porterror_search_form'] = PortErrorSearchForm()
+    context['time_begin'] = timezone.datetime.strftime(
+        time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_end, '%Y-%m-%d+%H:%M:%S')
+    context['oneway_search_form'] = OneWaySearchForm()
     return render(request, 'oneway_list.html', context)
+
+
+def search_oneway(request):
+    context = {}
+    oneway_search_form = OneWaySearchForm(request.GET)
+    if oneway_search_form.is_valid():
+        time_begin = oneway_search_form.cleaned_data['time_begin']
+        time_end = oneway_search_form.cleaned_data['time_end']
+        oneway_all_list = OneWayDevice.objects.filter(
+            record_time__range=(time_begin, time_end))
+    else:
+        context['oneway_search_form'] = oneway_search_form
+        return render(request, 'oneway_list.html', context)
+
+    page_of_objects, page_range = pages(request, oneway_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(
+        time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_end, '%Y-%m-%d+%H:%M:%S')
+    context['oneway_search_form'] = oneway_search_form
+    return render(request, 'oneway_list.html', context)
+
+
+def export_oneway(request):
+    time_begin = request.GET.get('time_begin', '')
+    time_end = request.GET.get('time_end', '')
+    if time_begin == '' or time_end == '':
+        today_time = timezone.datetime.now()
+        time_end = timezone.datetime(
+            year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-1)  # 默认下载当天的数据
+    else:
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
+        time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
+    oneway_all_list = OneWayDevice.objects.filter(
+        record_time__range=(time_begin, time_end))
+
+    output = exportXls(OneWayDevice._meta.fields,
+                       oneway_all_list, 'record_time')
+    response = FileResponse(
+        open(output, 'rb'), as_attachment=True, filename="oneway_result.xls")
+    return response

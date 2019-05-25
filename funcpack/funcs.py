@@ -27,7 +27,7 @@ def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
 
 
 XLS_DATETIME_FORMAT = xlwt.easyxf(num_format_str='yyyy/mm/dd')
-
+# fieldList 通过 类._meta.fields 传入
 def exportXls(fieldList, object_list, datetime_field=None):
     '''
     title: tuple or list
@@ -67,6 +67,7 @@ def exportXls(fieldList, object_list, datetime_field=None):
     # output.seek(0)
     return save_path
 
+# 因为rawobj_list是一个QuerySet，所以fieldList需要通过QuerySet.columns传入
 def rawQueryExportXls(fieldList, rawobj_list, datetime_field=None):    # rawquery 不能通过以上方式迭代取出，需要先序列化
     book = xlwt.Workbook()
     sheet = book.add_sheet('sheet1')

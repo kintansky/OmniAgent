@@ -69,14 +69,18 @@
                         <li><a href="{% url 'login' %}?from={{ request.get_full_path }}">登陆</a></li>
                         <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">注册</a></li>
                     {% endif %}
-                    
+                    <li>
+                        <a href="" tabindex="0" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="移动设备扫码打开" data-content="<img src='{% static 'QR.png' %}' class='img-responsive' alt='Responsive image'>">
+                            <span class="glyphicon glyphicon-qrcode"></span>
+                        </a>
+                    </li>
                 </ul>
 
                 <form class="navbar-form navbar-right" action="{% url 'search_device' %}" method="GET">
                     <div class="form-group">
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-search"></span></div>
-                            <input type="text" class="form-control" name="device_name" placeholder="快速定位：BJ">
+                            <input type="text" class="form-control" name="device_name" placeholder="设备直达：BJ">
                         </div>
                     </div>
                 </form>
@@ -98,6 +102,13 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="{% static 'jquery@1.12.4.min.js' %}"></script>
     <script src="{% static 'bootstrap@3.3.7/js/bootstrap.min.js' %}"></script>
+    <script>
+    $(function(){
+        $('[data-toggle="popover"]').popover({
+            html: true
+        });
+    })
+    </script>
     {% block tail_script %}{% endblock %}
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <!-- <script src="{% static 'assets/css/ie10-viewport-bug-workaround.css' %}}"></script> -->

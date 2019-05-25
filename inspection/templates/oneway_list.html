@@ -17,6 +17,23 @@
 <a class="btn btn-success disabled" href="" role="button">新增</a>
 {% endblock %}
 
+{% block search_form %}
+    <form action="{% url 'search_oneway' %}" method="GET" class="form-inline">
+        {% for field in oneway_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
+{% block export %}
+    <a class="btn btn-success" href="{% url 'export_oneway' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">导出</a>
+{% endblock %}
+
 {% block table_title %}
     <th>设备</th>
     <th>端口</th>
@@ -103,3 +120,22 @@
     </ul>
 </div>
 {% endblock%}
+
+{% block tail_script %}
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}" charset="UTF-8"></script>
+    <script>
+        $('.form_datetime').datetimepicker({
+            language:  'zh-CN',
+            format: 'yyyy-mm-dd hh:ii:ss',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            forceParse: 0,
+            showMeridian: 1
+            // pickerPosition: "bottom-left"
+        });
+    </script> 
+{% endblock %}

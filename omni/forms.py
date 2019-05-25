@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib import auth
 from django.contrib.auth.models import User
+import datetime
 
 class LoginForm(forms.Form):
     username = forms.CharField(label="User", widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -41,3 +42,26 @@ class RegisterForm(forms.Form):
         if password != password_again:
             raise forms.ValidationError('password dosent match')
         return password_again
+
+
+# TimeRangeForm可以作为其他需要选择时间的form的基类
+class TimeRangeForm(forms.Form):
+    time_begin = forms.DateTimeField(label='From', widget=forms.TextInput(attrs={'class': 'form-control form_datetime', 'placeholder': '2018-01-01 00:00:00', 'style':'width:160px', 'readonly': True}))
+    time_end = forms.DateTimeField(label='to', widget=forms.TextInput(attrs={'class': 'form-control form_datetime', 'placeholder': '2018-01-11 23:59:59', 'style':'width:160px', 'readonly': True}))
+
+    def clean(self):
+        cleaned_data = super().clean()  # 保证先继承原有的字段验证，进行初步验证
+        time_begin = cleaned_data.get('time_begin')
+        time_end = cleaned_data.get('time_end')
+        if type(time_begin) is str and type(time_end) is str:
+            try:
+                time_begin = datetime.datetime.strptime(time_begin, '%Y-%m-%d+%H:%M:%S')
+                self.cleaned_data['time_begin'] = time_begin
+                time_end = datetime.datetime.strptime(time_end, '%Y-%m-%d+%H:%M:%S')
+                self.cleaned_data['time_end'] = time_end
+            except:
+                raise forms.ValidationError('Time Format Error. Input should like "2018-01-01 00:00:00"')
+        if type(time_begin) is datetime.datetime and type(time_end) is datetime.datetime:
+            if time_begin >= time_end:
+                raise forms.ValidationError('Begin Time must earlier than End Time.')
+        return self.cleaned_data
