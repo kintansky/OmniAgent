@@ -78,7 +78,7 @@
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
             <td>{{ record.port_status }}</td>
             {% if record.tx_state == 1 %}
-                <td>
+                <td data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
                     {{ record.tx_now_power }}
                 </td>
             {% else %}
@@ -88,7 +88,7 @@
                 </td>
             {% endif %}
             {% if record.rx_state == 1 %}
-                <td>
+                <td data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
                     {{ record.rx_now_power }}
                 </td>
             {% else %}
