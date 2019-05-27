@@ -132,7 +132,7 @@ def __queryline(order_field):
 
 def port_error_list(request):
     order_field = request.GET.get('order_field', 'crc')
-    time_begin, time_end = getDateRange(-60)    # 默认-2
+    time_begin, time_end = getDateRange(-2)    # 默认-2
     time_range = (time_begin, time_end)
     porterror_query = __queryline(order_field)
     porterror_all_list = PortErrorDiff.objects.raw(
