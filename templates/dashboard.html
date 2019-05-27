@@ -9,17 +9,17 @@
 
 {% block content %}
     <div class="jumbotron">
-        <div class="container">
+        <div class="container text-center">
             <h1>OMNI AGENT</h1>
             <p>Omni Agent 是一个WATCHDOG程序，帮助用户实现设备值守和设备性能监控。</p>
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="container">
         <!-- 基础信息部分 -->
         <div class="row">
             <div class="col-md-4">
-                <h2><span class="glyphicon glyphicon-triangle-right"></span> 设备清单</h2>
+                <h3>&raquo; 设备清单</h3>
                 <div class="alert alert-success" role="alert">
                     <strong>{{ device_count }}</strong> 台设备被记录在案. 
                 </div>
@@ -47,10 +47,10 @@
                     <div class="btn-group" role="group" aria-label="true">
                         <a class="btn btn-danger" href="" role="button">备份 &raquo;</a>
                     </div>
-                </div>
+                </div>                    
             </div>
             <div class="col-md-4">
-                <h2><span class="glyphicon glyphicon-triangle-right"></span> 业务IP</h2>
+                <h3>&raquo; 业务IP</h3>
                 <div class="alert alert-success" role="alert">
                     巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
                 </div>
@@ -66,22 +66,29 @@
                 </div>
                 <div class="btn-toolbar">
                     <div class="btn-group" role="group" aria-label="true">
-                        <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">详情 &raquo;</a>
+                        <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">查看记录 &raquo;</a>
                     </div>
-                    <div class="btn-group" role="group" aria-label="true">
-                        <a class="btn btn-success" href="{% url 'allocate_ip' 'public' %}" role="button">分配公网IP &raquo;</a>
-                    </div>
-                    <div class="btn-group" role="group" aria-label="true">
-                        <a class="btn btn-danger" href="{% url 'allocate_ip' 'private' %}" role="button">分配私网IP &raquo;</a>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            分配 IP
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url 'allocate_ip' 'public' %}">分配公网IP</a></li>
+                            <li><a href="{% url 'allocate_ip' 'private' %}">分配私网IP</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- 监控部分 -->
+        <div class="page-header">
+            <h2 class="text-center">&laquo; 质量管理 &raquo;</h2>
+        </div>
         <div class="row">
             <div class="col-md-4">
-                <h2><span class="glyphicon glyphicon-triangle-right"></span> 光模块监控</h2>
+                <h3>&raquo; 光模块监控</h3>
                 {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
                     <div class="alert alert-success" role="alert">
                         <span class="glyphicon glyphicon-thumbs-up"></span>
@@ -115,13 +122,13 @@
                 {% endif %}
                 {# button显示部分 #}
                 {% if moudle_miss_count != 0 %}
-                    <p><a class="btn btn-danger" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
+                    <p><a class="btn btn-danger" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
                 {% else %}
-                    <p><a class="btn btn-primary" href="{% url 'moudle_list' %}" role="button">详情 &raquo;</a></p>
+                    <p><a class="btn btn-primary" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
                 {% endif %}
             </div>
             <div class="col-md-4">
-                <h2><span class="glyphicon glyphicon-triangle-right"></span> 端口质量监控</h2>
+                <h3>&raquo; 端口质量监控</h3>
                 {% if crc_port_count != 0 or ipv4head_port_count != 0 %}
                 <div class="alert alert-danger" role="alert">
                     巡检 {{ device_ipman_count }} 台设备，发现以下质量问题：
@@ -154,37 +161,17 @@
                 <p><a class="btn btn-danger" href="{% url 'port_error_list' %}" role="button">详情 &raquo;</a></p>
             </div>
             <div class="col-md-4">
-                <h2><span class="glyphicon glyphicon-triangle-right"></span> 单通隐患检查</h2>
-                {% if crc_port_count != 0 or ipv4head_port_count != 0 %}
+                <h3>&raquo; 单通隐患检查</h3>
+                {% if oneway_count != 0 %}
                 <div class="alert alert-danger" role="alert">
-                    巡检 {{ device_ipman_count }} 台设备，发现以下质量问题：
+                    发现 {{ oneway_devices.count }} 台设备 {{ oneway_count }} 个端口怀疑存在单通隐患
                 </div>
                 {% else %}
                 <div class="alert alert-success" role="alert">
                     巡检 {{ device_ipman_count }} 台设备，未发现问题
                 </div>
                 {% endif %}
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <span class="badge">{{ crc_port_count }}</span>
-                        CRC端口数
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{ crc_max_speed.stateCRC__max|floatformat }} 个/h</span>
-                        CRC最快增速
-                    </li>
-                </ul>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <span class="badge">{{ ipv4head_port_count }}</span>
-                        IPv4头错误端口数
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{ ipv4head_max_speed.stateIpv4HeadError__max|floatformat }} 个/h</span>
-                        IPv4头错误增速
-                    </li>
-                </ul>
-                <p><a class="btn btn-primary" href="{% url 'port_error_list' %}" role="button">详情 &raquo;</a></p>
+                <p><a class="btn btn-primary" href="{% url 'oneway_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
             </div>
         </div>
 
@@ -221,7 +208,7 @@
 <script>
     $('#deviceModal').on('shown.bs.modal', function () {
         $('#myInput').focus()
-    })
+    });
 
 </script>
 {% endblock %}

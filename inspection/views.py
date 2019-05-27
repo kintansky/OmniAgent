@@ -3,7 +3,9 @@ from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
 from django.utils import timezone
 from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
+# from django.core import serializers
+import json
 
 
 # Create your views here.
@@ -149,6 +151,43 @@ def port_error_list(request):
     context['order_field'] = order_field
     context['porterror_search_form'] = PortErrorSearchForm()
     return render(request, 'port_error_list.html', context)
+
+
+# 通过端口查找,端口下划分的ip及对应客户,最内层select可以与model对象再做一次join查询
+__QUERY_ERROR_AFFECT = "\
+    SELECT p_ip_tb.*, client_tb.group_id, client_tb.client_name \
+    FROM (\
+        SELECT pp_tb.*, ip_tb.device_ip \
+        FROM (\
+            SELECT id, device_name, `port`, logic_port \
+            FROM cmdb.networkresource_ipmanresource \
+            WHERE device_name = %s AND `port` = %s \
+        ) AS pp_tb LEFT JOIN cmdb.networkresource_iprecord AS ip_tb \
+        ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num\
+    ) AS p_ip_tb LEFT JOIN cmdb.networkresource_zxclientinfo AS client_tb \
+    ON p_ip_tb.device_ip = client_tb.ip\
+"
+
+
+def ajax_search_error_effect(request):
+    data = {}
+    try:
+        device_name = request.GET.get('device_name')
+        port = request.GET.get('port')
+        effect_list = PortErrorDiff.objects.raw(__QUERY_ERROR_AFFECT, (device_name, port))
+        effect_dict = []
+        for e in effect_list:
+            # print(e.device_name, e.port, e.logic_port)
+            effect_dict.append({'device_name': e.device_name,'port': e.port, 'group_id': e.group_id, 'client_name': e.client_name})
+        print(effect_dict)
+        print(json.dumps(effect_dict))
+        data['status'] = 'success'
+        data['effect_list'] = json.dumps(effect_dict)
+        # data['effect_list'] = serializers.serialize("json", effect_list, fields=('device_name', 'port', 'logic_port', 'group_id', 'client_name'))
+        print(data['effect_list'])
+    except:
+        data['status'] = 'error'
+    return JsonResponse(data)
 
 
 def search_port_error(request):

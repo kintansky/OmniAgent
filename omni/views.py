@@ -4,12 +4,12 @@ from django.urls import reverse
 from .forms import LoginForm, RegisterForm
 from django.contrib.auth.models import User
 from watchdog.models import Device
-from inspection.models import OpticalMoudleDiff, PortErrorDiff
+from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
 from networkresource.models import IpmanResource, IpRecord
 import datetime
 from django.utils import timezone
-from django.db.models import Count, Q, Max
-from funcpack.funcs import dumpOlt2Json
+from django.db.models import Count, Q, Max, Sum
+from funcpack.funcs import getDateRange, dumpOlt2Json
 
 
 def register(request):
@@ -73,16 +73,17 @@ def dashboard(request):
     context['device_cmnet_count'] = device_cmnet_count
     context['device_oth_count'] = device_oth_count
     # 模块信息
-    today_time = datetime.datetime.now()
-    time_end = timezone.datetime(year=today_time.year, month=today_time.month,
-                                 day=today_time.day, hour=23, minute=59, second=59)
-    time_begin = time_end + timezone.timedelta(days=-1)
+    # today_time = datetime.datetime.now()
+    # time_end = timezone.datetime(year=today_time.year, month=today_time.month,
+    #                              day=today_time.day, hour=23, minute=59, second=59)
+    # time_begin = time_end + timezone.timedelta(days=-1)
+    time_range = getDateRange(-1)
     moudle_new_count = OpticalMoudleDiff.objects.filter(
-        status='NEW', record_time__range=(time_begin, time_end)).count()
+        status='NEW', record_time__range=time_range).count()
     moudle_miss_count = OpticalMoudleDiff.objects.filter(
-        status='MISS', record_time__range=(time_begin, time_end)).count()
+        status='MISS', record_time__range=time_range).count()
     moudle_ch_count = OpticalMoudleDiff.objects.filter(
-        status='CH', record_time__range=(time_begin, time_end)).count()
+        status='CH', record_time__range=time_range).count()
     context['moudle_new_count'] = moudle_new_count
     context['moudle_miss_count'] = moudle_miss_count
     context['moudle_ch_count'] = moudle_ch_count
@@ -97,20 +98,27 @@ def dashboard(request):
     context['ip_private_ratio'] = ip_private_count/ip_count*100
     context['ip_public_ratio'] = ip_public_count/ip_count*100
     # 端口错包信息
-    crc_port_count = PortErrorDiff.objects.filter(stateCRC__gt=0, record_time__range=(
-        time_end + timezone.timedelta(days=-2), time_end)).count()
-    crc_max_speed = PortErrorDiff.objects.filter(record_time__range=(
-        time_end + timezone.timedelta(days=-2), time_end)).aggregate(Max('stateCRC'))
-    ipv4head_port_count = PortErrorDiff.objects.filter(stateIpv4HeadError__gt=0, record_time__range=(
-        time_end + timezone.timedelta(days=-2), time_end)).count()
-    ipv4head_max_speed = PortErrorDiff.objects.filter(record_time__range=(
-        time_end + timezone.timedelta(days=-2), time_end)).aggregate(Max('stateIpv4HeadError'))
+    time_range = getDateRange(-2)
+    crc_port_count = PortErrorDiff.objects.filter(
+        stateCRC__gt=0, record_time__range=time_range).count()
+    crc_max_speed = PortErrorDiff.objects.filter(
+        record_time__range=time_range).aggregate(Max('stateCRC'))
+    ipv4head_port_count = PortErrorDiff.objects.filter(
+        stateIpv4HeadError__gt=0, record_time__range=time_range).count()
+    ipv4head_max_speed = PortErrorDiff.objects.filter(
+        record_time__range=time_range).aggregate(Max('stateIpv4HeadError'))
     context['crc_port_count'] = crc_port_count
     context['crc_max_speed'] = crc_max_speed
     context['ipv4head_port_count'] = ipv4head_port_count
     context['ipv4head_max_speed'] = ipv4head_max_speed
-
+    # 单通设备检查
+    time_range = getDateRange(-1)
+    oneway_count = OneWayDevice.objects.filter(record_time__range=time_range).count()
+    oneway_devices = OneWayDevice.objects.filter(record_time__range=time_range).values('device_name').annotate(port_cnt=Sum('port')).order_by('-port_cnt')
+    context['oneway_devices'] = oneway_devices
+    context['oneway_count'] = oneway_count
     # 其他
+    today_time = datetime.datetime.now()
     context['time_begin'] = '%d-%d-%d+00:00:00' % (
         today_time.year, today_time.month, today_time.day)
     context['time_end'] = '%d-%d-%d+23:59:59' % (

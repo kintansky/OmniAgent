@@ -99,7 +99,7 @@
             {% endif %}
             <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
             <td>
-                <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger">
+                <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_effect_trigger", dn="{{ record.device_name }}", pt="{{ record.port }}">
                     <strong>检查</strong>
                 </a>
             </td>
@@ -215,6 +215,31 @@
             forceParse: 0,
             showMeridian: 1
             // pickerPosition: "bottom-left"
+        });
+
+        // 请求受影响的业务
+        $(document).ready(function(){
+            $(".modal_effect_trigger").click(function(){
+                $.ajax({
+                    url: "{% url 'ajax_search_error_effect' %}",  // 异步请求的地址
+                    type: 'GET',    // 请求方式
+                    data: {device_name: $(this).attr('dn'), port: $(this).attr('pt')},   // 发送的json
+                    cache: false,
+                    success: function(data){    // 回调函数，返回data
+                        if(data['status'] == 'success'){
+                            // console.log(data);
+                            // $(".modal-body").html(data['allocation_form']);  // TODO: prepend
+                            // $(".modal_body").prepend('<p>'+h+'</p>');
+                        }else{
+                            console.log(data);
+                            alert('没有找到相关对象');
+                        }
+                    },
+                    error: function(xhr){
+                        console.log(xhr);
+                    }
+                });
+            });
         });
     </script> 
 {% endblock %}

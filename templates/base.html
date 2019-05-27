@@ -68,7 +68,7 @@
                         <li><a href="{% url 'register' %}?from={{ request.get_full_path }}">注册</a></li>
                     {% endif %}
                     <li>
-                        <a href="" tabindex="0" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="移动设备扫码打开" data-content="<img src='{% static 'QR.png' %}' class='img-responsive' alt='Responsive image'>">
+                        <a href="" tabindex="0" data-toggle="popover" data-trigger="hover" data-placement="bottom" title="OA设备扫码访问" data-content="<img src='{% static 'QR.png' %}' class='img-responsive' alt='Responsive image'>">
                             <span class="glyphicon glyphicon-qrcode"></span>
                         </a>
                     </li>
@@ -78,7 +78,7 @@
                     <div class="form-group">
                         <div class="input-group">
                             <div class="input-group-addon"><span class="glyphicon glyphicon-search"></span></div>
-                            <input type="text" class="form-control" name="device_name" placeholder="设备直达：BJ">
+                            <input type="text" class="form-control" name="device_name" placeholder="设备直通车：BJ">
                         </div>
                     </div>
                 </form>

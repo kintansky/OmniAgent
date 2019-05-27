@@ -19,10 +19,10 @@
         </div>
         <div class="row">
             <div class="col-md-6">
-                <div id="usermain" style="width:400px;height:400px;"></div>
+                <div id="usermain" style="width:100%;height:400px;"></div>
             </div>
             <div class="col-md-6">
-                <div id="perfmain" style="width:400px;height:400px;"></div>
+                <div id="perfmain" style="width:100%;height:400px;"></div>
             </div>
         </div>
         
@@ -34,7 +34,7 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div id="networktree" style="width:800px;height:400px;"></div>
+                <div id="networktree" style="width:100%;height:400px;"></div>
             </div>
         </div>
 
@@ -117,7 +117,8 @@
                         {value:310, name:'OTV User'},
                         {value:234, name:'IMS User'},
                         {value:135, name:'ITMS User'},
-                    ],
+                    ].sort(function (a, b) { return a.value - b.value; }),  //排序
+                    roseType: 'radius', // 饼分块大小样式
                     itemStyle: {
                         emphasis: {
                             shadowBlur: 10,
@@ -132,6 +133,9 @@
         // 使用刚指定的配置项和数据显示图表。
         userPie.hideLoading();
         userPie.setOption(option);
+        window.addEventListener("resize", function () {
+            userPie.resize();
+        });
 
         var perfBar = echarts.init(document.getElementById('perfmain'));
         perfBar.showLoading();
@@ -164,6 +168,9 @@
         // 使用刚指定的配置项和数据显示图表。
         perfBar.hideLoading();
         perfBar.setOption(option);
+        window.addEventListener("resize", function () {
+            perfBar.resize();
+        });
     });
 
     // ajax 请求板卡信息
