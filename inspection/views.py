@@ -179,12 +179,12 @@ def ajax_search_error_effect(request):
         for e in effect_list:
             # print(e.device_name, e.port, e.logic_port)
             effect_dict.append({'device_name': e.device_name,'port': e.port, 'group_id': e.group_id, 'client_name': e.client_name})
-        print(effect_dict)
-        print(json.dumps(effect_dict))
+        # print(effect_dict)
+        # print(json.dumps(effect_dict))
         data['status'] = 'success'
         data['effect_list'] = json.dumps(effect_dict)
         # data['effect_list'] = serializers.serialize("json", effect_list, fields=('device_name', 'port', 'logic_port', 'group_id', 'client_name'))
-        print(data['effect_list'])
+        # print(data['effect_list'])
     except:
         data['status'] = 'error'
     return JsonResponse(data)
