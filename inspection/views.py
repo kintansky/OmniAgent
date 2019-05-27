@@ -113,7 +113,7 @@ __PORTERROR_QUERY = "\
             WHERE np.record_time between %s AND %s\
         ) AS error_info \
     LEFT JOIN (\
-        SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, record_time \
+        SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
             FROM cmdb.networkresource_portperf \
             WHERE record_time BETWEEN %s AND %s\
         ) AS npp \
@@ -155,7 +155,7 @@ def port_error_list(request):
 
 # 通过端口查找,端口下划分的ip及对应客户,最内层select可以与model对象再做一次join查询
 __QUERY_ERROR_AFFECT = "\
-    SELECT p_ip_tb.*, client_tb.group_id, client_tb.client_name \
+    SELECT p_ip_tb.*, client_tb.group_id, client_tb.client_name, client_tb.ip \
     FROM (\
         SELECT pp_tb.*, ip_tb.device_ip \
         FROM (\
@@ -176,14 +176,13 @@ def ajax_search_error_effect(request):
         port = request.GET.get('port')
         effect_list = PortErrorDiff.objects.raw(__QUERY_ERROR_AFFECT, (device_name, port))
         effect_dict = []
+        i = 1
         for e in effect_list:
-            # print(e.device_name, e.port, e.logic_port)
-            effect_dict.append({'device_name': e.device_name,'port': e.port, 'group_id': e.group_id, 'client_name': e.client_name})
-        # print(effect_dict)
-        # print(json.dumps(effect_dict))
+            effect_dict.append({'id': str(i), 'device_name': e.device_name,'port': e.port, 'group_id': str(e.group_id), 'client_name': str(e.client_name), 'ip': e.ip})
+            i += 1
         data['status'] = 'success'
         data['effect_list'] = json.dumps(effect_dict)
-        # data['effect_list'] = serializers.serialize("json", effect_list, fields=('device_name', 'port', 'logic_port', 'group_id', 'client_name'))
+        # data['effect_list'] = serializers.serialize("json", effect_list, fields=('device_name', 'port', 'logic_port', 'group_id', 'client_name')) # 多个联合查询的对象无法正确转换成json
         # print(data['effect_list'])
     except:
         data['status'] = 'error'

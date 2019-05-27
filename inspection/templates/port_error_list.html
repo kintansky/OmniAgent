@@ -62,6 +62,8 @@
     <th>端口状态</th>
     <th>BNG发光dBm</th>
     <th>BNG收光dBm</th>
+    <th>带宽利用率In</th>
+    <th>带宽利用率Out</th>
     <th>时间</th>
     <th>影响范围</th>
     <th>操作</th>
@@ -97,7 +99,9 @@
                     <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
             {% endif %}
-            <td>{{ record.record_time|date:"Y-m-d H:i" }}</td>
+            <td>{{ record.utility_in }}</td>
+            <td>{{ record.utility_out }}</td>
+            <td>{{ record.record_time|date:"Y-m-d" }}</td>
             <td>
                 <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_effect_trigger", dn="{{ record.device_name }}", pt="{{ record.port }}">
                     <strong>检查</strong>
@@ -120,6 +124,8 @@
             <td>NULL</td>
             <td>Null</td>
             <td>NULL</td>
+            <td>NULL</td>
+            <td>Null</td>
             <td>NULL</td>
         </tr>
     {% endfor %}
@@ -191,6 +197,8 @@
                 <h4 class="modal-title">影响范围</h4>
             </div>
             <div class="modal-body">
+                <ul class="list-group effect-list">
+                </ul>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
@@ -217,29 +225,33 @@
             // pickerPosition: "bottom-left"
         });
 
-        // 请求受影响的业务
-        // $(document).ready(function(){
-        //     $(".modal_effect_trigger").click(function(){
-        //         $.ajax({
-        //             url: "{% url 'ajax_search_error_effect' %}",  // 异步请求的地址
-        //             type: 'GET',    // 请求方式
-        //             data: {device_name: $(this).attr('dn'), port: $(this).attr('pt')},   // 发送的json
-        //             cache: false,
-        //             success: function(data){    // 回调函数，返回data
-        //                 if(data['status'] == 'success'){
-        //                     // console.log(data);
-        //                     // $(".modal-body").html(data['allocation_form']);  // TODO: prepend
-        //                     // $(".modal_body").prepend('<p>'+h+'</p>');
-        //                 }else{
-        //                     console.log(data);
-        //                     alert('没有找到相关对象');
-        //                 }
-        //             },
-        //             error: function(xhr){
-        //                 console.log(xhr);
-        //             }
-        //         });
-        //     });
-        // });
+        //请求受影响的业务
+        $(document).ready(function(){
+            $(".modal_effect_trigger").click(function(){
+                $.ajax({
+                    url: "{% url 'ajax_search_error_effect' %}",  // 异步请求的地址
+                    type: 'GET',    // 请求方式
+                    data: {device_name: $(this).attr('dn'), port: $(this).attr('pt')},   // 发送的json
+                    cache: false,
+                    success: function(data){    // 回调函数，返回data
+                        if(data['status'] == 'success'){
+                            // console.log(data);
+                            var effects = JSON.parse(data['effect_list']);  // 返回的数据被当成了string，需要转换成json
+                            var h = '';
+                            for (x in effects) {
+                                h += '<li class="list-group-item">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '\\' + effects[x]['group_id'] + '\\' + effects[x]['client_name'] + '</li>';
+                            };
+                            $(".effect-list").prepend(h);
+                        }else{
+                            console.log(data);
+                            alert('没有找到相关对象');
+                        }
+                    },
+                    error: function(xhr){
+                        console.log(xhr);
+                    }
+                });
+            });
+        });
     </script> 
 {% endblock %}
