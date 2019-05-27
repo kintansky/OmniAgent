@@ -20,7 +20,7 @@ from .base import *
 SECRET_KEY = '(n)6f(v^7ty62&fcr9(=1#awr9^2jb&#1tdf6jk!+*0i#a)(*j'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
