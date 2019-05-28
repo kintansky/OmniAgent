@@ -113,21 +113,6 @@
                 </a>
             </td>
         </tr>
-    {% empty %}
-        <tr>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>Null</td>
-            <td>NULL</td>
-            <td>Null</td>
-            <td>NULL</td>
-            <td>NULL</td>
-            <td>Null</td>
-            <td>NULL</td>
-        </tr>
     {% endfor %}
 {% endblock %}
 
@@ -239,7 +224,7 @@
                             var effects = JSON.parse(data['effect_list']);  // 返回的数据被当成了string，需要转换成json
                             var h = '';
                             for (x in effects) {
-                                h += '<li class="list-group-item">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '\\' + effects[x]['group_id'] + '\\' + effects[x]['client_name'] + '</li>';
+                                h += '<li class="list-group-item list-group-item-warning">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '\\' + effects[x]['group_id'] + '\\' + effects[x]['client_name'] + '</li>';
                             };
                             $(".effect-list").prepend(h);
                         }else{
