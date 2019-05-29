@@ -226,7 +226,7 @@
                             for (x in effects) {
                                 h += '<li class="list-group-item list-group-item-warning">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '\\' + effects[x]['group_id'] + '\\' + effects[x]['client_name'] + '</li>';
                             };
-                            $(".effect-list").prepend(h);
+                            $(".effect-list").html(h);
                         }else{
                             console.log(data);
                             alert('没有找到相关对象');
