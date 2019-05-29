@@ -37,8 +37,8 @@
 {% block table_title %}
     <th>设备</th>
     <th>端口</th>
-    <th>逻辑状态</th>
     <th>物理状态</th>
+    <th>逻辑状态</th>
     <th>描述</th>
     <th>记录时间</th>
 {% endblock %}
@@ -48,8 +48,8 @@
         <tr>
             <td>{{ record.device_name }}</td>
             <td>{{ record.port }}</td>
-            <td>{{ record.port_status }}</td>
             <td>{{ record.port_phy_status }}</td>
+            <td>{{ record.port_status }}</td>
             <td>{{ record.port_des }}</td>
             <td>{{ record.record_time|date:"Y-m-d H:i:s" }}</td>
         </tr>
