@@ -35,6 +35,7 @@ class IpRecord(models.Model):
     )
     device_ip = models.GenericIPAddressField(protocol='both')
     ip_mask = models.IntegerField(null=True)
+    gateway = models.GenericIPAddressField(protocol='both', null=True)
     device_name = models.CharField(max_length=255)
     logic_port = models.CharField(max_length=40)
     logic_port_num = models.CharField(max_length=40, null=True)
