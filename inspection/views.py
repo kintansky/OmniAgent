@@ -107,8 +107,8 @@ def export_moudle(request):
 __PORTERROR_QUERY = "\
     SELECT error_info.*, npp.* FROM (\
         SELECT np.*, ni.port_description, ni.port_status \
-            FROM networkresource_porterrordiff as np \
-            LEFT JOIN networkresource_ipmanresource AS ni \
+            FROM omni_agent.inspection_porterrordiff as np \
+            LEFT JOIN cmdb.networkresource_ipmanresource AS ni \
             ON np.device_name = ni.device_name AND np.port = ni.port \
             WHERE np.record_time between %s AND %s\
         ) AS error_info \

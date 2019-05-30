@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -32,11 +33,20 @@ class PortErrorDiff(models.Model):
     record_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        app_label = 'networkresource'
+        # app_label = 'networkresource'
         ordering = ['-id']
         indexes = [
             models.Index(fields=['device_name']),
         ]
+
+
+class PortErrorFixRecord(models.Model):
+    target = models.ForeignKey(PortErrorDiff, on_delete=models.DO_NOTHING)
+    problem_type = models.CharField(max_length=40)
+    problem_detail = models.TextField()
+    begin_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField()
+    worker = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
 
 class PortPerf(models.Model):
