@@ -30,7 +30,8 @@ class PortErrorDiff(models.Model):
     everIpv4HeaderError = models.IntegerField()
     stateCRC = models.FloatField()  # CRC状态，1为正常，0为异常
     stateIpv4HeadError = models.FloatField()    # head状态，1为正常，0为异常
-    record_time = models.DateTimeField(auto_now_add=True)
+    # record_time = models.DateTimeField(auto_now_add=True)
+    record_time = models.DateTimeField()
 
     class Meta:
         # app_label = 'networkresource'
