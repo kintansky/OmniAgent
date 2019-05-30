@@ -44,6 +44,7 @@ class IpRecord(models.Model):
     ip_description = models.TextField(blank=True)
     ip_type = models.CharField(max_length=20, choices=CHOICES)
     record_time = models.DateTimeField()
+    ip_func = models.CharField(max_length=40, null=True)
 
     class Meta:
         ordering = ['id', ]
