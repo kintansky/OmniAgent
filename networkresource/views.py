@@ -19,7 +19,7 @@ def ajax_search_slot_ports(request):
         device_name=device_name, slot=slot)
     rawQueryCmd = 'SELECT ni.id, ni.port, ni.brand_width, ni.port_status, \
                 ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
-                FROM networkresource_ipmanresource AS ni LEFT JOIN networkresource_porterrordiff as np \
+                FROM cmdb.networkresource_ipmanresource AS ni LEFT JOIN omni_agent.inspection_porterrordiff as np \
                 ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s \
                 WHERE ni.device_name = %s AND ni.slot = %s'
     today_time = timezone.datetime.now()
