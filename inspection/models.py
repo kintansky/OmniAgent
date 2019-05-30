@@ -37,6 +37,7 @@ class PortErrorDiff(models.Model):
         ordering = ['-id']
         indexes = [
             models.Index(fields=['device_name']),
+            models.Index(fields=['port']),
         ]
 
 
