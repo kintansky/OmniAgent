@@ -118,7 +118,7 @@ def export_ip(request):
     device_name = request.GET.get('device_name', '')
     ip_description = request.GET.get('ip_description', '')
     ip_type = request.GET.get('ip_type', '')
-    print(ip_address, device_name, ip_description, ip_type)
+    # print(ip_address, device_name, ip_description, ip_type)
     if ip_address == device_name == ip_description == '':
         file = os.path.join(
             BASE_DIR, 'collected_static/downloads/files/iprecord_all.xls')
