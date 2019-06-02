@@ -38,9 +38,9 @@ class IpAllocateForm(forms.Form):
         ('PTN', 'PTN'),
     )
     CHOICES2 = (
-        ('InUse', 'InUse'), # 在用
-        ('ShutDown', 'ShutDown'),   # 暂时关停
-        ('Delete', 'Delete'),   # 删除数据
+        ('InUse', '在用'), # 在用
+        ('ShutDown', '暂时关停'),   # 暂时关停
+        ('Delete', '删除数据'),   # 删除数据
     )
     ies = forms.CharField(label='ies', max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '10000100'}))   # 看是否能改成int
     order_num = forms.CharField(label='工单号', max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'CMCC-FS-SGYWTZ-***'}))
@@ -154,9 +154,9 @@ class IpPrivateAllocateForm(forms.Form):
         ('VPN', 'VPN'),
     )
     CHOICES2 = (
-        ('InUse', 'InUse'),
-        ('ShutDown', 'ShutDown'),
-        ('Delete', 'Delete'),
+        ('InUse', '在用'), # 在用
+        ('ShutDown', '暂时关停'),   # 暂时关停
+        ('Delete', '删除数据'),   # 删除数据
     )
     service = forms.CharField(label='业务标识', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))   # 看是否能改成int
     community = forms.CharField(label='community', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'GDFS_JiaHeIPPBX'}))

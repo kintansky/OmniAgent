@@ -58,8 +58,8 @@ class PublicIpGateway(models.Model):
     gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
     mask = models.SmallIntegerField()
 
-    class Meta:
-        app_label = 'watchdog'
+    # class Meta:
+    #     app_label = 'watchdog'
 
 
 class PublicIpSegment(models.Model):
@@ -75,7 +75,7 @@ class PublicIpSegment(models.Model):
     class Meta:
         unique_together = (('ip_segment', 'mask'),)
         ordering = ['id', ]
-        app_label = 'watchdog'
+        # app_label = 'watchdog'
 
 
 class PublicIpAllocation(models.Model):
@@ -97,15 +97,17 @@ class PublicIpAllocation(models.Model):
     ip_description = models.TextField(blank=True, null=True)
     up_brandwidth = models.SmallIntegerField(blank=True, null=True)
     down_brandwidth = models.SmallIntegerField()
-    alc_user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
+    # alc_user = models.ForeignKey(
+    #     User, on_delete=models.DO_NOTHING, related_name='plcip_alc_user')
+    # 不再使用外键，避免用户销户，只有id无法关联姓名的问题
+    alc_user = models.CharField(max_length=100, null=True)
     alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
     # alc_time = models.DateTimeField()   # 外部数据导入时使用
     # 取消该模型内的调整记录，增加状态标记：在用、销户
     state = models.CharField(max_length=10)
 
     class Meta:
-        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        # app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-alc_time', ]
 
 
@@ -114,8 +116,10 @@ class PublicIpModRecord(models.Model):
         PublicIpAllocation, on_delete=models.DO_NOTHING)
     mod_order = models.CharField(max_length=255)
     mod_msg = models.TextField()
-    mod_user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='plcip_mod_user')
+    # mod_user = models.ForeignKey(
+    #     User, on_delete=models.DO_NOTHING, related_name='plcip_mod_user')
+    # 不再使用外键，避免用户销户，只有id无法关联姓名的问题
+    mod_user = models.CharField(max_length=100, null=True)
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
 
@@ -141,7 +145,7 @@ class PublicIpModRecord(models.Model):
     ever_state = models.CharField(max_length=10, null=True)
 
     class Meta:
-        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        # app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-record_time', ]
 
 
@@ -167,14 +171,16 @@ class PrivateIpAllocation(models.Model):
         protocol='both', null=True)   # 10.0.64.1
     ipsegment = models.CharField(max_length=100, null=True)    # 10.0.64.0/24
     ip_description = models.TextField(blank=True, null=True)
-    alc_user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='prvip_alc_user')
+    # alc_user = models.ForeignKey(
+    #     User, on_delete=models.DO_NOTHING, related_name='prvip_alc_user')
+    # 不再使用外键，避免用户销户，只有id无法关联姓名的问题
+    alc_user = models.CharField(max_length=100, null=True)
     alc_time = models.DateTimeField(auto_now_add=True)    # 外部数据导入时注释
     # alc_time = models.DateTimeField()   # 外部数据导入时使用
     state = models.CharField(max_length=10)
 
     class Meta:
-        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        # app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-alc_time', ]
 
 
@@ -183,8 +189,10 @@ class PrivateIpModRecord(models.Model):
         PrivateIpAllocation, on_delete=models.DO_NOTHING)
     mod_order = models.CharField(max_length=255)
     mod_msg = models.TextField()
-    mod_user = models.ForeignKey(
-        User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
+    # mod_user = models.ForeignKey(
+    #     User, on_delete=models.DO_NOTHING, related_name='prvip_mod_user')
+    # 不再使用外键，避免用户销户，只有id无法关联姓名的问题
+    mod_user = models.CharField(max_length=100, null=True)
     # record_time = models.DateTimeField()
     record_time = models.DateTimeField(auto_now_add=True)
     # 本次修改前的分配信息，用于记录备份
@@ -212,7 +220,7 @@ class PrivateIpModRecord(models.Model):
     ever_state = models.CharField(max_length=10, null=True)
 
     class Meta:
-        app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
+        # app_label = 'watchdog'  # 因为cmdb没有auth_user表格，只能在omni_agent主数据库里面建表，否则无法关联fk
         ordering = ['-record_time', ]
 
 

@@ -108,13 +108,13 @@ __PORTERROR_QUERY = "\
     SELECT error_info.*, npp.* FROM (\
         SELECT np.*, ni.port_description, ni.port_status \
             FROM omni_agent.inspection_porterrordiff as np \
-            LEFT JOIN cmdb.networkresource_ipmanresource AS ni \
+            LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
             ON np.device_name = ni.device_name AND np.port = ni.port \
             WHERE np.record_time between %s AND %s\
         ) AS error_info \
     LEFT JOIN (\
         SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
-            FROM cmdb.networkresource_portperf \
+            FROM omni_agent.inspection_portperf \
             WHERE record_time BETWEEN %s AND %s\
         ) AS npp \
     ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
@@ -160,11 +160,11 @@ __QUERY_ERROR_AFFECT = "\
         SELECT pp_tb.*, ip_tb.device_ip \
         FROM (\
             SELECT id, device_name, `port`, logic_port \
-            FROM cmdb.networkresource_ipmanresource \
+            FROM omni_agent.networkresource_ipmanresource \
             WHERE device_name = %s AND `port` = %s \
-        ) AS pp_tb LEFT JOIN cmdb.networkresource_iprecord AS ip_tb \
+        ) AS pp_tb LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
         ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num\
-    ) AS p_ip_tb LEFT JOIN cmdb.networkresource_zxclientinfo AS client_tb \
+    ) AS p_ip_tb LEFT JOIN omni_agent.networkresource_zxclientinfo AS client_tb \
     ON p_ip_tb.device_ip = client_tb.ip\
 "
 

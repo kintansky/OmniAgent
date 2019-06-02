@@ -69,7 +69,7 @@ class PortPerf(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
-        app_label = 'networkresource'
+        # app_label = 'networkresource'
         ordering = ['-record_time']
         indexes = [
             models.Index(fields=['device_name']),

@@ -120,7 +120,7 @@ EACH_PAGE_DEVICES_NUMBER = 20
 
 
 # 注意优先级，多个数据库情况下路由顺序匹配优先，最后是default数据库
-DATABASE_ROUTERS = ['omni.db_router.NetworkresourceRouter',]
+# DATABASE_ROUTERS = ['omni.db_router.NetworkresourceRouter',]
 # 多数据库是建议使用下面的方法
 # DATABASE_APPS_MAPPING = {
 #     # example:

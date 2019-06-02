@@ -19,7 +19,7 @@ def ajax_search_slot_ports(request):
         device_name=device_name, slot=slot)
     rawQueryCmd = 'SELECT ni.id, ni.port, ni.brand_width, ni.port_status, \
                 ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
-                FROM cmdb.networkresource_ipmanresource AS ni LEFT JOIN omni_agent.inspection_porterrordiff as np \
+                FROM omni_agent.networkresource_ipmanresource AS ni LEFT JOIN omni_agent.inspection_porterrordiff as np \
                 ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s \
                 WHERE ni.device_name = %s AND ni.slot = %s'
     today_time = timezone.datetime.now()
@@ -246,7 +246,7 @@ def allocate_ip(request, ip_type):
                     'up_brandwidth']
                 public_ip_allocation.down_brandwidth = ip_allocate_form.cleaned_data[
                     'down_brandwidth']
-                public_ip_allocation.alc_user = request.user    # 直接通过request获取当前操作用户
+                public_ip_allocation.alc_user = request.user.first_name    # 直接通过request获取当前操作用户
                 public_ip_allocation.state = 'InUse'
                 public_ip_allocation.save()
                 context['status'] = 1   # 操作状态
@@ -285,7 +285,7 @@ def allocate_ip(request, ip_type):
                 private_ip_allocation.ipsegment = ip_allocate_form.cleaned_data['ipsegment']
                 private_ip_allocation.ip_description = ip_allocate_form.cleaned_data[
                     'ip_description']
-                private_ip_allocation.alc_user = request.user    # 直接通过request获取当前操作用户
+                private_ip_allocation.alc_user = request.user.first_name    # 直接通过request获取当前操作用户
                 private_ip_allocation.state = 'InUse'
                 private_ip_allocation.save()
                 context['status'] = 1   # 操作状态
@@ -393,7 +393,7 @@ def ip_allocation_mod(request, ip_type):
                 mod_record.mod_target = target_record
                 mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
                 mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
-                mod_record.mod_user = request.user
+                mod_record.mod_user = request.user.first_name
                 mod_record.save()
                 # 新数据
                 target_record.ies = ip_allocate_form.cleaned_data['ies']
@@ -461,7 +461,7 @@ def ip_allocation_mod(request, ip_type):
                 mod_record.mod_target = target_record
                 mod_record.mod_order = ip_mod_form.cleaned_data['mod_order']
                 mod_record.mod_msg = ip_mod_form.cleaned_data['mod_msg']
-                mod_record.mod_user = request.user
+                mod_record.mod_user = request.user.first_name
                 mod_record.save()
                 # 新信息
                 target_record.service = ip_allocate_form.cleaned_data['service']

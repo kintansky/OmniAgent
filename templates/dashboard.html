@@ -18,25 +18,8 @@
     <div class="container">
         <!-- 基础信息部分 -->
         <div class="row">
-            <div class="col-md-4">
-                <h3>&raquo; 设备清单</h3>
-                <div class="alert alert-success" role="alert">
-                    <strong>{{ device_count }}</strong> 台设备被记录在案. 
-                </div>
-                <ul class="list-group">
-                    <li class="list-group-item">
-                        <span class="badge">{{ device_ipman_count }} 台</span>
-                        城域网
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{ device_cmnet_count }} 台</span>
-                        承载网
-                    </li>
-                    <li class="list-group-item">
-                        <span class="badge">{{ device_oth_count }} 台</span>
-                        其 他
-                    </li>
-                </ul>
+            <div class="col-md-6">
+                <div id="devicemain" style="width:100%;height:300px;"></div>
                 <div class="btn-toolbar">
                     <div class="btn-group" role="group" aria-label="true">
                         <a class="btn btn-success" href="{% url 'device_list' %}" role="button">设备清单 &raquo;</a>
@@ -47,26 +30,13 @@
                     <div class="btn-group" role="group" aria-label="true">
                         <a class="btn btn-danger" href="" role="button">备份 &raquo;</a>
                     </div>
-                </div>                    
+                </div>
             </div>
-            <div class="col-md-4">
-                <h3>&raquo; 业务IP</h3>
-                <div class="alert alert-success" role="alert">
-                    巡检 {{ device_ipman_count }} 台设备,  <strong>{{ ip_count }}</strong> 个地址被记录在案.
-                </div>
-                <div class="progress">
-                    <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="{{ ip_public_ratio }}" aria-valuemin="0" aria-valuemax="100" style="min-width: 6em; width: {{ ip_public_ratio }}%">
-                        公网 {{ ip_public_count }} 个
-                    </div>
-                </div>
-                <div class="progress">
-                    <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" aria-valuenow="{{ ip_private_ratio }}" aria-valuemin="0" aria-valuemax="100" style="min-width: 6em; width: {{ ip_private_ratio }}%;">
-                        私网 {{ ip_private_count }} 个
-                    </div>
-                </div>
+            <div class="col-md-6">
+                <div id="ipmain" style="width:100%;height:300px;"></div>
                 <div class="btn-toolbar">
                     <div class="btn-group" role="group" aria-label="true">
-                        <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">查看记录 &raquo;</a>
+                        <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">查看业务地址 &raquo;</a>
                     </div>
                     <div class="btn-group" role="group">
                         <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -205,10 +175,85 @@
 {% endblock %}
 
 {% block tail_script %}
+<script src="{% static 'echarts.min.js' %}"></script>
+<!-- 引入 vintage 主题 -->
+<script src="{% static 'infographic.js' %}"></script>
 <script>
     $('#deviceModal').on('shown.bs.modal', function () {
         $('#myInput').focus()
     });
 
+    $(document).ready(function(){
+        var devicePie = echarts.init(document.getElementById('ipmain'), 'infographic');
+        devicePie.showLoading();
+
+        var option = {
+            title : {
+                show: false,
+            },
+            legend: {
+                orient : 'vertical',
+                x : 'right',
+                data:['公网','私网']
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            calculable : true,
+            series : [
+                {
+                    name:'业务地址',
+                    type:'pie',
+                    data:[
+                        {value:'{{ ip_public_count }}', name:'公网'},
+                        {value:'{{ ip_private_count }}', name:'私网'},
+                    ].sort(function (a, b) { return a.value - b.value; }),
+                }
+            ]
+        };
+        devicePie.hideLoading();
+        devicePie.setOption(option);
+        window.addEventListener("resize", function () {
+            devicePie.resize();
+        });
+    });
+
+    $(document).ready(function(){
+        var ipPie = echarts.init(document.getElementById('devicemain'), 'infographic');
+        ipPie.showLoading();
+
+        var option = {
+            title : {
+                show: false,
+            },
+            legend: {
+                orient : 'vertical',
+                x : 'right',
+                data:['城域网设备','承载网设备','其他设备']
+            },
+            tooltip : {
+                trigger: 'item',
+                formatter: "{a} <br/>{b} : {c} ({d}%)"
+            },
+            calculable : true,
+            series : [
+                {
+                    name:'监控设备',
+                    type:'pie',
+                    data:[
+                        {value:'{{ device_ipman_count }}', name:'城域网设备'},
+                        {value:'{{ device_cmnet_count }}', name:'承载网设备'},
+                        {value:'{{ device_oth_count }}', name:'其他设备'},
+                    ].sort(function (a, b) { return a.value - b.value; }),
+                }
+            ]
+        };
+        ipPie.hideLoading();
+        ipPie.setOption(option);
+        window.addEventListener("resize", function () {
+            ipPie.resize();
+        });
+    });
 </script>
 {% endblock %}

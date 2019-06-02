@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Device, DeviceManufactor
 from .forms import AddDeviceForm
+from networkresource.models import IpmanResource
+from django.utils import timezone
 # 下面为了引入funcpack的公共函数
-from funcpack.funcs import pages
+from funcpack.funcs import pages, dumpOlt2Json
 
 # Create your views here.
 
@@ -72,3 +74,45 @@ def add_device(request):
     context['add_device_form'] = add_device_form
     context['status'] = status
     return render(request, 'add_device.html', context)
+
+
+def device_detail(request, device_name):
+    device = get_object_or_404(Device, device_name=device_name)
+    # slot_brief = IpmanResource.objects.filter(device_name=device_name).values_list('slot').annotate(allports=Count('slot'), upports=Count('port_status', filter=Q(port_status='Up'))).order_by('slot')
+    rawQueryCmd = "SELECT nt.id, nt.slot, COUNT(nt.slot) AS allports, \
+                    COUNT(case when nt.port_status = 'Up' then nt.port_status else NULL END ) AS upports, \
+                    SUM(case when nt.stateCRC > 0 then nt.stateCRC ELSE 0 END ) AS crc \
+                FROM (\
+                    SELECT ni.id, ni.slot, ni.port, ni.brand_width, \
+                        ni.port_status, ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
+                    FROM omni_agent.networkresource_ipmanresource AS ni \
+                    LEFT JOIN omni_agent.inspection_porterrordiff as np \
+                    ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s AND %s \
+                    WHERE ni.device_name = %s) AS nt \
+                GROUP BY nt.slot ORDER BY nt.slot"
+    today_time = timezone.datetime.now()
+    time_end = timezone.datetime(year=today_time.year, month=today_time.month,
+                                 day=today_time.day, hour=23, minute=59, second=59)
+    time_begin = time_end + timezone.timedelta(days=-2)
+    rawQueryData = (time_begin, time_end, device_name)
+    slot_brief = IpmanResource.objects.raw(rawQueryCmd, rawQueryData)
+    port_up_count = IpmanResource.objects.filter(
+        device_name=device_name, port_status__icontains='up').count()
+    port_down_count = IpmanResource.objects.filter(
+        device_name=device_name).count() - port_up_count
+    # 关系查询需要修改model的建立外键关系，或者使用raw query
+    rawQueryCmd = 'SELECT id, port_description FROM omni_agent.networkresource_ipmanresource WHERE device_name = %s AND port_description REGEXP "dT:.*?"'
+    oltList = IpmanResource.objects.raw(rawQueryCmd, (device_name,))
+    olts = set()
+    for olt in oltList:
+        olts.add(olt.port_description.split(':')[1])
+    oltJson = dumpOlt2Json(olts, device_name)
+    # print(oltJson)
+
+    context = {}
+    context['device'] = device
+    context['slot_brief'] = slot_brief
+    context['port_up_count'] = port_up_count
+    context['port_down_count'] = port_down_count
+    context['networkjson'] = oltJson
+    return render(request, 'device_detail.html', context)

@@ -97,7 +97,7 @@
                 <td>{{ record.access_type }}</td>
                 <td>{{ record.client_name|truncatechars:15 }}</td>
                 <td>{{ record.down_brandwidth }}</td>
-                <td>{{ record.alc_user.first_name }}</td>
+                <td>{{ record.alc_user }}</td>
                 <td>{{ record.state }}</td>
                 {% if user.is_authenticated %}
                     <td>

@@ -34,7 +34,7 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                <div id="networktree" style="width:100%;height:400px;"></div>
+                <div id="networktree" style="width:100%;height:600px;"></div>
             </div>
         </div>
 
@@ -90,11 +90,12 @@
 {% endblock %}
 
 {% block tail_script %}
-<script src="{% static 'echarts.common.min.js' %}"></script>
+<script src="{% static 'echarts.min.js' %}"></script>
+<script src="{% static 'infographic.js' %}"></script>
 <script>
     // 基于准备好的dom，初始化echarts实例
     $(document).ready(function(){
-        var userPie = echarts.init(document.getElementById('usermain'));
+        var userPie = echarts.init(document.getElementById('usermain'), 'infographic');
         userPie.showLoading();
         // 指定图表的配置项和数据
         var option = {
@@ -137,7 +138,7 @@
             userPie.resize();
         });
 
-        var perfBar = echarts.init(document.getElementById('perfmain'));
+        var perfBar = echarts.init(document.getElementById('perfmain'), 'infographic');
         perfBar.showLoading();
         // 指定图表的配置项和数据
         var option = {
@@ -170,6 +171,71 @@
         perfBar.setOption(option);
         window.addEventListener("resize", function () {
             perfBar.resize();
+        });
+
+        var olts = JSON.parse('{{ networkjson|safe }}');
+        var ntTree = echarts.init(document.getElementById('networktree'), 'infographic');
+        ntTree.showLoading();
+        var option = {
+            title: {
+                text: '拓扑',
+                show: false,
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    mark: {show: true},
+                    dataView: {show: true, readOnly: false},
+                    restore: {show: true},
+                    saveAsImage: {show: true}
+                }
+            },
+            calculable : false,
+            series : [
+                {
+                    name:'树图',
+                    type:'tree',
+                    orient: 'horizontal',  // vertical horizontal
+                    rootLocation: {x: 'left',y: 'center'}, // 根节点位置  {x: 100, y: 'center'}
+                    nodePadding: 10,
+                    layerPadding: 200,
+                    hoverable: false,
+                    roam: true,    // 鼠标交互
+                    symbolSize: 6,
+                    itemStyle: {
+                        normal: {
+                            label: {
+                                show: true,
+                                position: 'right',
+                                formatter: "{b}",
+                                textStyle: {
+                                    color: '#000',
+                                    fontSize: 9
+                                }
+                            },
+                            lineStyle: {
+                                width: 1,
+                                type: 'solid' // 'curve'|'broken'|'solid'|'dotted'|'dashed'
+                            }
+                        },
+                        emphasis: {
+                            label: {
+                                show: false
+                            },
+                            borderWidth: 5
+                        }
+                    },
+                    
+                    data: [
+                        olts
+                    ]
+                }
+            ]
+        };
+        ntTree.hideLoading();
+        ntTree.setOption(option);
+        window.addEventListener("resize", function () {
+            ntTree.resize();
         });
     });
 
