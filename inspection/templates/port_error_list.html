@@ -65,7 +65,7 @@
     <th>带宽利用率In</th>
     <th>带宽利用率Out</th>
     <th>时间</th>
-    <th>影响范围</th>
+    <th>影响</th>
     <th>操作</th>
 {% endblock %}
 
@@ -103,14 +103,29 @@
             <td>{{ record.utility_out }}</td>
             <td>{{ record.record_time|date:"Y-m-d" }}</td>
             <td>
-                <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_effect_trigger", dn="{{ record.device_name }}", pt="{{ record.port }}">
+                <a href="" data-toggle="modal" data-target="#effectModal" class="modal_effect_trigger" dn="{{ record.device_name }}" pt="{{ record.port }}">
                     <strong>检查</strong>
                 </a>
             </td>
-            <td>
-                <a href="">
+            
+            {% if record.fix_status == 1 %}
+            <td class="success">已处理
+            {% elif record.claim == 1 %}
+            <td class="info">处理中
+            {% else %}
+            <td class="danger">
+                <a href="" class="operation-claim" rid="{{ record.id }}"><strong>未处理</strong></a>
+            {% endif %}
+            |
+            {% if user.is_authenticated %}
+                <a href="" data-toggle="modal" data-target="#operationModal" class="modal_operation_trigger" rid="{{ record.id }}">
                     <span class="glyphicon glyphicon-edit"></span>
                 </a>
+            {% else %}
+                <a href="{% url 'login' %}?from={{ request.get_full_path }}">
+                    <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                </a>
+            {% endif %}
             </td>
         </tr>
     {% endfor %}
@@ -174,7 +189,8 @@
 
 {% block other_content %}
 {# modal #}
-<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+<!-- 错误影响模态框 -->
+<div class="modal fade bs-example-modal-lg" id="effectModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -191,6 +207,32 @@
         </div>
     </div>
 </div>
+<!-- 端口处理模态框 -->
+<div class="modal fade bs-example-modal-lg" id="operationModal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">操作</h4>
+            </div>
+            <div class="modal-body">
+                <h4> 当前处理状态 </h4>
+                <p class='operation-status'></p>
+                <h4> 处理结果 </h4>
+                <p class="operation_form"></p>
+                <hr>
+                <h4> 近10次处理记录 </h4>
+                <ul class="list-group operation-record">
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-success finish-btn">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block tail_script %}
@@ -230,6 +272,85 @@
                         }else{
                             console.log(data);
                             alert('没有找到相关对象');
+                        }
+                    },
+                    error: function(xhr){
+                        console.log(xhr);
+                    }
+                });
+            });
+        });
+
+        // 请求当前处理状态
+        $(document).ready(function(){
+            $(".modal_operation_trigger").click(function(){
+                $.ajax({
+                    url: "{% url 'ajax_port_error_operation_list' %}",
+                    type: 'GET',
+                    data: {rid: $(this).attr('rid')},
+                    cache: false,
+                    success: function(data){
+                        if(data['status'] == 'success'){
+                            // console.log(data['operation_form']);
+                            $(".operation-record").html(data['operation-record']);
+                            if(data['operating'] == 'yes'){ //正在处理
+                                $(".operation-status").html('<div class="alert alert-success" role="alert">'+data['worker']+' 正在处理</div>' + '<hr>');
+                                $(".operation_form").html(data['operation_form']);
+                            }else{
+                                $(".operation-status").html('暂未认领<hr>');
+                                $(".operation_form").html('无');
+                            }
+                        }else{
+                            console.log(data);
+                            alert('error');
+                        }
+                    },
+                    error: function(xhr){
+                        console.log(xhr);
+                    }
+                });
+            });
+        });
+
+        // 认领错误端口
+        $(document).ready(function(){
+            $(".operation-claim").click(function(){
+                $.ajax({
+                    url: "{% url 'ajax_port_error_operate' 'claim' %}",
+                    type: 'POST',
+                    data: {rid: $(this).attr('rid'), csrfmiddlewaretoken: "{{ csrf_token }}"},
+                    cache: false,
+                    success: function(data){
+                        if(data['status'] == 'success'){
+                            console.log(data);                            
+                        }else{
+                            console.log(data);
+                            alert('error');
+                        }
+                    },
+                    error: function(xhr){
+                        console.log(xhr);
+                    }
+                });
+            });
+        });
+
+        // 完成处理端口
+        $(document).ready(function(){
+            $(".finish-btn").click(function(){
+                $.ajax({
+                    url: "{% url 'ajax_port_error_operate' 'finish' %}",
+                    type: 'POST',
+                    data: $('.modal_form').serialize()+"&rid="+$(".modal_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
+                    cache: false,
+                    success: function(data){
+                        if(data['status'] == 'success'){
+                            // console.log(data);
+                            $('.modal').modal('hide');  // 修改成功后关闭modal
+                            alert('处理完成');
+                        }else{
+                            console.log(data);
+                            alert(data['error_info']);
                         }
                     },
                     error: function(xhr){

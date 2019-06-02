@@ -24,13 +24,14 @@ class OpticalMoudleDiff(models.Model):
 class PortErrorDiff(models.Model):
     device_name = models.CharField(max_length=255)
     port = models.CharField(max_length=40)
-    nowCRC = models.IntegerField()
-    nowIpv4HeaderError = models.IntegerField()
-    everCRC = models.IntegerField()
-    everIpv4HeaderError = models.IntegerField()
-    stateCRC = models.FloatField()  # CRC状态，1为正常，0为异常
-    stateIpv4HeadError = models.FloatField()    # head状态，1为正常，0为异常
+    nowCRC = models.IntegerField(null=True)
+    nowIpv4HeaderError = models.IntegerField(null=True)
+    everCRC = models.IntegerField(null=True)
+    everIpv4HeaderError = models.IntegerField(null=True)
+    stateCRC = models.FloatField(null=True)  # CRC每小时增速
+    stateIpv4HeadError = models.FloatField(null=True)    # head每小时增速
     record_time = models.DateTimeField(auto_now_add=True)
+    fix_status = models.BooleanField(default=False, null=True)
 
     class Meta:
         # app_label = 'networkresource'
@@ -42,12 +43,17 @@ class PortErrorDiff(models.Model):
 
 
 class PortErrorFixRecord(models.Model):
-    target = models.ForeignKey(PortErrorDiff, on_delete=models.DO_NOTHING)
-    problem_type = models.CharField(max_length=40)
-    problem_detail = models.TextField()
+    # target = models.ForeignKey(PortErrorDiff, on_delete=models.DO_NOTHING)
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    problem_type = models.CharField(max_length=40, null=True)
+    problem_detail = models.TextField(null=True)
     begin_time = models.DateTimeField(auto_now_add=True)
-    end_time = models.DateTimeField()
-    worker = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    end_time = models.DateTimeField(null=True)
+    # worker = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    worker = models.CharField(max_length=100)
+    status = models.BooleanField(default=False)    # 标记是否已经完成处理
+    claim = models.BooleanField(default=True)    # 用户认领端口，默认True，即建立记录就认领，处理完重新设置为False
 
 
 class PortPerf(models.Model):

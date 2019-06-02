@@ -107,7 +107,7 @@ STATICFILES_DIRS = [
 ]
 
 # 自定义参数
-EACH_PAGE_DEVICES_NUMBER = 20
+EACH_PAGE_DEVICES_NUMBER = 50
 
 # CACHE, 减少数据库查询次数
 # 开发环境和生产环境需要单独创建py manage.py createcachetable --settings omni.settings.development

@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
 import json
+
 
 
 # Create your views here.
@@ -104,6 +105,7 @@ def export_moudle(request):
 
 # 端口质量模块
 # port error 采用rawquery做连接查询，取出其他关联信息 用于请求CRC+光功率的信息
+'''
 __PORTERROR_QUERY = "\
     SELECT error_info.*, npp.* FROM (\
         SELECT np.*, ni.port_description, ni.port_status \
@@ -120,13 +122,35 @@ __PORTERROR_QUERY = "\
     ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
     AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
 "
+'''
+
+__PORTERROR_QUERY = "\
+    SELECT new_tb.*, fix_tb.worker, fix_tb.claim FROM (\
+        SELECT error_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
+            SELECT np.*, ni.port_description, ni.port_status \
+                FROM omni_agent.inspection_porterrordiff as np \
+                LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
+                ON np.device_name = ni.device_name AND np.port = ni.port \
+                WHERE np.record_time BETWEEN %s AND %s\
+            ) AS error_info \
+        LEFT JOIN (\
+            SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
+                FROM omni_agent.inspection_portperf \
+                WHERE record_time BETWEEN %s AND %s\
+            ) AS npp \
+        ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
+        AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
+    ) AS new_tb LEFT JOIN (SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1) AS fix_tb \
+    ON new_tb.device_name = fix_tb.device_name AND new_tb.port = fix_tb.port \
+"
+# 注意修改__queryline的排序字段
 
 
 def __queryline(order_field):
     if order_field == 'crc':
-        porterror_query = __PORTERROR_QUERY + 'ORDER BY -error_info.stateCRC'
+        porterror_query = __PORTERROR_QUERY + 'ORDER BY -new_tb.stateCRC'
     elif order_field == 'head':
-        porterror_query = __PORTERROR_QUERY + 'ORDER BY -error_info.stateIpv4HeadError'
+        porterror_query = __PORTERROR_QUERY + 'ORDER BY -new_tb.stateIpv4HeadError'
     return porterror_query
 
 
@@ -239,6 +263,115 @@ def export_porterror(request):
     response = FileResponse(
         open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
+
+
+def ajax_port_operation_list(request):
+    data = {}
+    rid = request.GET.get('rid')
+    target = PortErrorDiff.objects.get(id=int(rid))
+    # 过往处理记录（最近10条）
+    operation_old_records = PortErrorFixRecord.objects.filter(device_name=target.device_name, port=target.port, status=True).order_by('-begin_time')[0:10]
+    data = portErrorEverOperationHtmlCallBack(operation_old_records, data)
+    # 当前在处理的记录，如果能找到正在处理的记录，说明正在被处理
+    try:
+        operation_now_record = PortErrorFixRecord.objects.get(device_name=target.device_name, port=target.port, status=False)
+        data['operating'] = 'yes'
+        data['worker'] = operation_now_record.worker
+        
+        data = portOperationHtmlCallBack(data, rid)
+        data['status'] = 'success'
+        
+    except Exception as err: # 如果没找到说明没有在处理的记录，需要先认领，再处理
+        print(err)
+        data['operating'] = 'no'
+        data['operation_form'] = ''
+        data['status'] = 'success'
+    return JsonResponse(data)
+
+
+def portErrorEverOperationHtmlCallBack(records, data):
+    problem_dict = {'power': '光功率问题', 'moudle': '光模块故障', 'fiber': '尾纤问题', 'wdm': '波分故障', 'oth': '其他故障'}
+    h = ''
+    for r in records:
+        begin = r.begin_time.strftime('%Y-%m-%d')
+        end = r.end_time.strftime('%Y-%m-%d')
+        h += '<li class="list-group-item list-group-item-success">' + \
+                begin + ' 发现 ' + '<strong>' + problem_dict[r.problem_type] + '</strong>' + ' ' + end + ' 完成处理 处理人: ' + r.worker + \
+            '</li>'
+    data['operation-record'] = h
+    return data
+
+
+def portOperationHtmlCallBack(data, rid):
+    h = '<form class="modal_form" action="" method="POST" rid="{}">'.format(rid)
+    operation_form = PortErrorOperationForm()
+    for f in operation_form:
+        h += '<div class="form-group"><label for="{}" class="control-label">{}</label>{}</div>'.format(
+            f.id_for_label, f.label, f)
+    h += '</form>'
+    data['operation_form'] = h
+    return data
+
+
+def ajax_port_operate(request, operation_type):
+    data = {}
+    if operation_type == 'claim':
+        rid = request.POST.get('rid')
+        target = PortErrorDiff.objects.get(id=int(rid))
+        try:
+            # 可能已经存在正在处理的记录的情况，这种不不要再新建记录
+            PortErrorFixRecord.objects.get(device_name=target.device_name, port=target.port, claim=True)
+            data['status'] = 'success'
+        except:
+            # 不存在正在处理的记录的情况，新建记录
+            fix_record = PortErrorFixRecord()
+            fix_record.device_name = target.device_name
+            fix_record.port = target.port
+            fix_record.worker = request.user.first_name
+            fix_record.claim = True
+            fix_record.save()
+            data['status'] = 'success'
+    elif operation_type == 'finish':
+        of = PortErrorOperationForm(request.POST)
+        rid = request.POST.get('rid')
+        target = PortErrorDiff.objects.get(id=int(rid))
+        if target.fix_status is None:  # 避免一些没刷新的问题
+            fix_record = PortErrorFixRecord.objects.get(device_name=target.device_name, port=target.port, status=False, claim=True)
+            if of.is_valid():
+                if request.user.first_name == fix_record.worker:
+                    fix_record.problem_type = of.cleaned_data['problem_type']
+                    fix_record.problem_detail = of.cleaned_data['problem_detail']
+                    fix_record.end_time = timezone.datetime.now()
+                    fix_record.status = True
+                    fix_record.claim = False
+                    fix_record.save()
+                    data['status'] = 'success'
+                    target.fix_status = True
+                    # 避免空字符回填的问题
+                    if target.nowCRC is None:
+                        target.nowCRC = 0
+                    if target.nowIpv4HeaderError is None:
+                        target.nowIpv4HeaderError = 0
+                    if target.everCRC is None:
+                        target.everCRC = 0
+                    if target.everIpv4HeaderError is None:
+                        target.everIpv4HeaderError = 0
+                    if target.stateCRC is None:
+                        target.stateCRC = 0
+                    if target.stateIpv4HeadError is None:
+                        target.stateIpv4HeadError = 0
+                    target.save()
+                else:
+                    data['status'] = 'error'
+                    data['error_info'] = '你非认领用户，认领用户为{}'.format(fix_record.worker)
+            else:
+                data['status'] = 'error'
+                error_info = ''
+                errorDict = of.errors.as_data()
+                for f in errorDict:
+                        error_info += '填写错误字段{}: {}'.format(f, errorDict[f])
+                data['error_info'] = error_info
+    return JsonResponse(data)
 
 
 # 单通设备检查模块
