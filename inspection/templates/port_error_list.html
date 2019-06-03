@@ -107,26 +107,27 @@
                     <strong>检查</strong>
                 </a>
             </td>
-            
-            {% if record.fix_status == 1 %}
-            <td class="success">已处理
-            {% elif record.claim == 1 %}
-            <td class="info">处理中
-            {% else %}
-            <td class="danger">
-                <a href="" class="operation-claim" rid="{{ record.id }}"><strong>未处理</strong></a>
-            {% endif %}
-            |
             {% if user.is_authenticated %}
+                {% if record.fix_status == 1 %}
+                <td class="success">已处理
+                {% elif record.claim == 1 %}
+                <td class="info">处理中
+                {% else %}
+                <td class="danger">
+                    <a href="" class="operation-claim" rid="{{ record.id }}"><strong>请认领</strong></a>
+                {% endif %}
+                |
                 <a href="" data-toggle="modal" data-target="#operationModal" class="modal_operation_trigger" rid="{{ record.id }}">
                     <span class="glyphicon glyphicon-edit"></span>
                 </a>
+                </td>
             {% else %}
+            <td>
                 <a href="{% url 'login' %}?from={{ request.get_full_path }}">
                     <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
                 </a>
-            {% endif %}
             </td>
+            {% endif %}
         </tr>
     {% endfor %}
 {% endblock %}
