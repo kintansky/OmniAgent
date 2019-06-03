@@ -86,7 +86,7 @@ def writeXls(book, sheetName, titles, datas):
 
 if __name__ == "__main__":
     tableInfo = {
-        'tb': 'watchdog_publicipsegment',
+        'tb': 'networkresource_publicipsegment',
         # 'host': 'localhost',
         'host': '10.243.24.174',
         'port': 9003,
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         ipsetDict[str(gw[3])].add(subnet)
 
     # IP 清单
-    tableInfo['db'] = 'cmdb'
+    tableInfo['db'] = 'omni_agent'
     tableInfo['tb'] = 'networkresource_iprecord'
     IPTable = SqlTable(**tableInfo)
     cmd = 'select device_ip, ip_mask, device_name, logic_port, svlan, cvlan, ip_description, gateway, ip_func  from {}'.format(IPTable._tb)
