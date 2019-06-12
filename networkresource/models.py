@@ -235,6 +235,7 @@ class ZxClientInfo(models.Model):
     gateway = models.CharField(max_length=255, null=True)
     address = models.TextField(null=True)
     ip = models.CharField(max_length=255, null=True)
+    guard_level = models.CharField(max_length=20, null=True)
 
     class Meta:
         ordering = ['id']

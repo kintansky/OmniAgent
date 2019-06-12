@@ -31,7 +31,7 @@ class PortErrorDiff(models.Model):
     stateCRC = models.FloatField(null=True)  # CRC每小时增速
     stateIpv4HeadError = models.FloatField(null=True)    # head每小时增速
     record_time = models.DateTimeField(auto_now_add=True)
-    fix_status = models.BooleanField(default=False, null=True)
+    fix_status = models.BooleanField(default=False, null=True)  # 修复标记位，1代表该条记录已修复
 
     class Meta:
         # app_label = 'networkresource'
@@ -54,6 +54,24 @@ class PortErrorFixRecord(models.Model):
     worker = models.CharField(max_length=100)
     status = models.BooleanField(default=False)    # 标记是否已经完成处理
     claim = models.BooleanField(default=True)    # 用户认领端口，默认True，即建立记录就认领，处理完重新设置为False
+
+'''
+PortErrorDiff 记录时初始状态fix_status=0
+    端口未处理
+    PortErrorFixRecord：用户未认领，无记录
+    端口已认领
+    PortErrorFixRecord：用户认领claim=1，初始记录status=0
+    端口已修复
+    PortErrorFixRecord：用户认领claim=0，初始记录status=1，同时PortErrorDiff fix_status=1表明已修复，同一个端口，claim=1的只会有一条
+PortErrorDiff 记录状态fix_status=1
+    基于以上逻辑
+    PortErrorFixRecord：肯定存在status=1，claim=0的记录
+    如果有status=0，claim=1的记录肯定是发生在该条PortErrorDiff条目记录时间之后，即新发现的记录
+
+如果出现新PortErrorDiff记录
+    如果旧PortErrorDiff记录未修复，PortErrorFixRecord.claim=1的会一直标记PortErrorDiff处于被认领状态
+    旧PortErrorDiff记录已修复或不存在，PortErrorFixRecord.claim=0，则可以通过claim位区分是否需要被认领处理
+'''
 
 
 class PortPerf(models.Model):

@@ -302,7 +302,7 @@ def portErrorEverOperationHtmlCallBack(records, data):
     return data
 
 
-def portOperationHtmlCallBack(data, rid):
+def portOperationHtmlCallBack(data, rid):   # 构造处理完成时需要填写的表单
     h = '<form class="modal_form" action="" method="POST" rid="{}">'.format(rid)
     operation_form = PortErrorOperationForm()
     for f in operation_form:
