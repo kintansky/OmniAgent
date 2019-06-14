@@ -79,7 +79,7 @@
     <th>带宽利用率Out</th>
     <th>时间</th>
     <th>影响</th>
-    <th>操作</th>
+    <th>处理</th>
 {% endblock %}
 
 {% block table_body %}
@@ -112,8 +112,8 @@
                     <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
             {% endif %}
-            <td>{{ record.utility_in }}</td>
-            <td>{{ record.utility_out }}</td>
+            <td>{{ record.utility_in|floatformat|default:'0' }}</td>
+            <td>{{ record.utility_out|floatformat|default:'0' }}</td>
             <td>{{ record.record_time|date:"Y-m-d" }}</td>
             <td>
                 <a href="" data-toggle="modal" data-target="#effectModal" class="modal_effect_trigger" dn="{{ record.device_name }}" pt="{{ record.port }}">
@@ -227,7 +227,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">操作</h4>
+                <h4 class="modal-title">问题处理</h4>
             </div>
             <div class="modal-body">
                 <h4> 当前处理状态 </h4>
@@ -265,9 +265,9 @@
             showMeridian: 0 // 是否显示上下午
             // pickerPosition: "bottom-left"
         });
-
-        //请求受影响的业务
+        
         $(document).ready(function(){
+            //请求受影响的业务
             $(".modal_effect_trigger").click(function(){
                 $.ajax({
                     url: "{% url 'ajax_search_error_effect' %}",  // 异步请求的地址
@@ -293,10 +293,8 @@
                     }
                 });
             });
-        });
 
-        // 请求当前处理状态
-        $(document).ready(function(){
+            // 请求当前处理状态
             $(".modal_operation_trigger").click(function(){
                 $.ajax({
                     url: "{% url 'ajax_port_error_operation_list' %}",
@@ -324,10 +322,8 @@
                     }
                 });
             });
-        });
 
-        // 认领错误端口
-        $(document).ready(function(){
+            // 认领错误端口
             $(".operation-claim").click(function(){
                 $.ajax({
                     url: "{% url 'ajax_port_error_operate' 'claim' %}",
@@ -347,10 +343,8 @@
                     }
                 });
             });
-        });
 
-        // 完成处理端口
-        $(document).ready(function(){
+            // 完成处理端口
             $(".finish-btn").click(function(){
                 $.ajax({
                     url: "{% url 'ajax_port_error_operate' 'finish' %}",
