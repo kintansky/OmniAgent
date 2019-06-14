@@ -131,7 +131,7 @@ __PORTERROR_QUERY = "\
                 FROM omni_agent.inspection_porterrordiff as np \
                 LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
                 ON np.device_name = ni.device_name AND np.port = ni.port \
-                WHERE np.record_time BETWEEN %s AND %s\
+                WHERE np.record_time BETWEEN %s AND %s AND np.stateCRC >= 60 OR np.stateIpv4HeadError >= 1000 \
             ) AS error_info \
         LEFT JOIN (\
             SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
