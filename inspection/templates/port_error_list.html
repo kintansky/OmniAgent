@@ -35,7 +35,16 @@
 {% endblock %}
 
 {% block export %}
-    <a class="btn btn-success" href="{% url 'export_porterror' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">导出</a>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            导出
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            <li><a href="{% url 'export_porterror' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">检查记录</a></li>
+            <li><a href="{% url 'export_porterrorfix' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">处理记录</a></li>
+        </ul>
+    </div>
 {% endblock %}
 
 {% block alert_content %}
@@ -280,7 +289,7 @@
                             var effects = JSON.parse(data['effect_list']);  // 返回的数据被当成了string，需要转换成json
                             var h = '';
                             for (x in effects) {
-                                h += '<li class="list-group-item list-group-item-warning">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '\\' + effects[x]['group_id'] + '\\' + effects[x]['client_name'] + '</li>';
+                                h += '<li class="list-group-item list-group-item-warning">' + '<strong>'+ effects[x]['ip'] + '</strong>' + '；产品编号：' + effects[x]['product_id'] + '；客户：' + effects[x]['client_name'] + '</li>';
                             };
                             $(".effect-list").html(h);
                         }else{

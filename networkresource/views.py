@@ -142,7 +142,7 @@ def export_ip(request):
             ip_all_list = IpRecord.objects.filter(
                 device_name=device_name, ip_type=ip_type, ip_description__icontains=ip_description)
 
-    output = exportXls(IpRecord._meta.fields, ip_all_list, 'record_time')
+    output = exportXls(IpRecord._meta.fields, ip_all_list, ('record_time',))
     response = FileResponse(open(output, 'rb'), as_attachment=True,
                             filename="iprecord__search_result.xls")  # 使用Fileresponse替代以上两行
     return response

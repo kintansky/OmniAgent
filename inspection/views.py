@@ -97,7 +97,7 @@ def export_moudle(request):
             moudle_all_list = OpticalMoudleDiff.objects.filter(
                 record_time__range=time_range)
     output = exportXls(OpticalMoudleDiff._meta.fields,
-                       moudle_all_list, 'record_time')
+                       moudle_all_list, ('record_time',))
     response = FileResponse(open(output, 'rb'), as_attachment=True,
                             filename="moudle_result.xls")  # 使用Fileresponse替代以上两行
     return response
@@ -179,17 +179,18 @@ def port_error_list(request):
 
 # 通过端口查找,端口下划分的ip及对应客户,最内层select可以与model对象再做一次join查询
 __QUERY_ERROR_AFFECT = "\
-    SELECT p_ip_tb.*, client_tb.group_id, client_tb.client_name, client_tb.ip \
-    FROM (\
-        SELECT pp_tb.*, ip_tb.device_ip \
-        FROM (\
+    SELECT p_ip_tb.*, client_tb.product_id, client_tb.client_name, client_tb.ip \
+    FROM ( \
+        SELECT pp_tb.*, ip_tb.device_ip, ip_tb.ip_type \
+        FROM ( \
             SELECT id, device_name, `port`, logic_port \
             FROM omni_agent.networkresource_ipmanresource \
             WHERE device_name = %s AND `port` = %s \
-        ) AS pp_tb LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
-        ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num\
+        ) AS pp_tb \
+        LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
+        ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num HAVING ip_tb.ip_type IN ('public_outer', 'public_inner') \
     ) AS p_ip_tb LEFT JOIN omni_agent.networkresource_zxclientinfo AS client_tb \
-    ON p_ip_tb.device_ip = client_tb.ip\
+    ON p_ip_tb.device_ip = client_tb.ip HAVING client_name IS NOT NULL \
 "
 
 
@@ -202,12 +203,10 @@ def ajax_search_error_effect(request):
         effect_dict = []
         i = 1
         for e in effect_list:
-            effect_dict.append({'id': str(i), 'device_name': e.device_name,'port': e.port, 'group_id': str(e.group_id), 'client_name': str(e.client_name), 'ip': e.ip})
+            effect_dict.append({'id': str(i), 'device_name': e.device_name,'port': e.port, 'product_id': str(e.product_id), 'client_name': str(e.client_name), 'ip': e.device_ip})
             i += 1
         data['status'] = 'success'
         data['effect_list'] = json.dumps(effect_dict)
-        # data['effect_list'] = serializers.serialize("json", effect_list, fields=('device_name', 'port', 'logic_port', 'group_id', 'client_name')) # 多个联合查询的对象无法正确转换成json
-        # print(data['effect_list'])
     except:
         data['status'] = 'error'
     return JsonResponse(data)
@@ -259,7 +258,7 @@ def export_porterror(request):
         porterror_query, (time_begin, time_end, time_begin, time_end)
     )
     output = rawQueryExportXls(
-        porterror_all_list.columns, porterror_all_list, 'record_time')
+        porterror_all_list.columns, porterror_all_list, ('record_time',))
     response = FileResponse(
         open(output, 'rb'), as_attachment=True, filename="porterror_result.xls")
     return response
@@ -311,6 +310,27 @@ def portOperationHtmlCallBack(data, rid):   # 构造处理完成时需要填写�
     h += '</form>'
     data['operation_form'] = h
     return data
+
+
+def export_porterrorfix(request):
+    time_begin = request.GET.get('time_begin', '')
+    time_end = request.GET.get('time_end', '')
+    if time_begin == '' or time_end == '':
+        today_time = timezone.datetime.now()
+        time_end = timezone.datetime(
+            year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-2)  # 默认下载当天的数据
+    else:
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
+        time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
+    fix_records = PortErrorFixRecord.objects.filter(begin_time__range=(time_begin, time_end))
+    output = exportXls(PortErrorFixRecord._meta.fields,
+                       fix_records, ('begin_time', 'end_time'))
+    response = FileResponse(
+        open(output, 'rb'), as_attachment=True, filename="oneway_result.xls")
+    return response
+
 
 
 def ajax_port_operate(request, operation_type):
@@ -434,7 +454,7 @@ def export_oneway(request):
         record_time__range=(time_begin, time_end))
 
     output = exportXls(OneWayDevice._meta.fields,
-                       oneway_all_list, 'record_time')
+                       oneway_all_list, ('record_time',))
     response = FileResponse(
         open(output, 'rb'), as_attachment=True, filename="oneway_result.xls")
     return response

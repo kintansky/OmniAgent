@@ -28,7 +28,7 @@ def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
 
 XLS_DATETIME_FORMAT = xlwt.easyxf(num_format_str='yyyy/mm/dd')
 # fieldList 通过 类._meta.fields 传入
-def exportXls(fieldList, object_list, datetime_field=None):
+def exportXls(fieldList, object_list, datetime_field=tuple()):
     '''
     title: tuple or list
     '''
@@ -52,7 +52,7 @@ def exportXls(fieldList, object_list, datetime_field=None):
     for i in range(object_list.count()):
         col = 0
         for t in titles:
-            if t == datetime_field:
+            if t in datetime_field:
                 sheet.write(row, col, qs[i][t], XLS_DATETIME_FORMAT)
             else:
                 sheet.write(row, col, qs[i][t]) # 逐条实例化
@@ -68,7 +68,7 @@ def exportXls(fieldList, object_list, datetime_field=None):
     return save_path
 
 # 因为rawobj_list是一个QuerySet，所以fieldList需要通过QuerySet.columns传入
-def rawQueryExportXls(fieldList, rawobj_list, datetime_field=None):    # rawquery 不能通过以上方式迭代取出，需要先序列化
+def rawQueryExportXls(fieldList, rawobj_list, datetime_field=tuple()):    # rawquery 不能通过以上方式迭代取出，需要先序列化
     book = xlwt.Workbook()
     sheet = book.add_sheet('sheet1')
     col = 0
@@ -77,10 +77,9 @@ def rawQueryExportXls(fieldList, rawobj_list, datetime_field=None):    # rawquer
         col += 1
     row = 1
     for rawobj in rawobj_list:
-        data = {}
         col = 0
         for t in fieldList:
-            if t == datetime_field:
+            if t in datetime_field:
                 sheet.write(row, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
             else:
                 sheet.write(row, col, rawobj.serializable_value(t))
