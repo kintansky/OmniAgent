@@ -79,7 +79,9 @@ def add_device(request):
 
 
 def device_detail(request, device_name):
+    context = {}
     device = get_object_or_404(Device, device_name=device_name)
+    context['device'] = device
     # slot_brief = IpmanResource.objects.filter(device_name=device_name).values_list('slot').annotate(allports=Count('slot'), upports=Count('port_status', filter=Q(port_status='Up'))).order_by('slot')
     rawQueryCmd = "SELECT nt.id, nt.slot, COUNT(nt.slot) AS allports, \
                     COUNT(case when nt.port_status = 'Up' then nt.port_status else NULL END ) AS upports, \
@@ -102,26 +104,25 @@ def device_detail(request, device_name):
         device_name=device_name, port_status__icontains='up').count()
     port_down_count = IpmanResource.objects.filter(
         device_name=device_name).count() - port_up_count
-    # 关系查询需要修改model的建立外键关系，或者使用raw query
+    context['slot_brief'] = slot_brief
+    context['port_up_count'] = port_up_count
+    context['port_down_count'] = port_down_count
+    # 网络下联拓扑
     rawQueryCmd = 'SELECT id, port_description FROM omni_agent.networkresource_ipmanresource WHERE device_name = %s AND port_description REGEXP "dT:.*?"'
     oltList = IpmanResource.objects.raw(rawQueryCmd, (device_name,))
     olts = set()
     for olt in oltList:
         olts.add(olt.port_description.split(':')[1])
     oltJson = dumpOlt2Json(olts, device_name)
-    # print(oltJson)
-
-    natpool_usage = NatPoolUsage.objects.filter(Q(device1=device_name) | Q(device2=device_name)).order_by('-record_time')[0]
-    pair_device1 = natpool_usage.device1.split('-')[-2] + '-' + natpool_usage.device1.split('-')[-3]
-    pair_device2 = natpool_usage.device2.split('-')[-2] + '-' + natpool_usage.device2.split('-')[-3]
-
-    context = {}
-    context['device'] = device
-    context['slot_brief'] = slot_brief
-    context['port_up_count'] = port_up_count
-    context['port_down_count'] = port_down_count
     context['networkjson'] = oltJson
-    context['natpool_usage'] = natpool_usage
-    context['pair_device1'] = pair_device1
-    context['pair_device2'] = pair_device2
+    # print(oltJson)
+    # nat地址利用率，只有bras和bng有
+    if '-BNG' in device_name or '-BRAS' in device_name:
+        natpool_usage = NatPoolUsage.objects.filter(Q(device1=device_name) | Q(device2=device_name)).order_by('-record_time')[0]
+        pair_device1 = natpool_usage.device1.split('-')[-2] + '-' + natpool_usage.device1.split('-')[-3]
+        pair_device2 = natpool_usage.device2.split('-')[-2] + '-' + natpool_usage.device2.split('-')[-3]
+        context['natpool_usage'] = natpool_usage
+        context['pair_device1'] = pair_device1
+        context['pair_device2'] = pair_device2
+    
     return render(request, 'device_detail.html', context)
