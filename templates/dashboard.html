@@ -154,7 +154,7 @@
                 <h3>&raquo; NAT地址池</h3>
                 <div class="alert alert-danger" role="alert">
                     <span class="glyphicon glyphicon-exclamation-sign"></span>
-                    高负荷 TOP 5
+                    NAT 地址池高负荷 TOP 5 网元
                 </div>
                 <ul class="list-group">
                     {% for pd in heavy_load_pair_devices %}
@@ -164,7 +164,7 @@
                         </li>
                     {% endfor %}
                 </ul>
-                <p><a class="btn btn-primary" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
+                <p><a class="btn btn-primary" href="{% url 'natpool_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
             </div>
             <div class="col-md-4">
                 <h3>&raquo; 光模块监控</h3>

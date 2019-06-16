@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord, NatPoolUsage
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
@@ -482,14 +482,38 @@ def group_client_list(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
+    context['group_client_search_form'] = GroupClientSearchForm()
+    return render(request, 'group_client_list.html', context)
+
+
+def search_group_client(request):
+    context = {}
+    group_client_search_form = GroupClientSearchForm(request.GET)
+    if group_client_search_form.is_valid():
+        client_name = group_client_search_form.cleaned_data['client_name']
+        product_id = group_client_search_form.cleaned_data['product_id']
+        if client_name != '' and product_id is None:
+            group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY+"HAVING client_info.client_name like '%{}%'".format(client_name))
+        elif client_name == '' and product_id is not None:
+            group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY+"HAVING client_info.product_id = {}".format(product_id))
+        elif client_name != '' and product_id is not None:
+            group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY+"HAVING client_info.client_name like '%{}%' and client_info.product_id = {}".format(client_name, product_id))
+        else:
+            group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY)
+    else:
+        context['group_client_search_form'] = group_client_search_form
+        return render(request, 'group_client_list.html', context)
+    page_of_objects, page_range = pages(request, group_client_all_list)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['group_client_search_form'] = group_client_search_form
     return render(request, 'group_client_list.html', context)
 
 
 def natpool_list(request):
     context = {}
-    time_begin, time_end = getDateRange(-2)
-    time_range = (time_begin, time_end)
-    natpool_all_list = NatPoolUsage.objects.filter(record_time__range=('2019-06-13 00:00:00', '2019-06-14 00:00:00')).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
+    natpool_all_list = NatPoolUsage.objects.filter(record_time__range=getDateRange(-2)).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
     page_of_objects, page_range = pages(request, natpool_all_list)
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects

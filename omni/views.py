@@ -73,17 +73,12 @@ def dashboard(request):
     context['device_cmnet_count'] = device_cmnet_count
     context['device_oth_count'] = device_oth_count
     # 模块信息
-    # today_time = datetime.datetime.now()
-    # time_end = timezone.datetime(year=today_time.year, month=today_time.month,
-    #                              day=today_time.day, hour=23, minute=59, second=59)
-    # time_begin = time_end + timezone.timedelta(days=-1)
-    time_range = getDateRange(-1)
     moudle_new_count = OpticalMoudleDiff.objects.filter(
-        status='NEW', record_time__range=time_range).count()
+        status='NEW', record_time__range=getDateRange(-1)).count()
     moudle_miss_count = OpticalMoudleDiff.objects.filter(
-        status='MISS', record_time__range=time_range).count()
+        status='MISS', record_time__range=getDateRange(-1)).count()
     moudle_ch_count = OpticalMoudleDiff.objects.filter(
-        status='CH', record_time__range=time_range).count()
+        status='CH', record_time__range=getDateRange(-1)).count()
     context['moudle_new_count'] = moudle_new_count
     context['moudle_miss_count'] = moudle_miss_count
     context['moudle_ch_count'] = moudle_ch_count
@@ -102,29 +97,25 @@ def dashboard(request):
         context['ip_private_ratio'] = 0
         context['ip_public_ratio'] = 0
     # 端口错包信息
-    time_range = getDateRange(-2)
     crc_port_count = PortErrorDiff.objects.filter(
-        stateCRC__gt=0, record_time__range=time_range).count()
+        stateCRC__gt=0, record_time__range=getDateRange(-2)).count()
     crc_max_speed = PortErrorDiff.objects.filter(
-        record_time__range=time_range).aggregate(Max('stateCRC'))
+        record_time__range=getDateRange(-2)).aggregate(Max('stateCRC'))
     ipv4head_port_count = PortErrorDiff.objects.filter(
-        stateIpv4HeadError__gt=0, record_time__range=time_range).count()
+        stateIpv4HeadError__gt=0, record_time__range=getDateRange(-2)).count()
     ipv4head_max_speed = PortErrorDiff.objects.filter(
-        record_time__range=time_range).aggregate(Max('stateIpv4HeadError'))
+        record_time__range=getDateRange(-2)).aggregate(Max('stateIpv4HeadError'))
     context['crc_port_count'] = crc_port_count
     context['crc_max_speed'] = crc_max_speed
     context['ipv4head_port_count'] = ipv4head_port_count
     context['ipv4head_max_speed'] = ipv4head_max_speed
     # 单通设备检查
-    time_range = getDateRange(-1)
-    oneway_count = OneWayDevice.objects.filter(record_time__range=time_range).count()
-    oneway_devices = OneWayDevice.objects.filter(record_time__range=time_range).values('device_name').annotate(port_cnt=Sum('port')).order_by('-port_cnt')
+    oneway_count = OneWayDevice.objects.filter(record_time__range=getDateRange(-1)).count()
+    oneway_devices = OneWayDevice.objects.filter(record_time__range=getDateRange(-1)).values('device_name').annotate(port_cnt=Sum('port')).order_by('-port_cnt')
     context['oneway_devices'] = oneway_devices
     context['oneway_count'] = oneway_count
     # nat地址池
-    time_range = getDateRange(-1)
-    # 注意修改测试日期
-    heavy_load_pair_devices = NatPoolUsage.objects.filter(record_time__range=('2019-06-13 00:00:00', '2019-06-14 00:00:00')).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())[0:5]
+    heavy_load_pair_devices = NatPoolUsage.objects.filter(record_time__range=getDateRange(-2)).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())[0:5]
     context['heavy_load_pair_devices'] = heavy_load_pair_devices
     # 其他
     today_time = datetime.datetime.now()

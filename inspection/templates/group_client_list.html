@@ -13,6 +13,19 @@
 
 {% block subheader %} 专线业务监测 {% endblock %}
 
+{% block search_form %}
+    <form action="{% url 'search_group_client' %}" method="GET" class="form-inline">
+        {% for field in group_client_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
 {% block table_title %}
     <th>客户</th>
     <th>产品编号</th>

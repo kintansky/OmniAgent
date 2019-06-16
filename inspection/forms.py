@@ -40,6 +40,14 @@ class OneWaySearchForm(TimeRangeForm):
     pass
 
 
+class GroupClientSearchForm(forms.Form):
+    client_name = forms.CharField(label='客户名', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '****'}))
+    product_id = forms.IntegerField(label='产品编码', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '20401****'}))
+
+    def clean_client_name(self):
+        return self.cleaned_data['client_name'].strip()
+
+
 class NatPoolSearchForm(TimeRangeForm):
     device_name = forms.CharField(label='设备', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:230px'}))
 
