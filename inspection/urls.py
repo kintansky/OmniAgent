@@ -18,5 +18,9 @@ urlpatterns = [
     path('oneway/search/', views.search_oneway, name='search_oneway'),
     path('oneway/download/', views.export_oneway, name='export_oneway'),
 
-    path('oneway/group_client_list/', views.group_client_list, name='group_client_list'),
+    path('group_client_list/', views.group_client_list, name='group_client_list'),
+
+    path('natpool/', views.natpool_list, name='natpool_list'),
+    path('natpool/search/', views.search_natpool, name='search_natpool'),
+    path('natpool/download/', views.export_natpool, name='export_natpool'),
 ]

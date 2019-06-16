@@ -4,11 +4,11 @@ from django.urls import reverse
 from .forms import LoginForm, RegisterForm
 from django.contrib.auth.models import User
 from watchdog.models import Device
-from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice
+from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, NatPoolUsage
 from networkresource.models import IpRecord
 import datetime
 from django.utils import timezone
-from django.db.models import Count, Q, Max, Sum
+from django.db.models import Count, Q, Max, Sum, F
 from funcpack.funcs import getDateRange
 
 
@@ -121,6 +121,11 @@ def dashboard(request):
     oneway_devices = OneWayDevice.objects.filter(record_time__range=time_range).values('device_name').annotate(port_cnt=Sum('port')).order_by('-port_cnt')
     context['oneway_devices'] = oneway_devices
     context['oneway_count'] = oneway_count
+    # nat地址池
+    time_range = getDateRange(-1)
+    # 注意修改测试日期
+    heavy_load_pair_devices = NatPoolUsage.objects.filter(record_time__range=('2019-06-13 00:00:00', '2019-06-14 00:00:00')).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())[0:5]
+    context['heavy_load_pair_devices'] = heavy_load_pair_devices
     # 其他
     today_time = datetime.datetime.now()
     context['time_begin'] = '%d-%d-%d+00:00:00' % (

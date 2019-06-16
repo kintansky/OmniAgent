@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord, NatPoolUsage
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
 import json
+from django.db.models import F, Q
 
 
 
@@ -482,3 +483,71 @@ def group_client_list(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     return render(request, 'group_client_list.html', context)
+
+
+def natpool_list(request):
+    context = {}
+    time_begin, time_end = getDateRange(-2)
+    time_range = (time_begin, time_end)
+    natpool_all_list = NatPoolUsage.objects.filter(record_time__range=('2019-06-13 00:00:00', '2019-06-14 00:00:00')).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
+    page_of_objects, page_range = pages(request, natpool_all_list)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['natpool_search_form'] = NatPoolSearchForm()
+    return render(request, 'natpool.html', context)
+
+
+def search_natpool(request):
+    context = {}
+    natpool_search_form = NatPoolSearchForm(request.GET)
+    if natpool_search_form.is_valid():
+        time_begin = natpool_search_form.cleaned_data['time_begin']
+        time_end = natpool_search_form.cleaned_data['time_end']
+        device_name = natpool_search_form.cleaned_data['device_name']
+        if device_name != '':
+            natpool_all_list = NatPoolUsage.objects.filter(Q(device1__icontains=device_name) | Q(device2__icontains=device_name), Q(record_time__range=(time_begin, time_end))).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
+            context['search_device_name'] = device_name
+        else:
+            natpool_all_list = NatPoolUsage.objects.filter(record_time__range=(time_begin, time_end)).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
+    else:
+        context['natpool_search_form'] = natpool_search_form
+        return render(request, 'natpool.html', context)
+
+    page_of_objects, page_range = pages(request, natpool_all_list)
+
+    context['records'] = page_of_objects
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
+    context['natpool_search_form'] = natpool_search_form
+    return render(request, 'natpool.html', context)
+
+
+__NATPOOL_QUERY = "\
+    SELECT `inspection_natpoolusage`.`id`, `inspection_natpoolusage`.`device1`, `inspection_natpoolusage`.`device1_nat_usage`, `inspection_natpoolusage`.`device2`, `inspection_natpoolusage`.`device2_nat_usage`, `inspection_natpoolusage`.`record_time`, (`inspection_natpoolusage`.`device1_nat_usage` + `inspection_natpoolusage`.`device2_nat_usage`) AS `nat_total` \
+    FROM `inspection_natpoolusage` \
+    WHERE (`inspection_natpoolusage`.`device1` LIKE '%{}%' OR `inspection_natpoolusage`.`device2` LIKE '%{}%') AND `inspection_natpoolusage`.`record_time` BETWEEN '{}' and '{}' \
+    ORDER BY (`inspection_natpoolusage`.`device1_nat_usage` + `inspection_natpoolusage`.`device2_nat_usage`) DESC \
+"
+
+def export_natpool(request):
+    time_begin = request.GET.get('time_begin', '')
+    time_end = request.GET.get('time_end', '')
+    device_name = request.GET.get('device_name', '')
+    if time_begin == '' or time_end == '':
+        today_time = timezone.datetime.now()
+        time_end = timezone.datetime(
+            year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-1)  # 默认下载当天的数据
+    else:
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
+        time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
+    natpool_all_list = NatPoolUsage.objects.raw(__NATPOOL_QUERY.format(device_name, device_name, time_begin, time_end))
+    
+    output = rawQueryExportXls(natpool_all_list.columns, natpool_all_list, ('record_time',))
+    response = FileResponse(
+        open(output, 'rb'), as_attachment=True, filename="natpool_usage.xls")
+    return response

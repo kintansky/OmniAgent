@@ -119,9 +119,11 @@ class OneWayDevice(models.Model):
 
 class NatPoolUsage(models.Model):
     device1 = models.CharField(max_length=255)
-    device1_nat_usage = models.DecimalField(max_digits=5, decimal_places=2)
+    # device1_nat_usage = models.DecimalField(max_digits=5, decimal_places=2)   # mysql-connector bug, raise decimal cant be deocded
+    device1_nat_usage = models.FloatField()
     device2 = models.CharField(max_length=255)
-    device2_nat_usage = models.DecimalField(max_digits=5, decimal_places=2)
+    # device2_nat_usage = models.DecimalField(max_digits=5, decimal_places=2)
+    device2_nat_usage = models.FloatField()
     record_time = models.DateTimeField()
 
     class Meta:

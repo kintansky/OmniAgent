@@ -145,6 +145,69 @@
             </div>
         </div>
 
+        <!-- 性能管理 -->
+        <div class="page-header">
+            <h2 class="text-center">&laquo; 性能管理 &raquo;</h2>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <h3>&raquo; NAT地址池</h3>
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign"></span>
+                    高负荷 TOP 5
+                </div>
+                <ul class="list-group">
+                    {% for pd in heavy_load_pair_devices %}
+                        <li class="list-group-item">
+                            <span class="badge">{{ pd.nat_total|floatformat }}%</span>
+                            {{ pd.device1 }}<strong>:{{ pd.device1_nat_usage }}%</strong> & {{ pd.device2 }}<strong>:{{ pd.device2_nat_usage }}%</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p><a class="btn btn-primary" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <h3>&raquo; 光模块监控</h3>
+                {% if moudle_miss_count == 0 and moudle_new_count == 0 and moudle_ch_count == 0 %}
+                    <div class="alert alert-success" role="alert">
+                        <span class="glyphicon glyphicon-thumbs-up"></span>
+                        24 小时内无光模块变化.
+                    </div>
+                {% else %}
+                    {% if moudle_miss_count != 0 %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>危险! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=MISS&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                24 小时内 {{ moudle_miss_count }} 个模块丢失.
+                            </a>
+                        </div>
+                    {% endif %}
+                    {% if moudle_ch_count != 0 %}
+                        <div class="alert alert-warning" role="alert">
+                            <strong>当心! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=CH&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                24 小时内 {{ moudle_ch_count }} 个模块变更.
+                            </a>
+                        </div>
+                    {% endif %}
+                    {% if moudle_new_count != 0 %}
+                        <div class="alert alert-info" role="alert">
+                            <strong>注意! </strong>
+                            <a href="{% url 'search_moudle' %}?device_name=&status=NEW&time_begin={{ time_begin }}&time_end={{ time_end }}" class="alert-link">
+                                24 小时内 {{ moudle_new_count }} 个新模块加入.
+                            </a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+                {# button显示部分 #}
+                {% if moudle_miss_count != 0 %}
+                    <p><a class="btn btn-danger" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
+                {% else %}
+                    <p><a class="btn btn-primary" href="{% url 'moudle_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
     
     <!-- Device Detail Modal -->
