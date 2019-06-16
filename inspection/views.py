@@ -545,6 +545,7 @@ def export_natpool(request):
         time_begin = timezone.datetime.strptime(
             time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
+    # 因为有一个自定义字段的原因，直接query取不到自定义字段名，因此使用raw，以便使用函数导出
     natpool_all_list = NatPoolUsage.objects.raw(__NATPOOL_QUERY.format(device_name, device_name, time_begin, time_end))
     
     output = rawQueryExportXls(natpool_all_list.columns, natpool_all_list, ('record_time',))

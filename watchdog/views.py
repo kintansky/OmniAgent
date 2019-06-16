@@ -2,9 +2,11 @@ from django.shortcuts import render, get_object_or_404
 from .models import Device, DeviceManufactor
 from .forms import AddDeviceForm
 from networkresource.models import IpmanResource
+from inspection.models import NatPoolUsage
 from django.utils import timezone
 # 下面为了引入funcpack的公共函数
 from funcpack.funcs import pages, dumpOlt2Json
+from django.db.models import Q
 
 # Create your views here.
 
@@ -109,10 +111,17 @@ def device_detail(request, device_name):
     oltJson = dumpOlt2Json(olts, device_name)
     # print(oltJson)
 
+    natpool_usage = NatPoolUsage.objects.filter(Q(device1=device_name) | Q(device2=device_name)).order_by('-record_time')[0]
+    pair_device1 = natpool_usage.device1.split('-')[-2] + '-' + natpool_usage.device1.split('-')[-3]
+    pair_device2 = natpool_usage.device2.split('-')[-2] + '-' + natpool_usage.device2.split('-')[-3]
+
     context = {}
     context['device'] = device
     context['slot_brief'] = slot_brief
     context['port_up_count'] = port_up_count
     context['port_down_count'] = port_down_count
     context['networkjson'] = oltJson
+    context['natpool_usage'] = natpool_usage
+    context['pair_device1'] = pair_device1
+    context['pair_device2'] = pair_device2
     return render(request, 'device_detail.html', context)
