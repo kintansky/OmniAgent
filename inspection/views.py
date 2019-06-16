@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord
+from networkresource.models import ZxClientInfo
 from django.utils import timezone
 from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
@@ -332,7 +333,6 @@ def export_porterrorfix(request):
     return response
 
 
-
 def ajax_port_operate(request, operation_type):
     data = {}
     if operation_type == 'claim':
@@ -458,3 +458,27 @@ def export_oneway(request):
     response = FileResponse(
         open(output, 'rb'), as_attachment=True, filename="oneway_result.xls")
     return response
+
+
+__GROUP_CLIENT_QUERY = "\
+    SELECT client_info.*, re_tb.port_phy_status, re_tb.port_status FROM ( \
+        SELECT \
+            zx_tb.id, zx_tb.client_name, zx_tb.product_id, zx_tb.ip, zx_tb.guard_level, \
+            ip_tb.device_name, ip_tb.logic_port, ip_tb.logic_port_num, ip_tb.ip_description \
+        FROM omni_agent.networkresource_zxclientinfo as zx_tb \
+        LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
+        ON zx_tb.ip = ip_tb.device_ip HAVING zx_tb.ip != '' \
+    ) AS client_info \
+    LEFT JOIN omni_agent.networkresource_ipmanresource AS re_tb \
+    ON client_info.device_name = re_tb.device_name AND client_info.logic_port_num = re_tb.logic_port \
+"
+
+def group_client_list(request):
+    context = {}
+    group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY)
+    page_of_objects, page_range = pages(request, group_client_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    return render(request, 'group_client_list.html', context)
