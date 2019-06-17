@@ -120,7 +120,7 @@
                     {% for pd in heavy_load_pair_devices %}
                         <li class="list-group-item">
                             <span class="badge">{{ pd.nat_total|floatformat }}%</span>
-                            {{ pd.device1 }}<strong>:{{ pd.device1_nat_usage }}%</strong> & {{ pd.device2 }}<strong>:{{ pd.device2_nat_usage }}%</strong>
+                            {{ pd.device1 }}<strong>:{{ pd.device1_nat_usage|floatformat:'0' }}%</strong> & {{ pd.device2 }}<strong>:{{ pd.device2_nat_usage|floatformat:'0' }}%</strong>
                         </li>
                     {% endfor %}
                 </ul>
