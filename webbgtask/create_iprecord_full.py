@@ -88,7 +88,7 @@ if __name__ == "__main__":
     tableInfo = {
         'tb': 'networkresource_publicipsegment',
         # 'host': 'localhost',
-        'host': '10.243.24.174',
+        'host': '10.201.163.202',
         'port': 9003,
         'user': 'root',
         'password': 'hlw2018!@#',
