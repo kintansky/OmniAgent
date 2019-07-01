@@ -8,6 +8,7 @@ from django.http import FileResponse, JsonResponse
 # from django.core import serializers
 import json
 from django.db.models import F, Q
+from django.contrib.auth.models import User
 
 
 
@@ -148,11 +149,11 @@ __PORTERROR_QUERY = "\
 # 注意修改__queryline的排序字段
 
 
-def __queryline(order_field):
+def __queryline(order_field, otherCmd=''):
     if order_field == 'crc':
-        porterror_query = __PORTERROR_QUERY + 'ORDER BY -new_tb.stateCRC'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateCRC'
     elif order_field == 'head':
-        porterror_query = __PORTERROR_QUERY + 'ORDER BY -new_tb.stateIpv4HeadError'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateIpv4HeadError'
     return porterror_query
 
 
@@ -221,7 +222,23 @@ def search_port_error(request):
     if porterror_search_form.is_valid():
         time_begin = porterror_search_form.cleaned_data['time_begin']
         time_end = porterror_search_form.cleaned_data['time_end']
-        porterror_query = __queryline(order_field)
+        pwr_problem = porterror_search_form.cleaned_data['pwr_problem']
+        only_me = porterror_search_form.cleaned_data['only_me']
+        otherCmd = ''
+        if pwr_problem:
+            otherCmd += 'HAVING '
+            otherCmd += 'new_tb.tx_state is TRUE OR new_tb.rx_state is TRUE '
+            if only_me:
+                if request.user.is_authenticated:
+                    otherCmd += 'AND fix_tb.worker = "{}"'.format(request.user.first_name)
+                else:
+                    print('未登录')
+        elif only_me:
+            if request.user.is_authenticated:
+                otherCmd += 'HAVING fix_tb.worker = "{}"'.format(request.user.first_name)
+            else:
+                print('未登录')
+        porterror_query = __queryline(order_field, otherCmd=otherCmd)
         porterror_all_list = PortErrorDiff.objects.raw(
             porterror_query, (time_begin, time_end, time_begin, time_end)
         )
@@ -291,7 +308,7 @@ def ajax_port_operation_list(request):
 
 
 def portErrorEverOperationHtmlCallBack(records, data):
-    problem_dict = {'power': '光功率问题', 'moudle': '光模块故障', 'fiber': '尾纤问题', 'wdm': '波分故障', 'oth': '其他故障'}
+    problem_dict = {'power': '光功率问题', 'moudle': '光模块故障', 'fiber': '尾纤问题', 'wdm': '波分故障', 'other': '其他故障'}
     h = ''
     for r in records:
         begin = r.begin_time.strftime('%Y-%m-%d')
