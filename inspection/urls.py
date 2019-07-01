@@ -12,7 +12,9 @@ urlpatterns = [
     path('porterror/ajax_search_error_effect/', views.ajax_search_error_effect, name='ajax_search_error_effect'),
     path('porterror/ajax_port_operation_list/', views.ajax_port_operation_list, name='ajax_port_error_operation_list'),
     path('porterror/ajax_port_operate/<str:operation_type>', views.ajax_port_operate, name='ajax_port_error_operate'),
-    path('porterror/download/fixrecord/', views.export_porterrorfix, name='export_porterrorfix'),
+    path('porterror/fixrecord/', views.porterror_fix_list, name='port_error_fix_list'),
+    path('porterror/fixrecord/search/', views.search_porterror_fix, name='search_porterror_fix'),
+    path('porterror/fixrecord/download/', views.export_porterrorfix, name='export_porterrorfix'),
     path('porterror/my_tasks/', views.my_port_error_tasks, name='my_port_error_tasks'),
 
     path('oneway/', views.oneway_list, name='oneway_list'),

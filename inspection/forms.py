@@ -16,6 +16,10 @@ class PortErrorSearchForm(TimeRangeForm):
     pwr_problem = forms.BooleanField(label='仅光功率异常', initial=False, required=False, widget=forms.CheckboxInput(attrs={'class': 'form-control'}))
 
 
+class PortErrorFixRecordSearchForm(TimeRangeForm):
+    pass
+
+
 class PortErrorOperationForm(forms.Form):
     CHOICES = (
         ('power', '光功率问题'),

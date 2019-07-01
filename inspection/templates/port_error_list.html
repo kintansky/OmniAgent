@@ -46,7 +46,7 @@
         </button>
         <ul class="dropdown-menu">
             <li><a href="{% url 'export_porterror' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">巡检记录</a></li>
-            <li><a href="{% url 'export_porterrorfix' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">处理记录</a></li>
+            <li><a href="{% url 'port_error_fix_list' %}">处理记录</a></li>
         </ul>
     </div>
 {% endblock %}

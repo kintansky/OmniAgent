@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord, NatPoolUsage
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm, PortErrorFixRecordSearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
@@ -227,11 +227,6 @@ def search_port_error(request):
         if pwr_problem:
             otherCmd += 'HAVING '
             otherCmd += 'new_tb.tx_state = 0 OR new_tb.rx_state = 0 '
-        # elif only_me:
-        #     if request.user.is_authenticated:
-        #         otherCmd += 'HAVING fix_tb.worker = "{}"'.format(request.user.first_name)
-        #     else:
-        #         print('未登录')
         porterror_query = __queryline(order_field, otherCmd=otherCmd)
         porterror_all_list = PortErrorDiff.objects.raw(
             porterror_query, (time_begin, time_end, time_begin, time_end)
@@ -323,6 +318,57 @@ def portOperationHtmlCallBack(data, rid):   # 构造处理完成时需要填写�
     h += '</form>'
     data['operation_form'] = h
     return data
+
+
+def porterror_fix_list(request):
+    context = {}
+    time_begin = request.GET.get('time_begin', '')
+    time_end = request.GET.get('time_end', '')
+    if time_begin == '' or time_end == '':
+        today_time = timezone.datetime.now()
+        time_end = timezone.datetime(
+            year=today_time.year, month=today_time.month, day=today_time.day, hour=23, minute=59, second=59)
+        time_begin = time_end + timezone.timedelta(days=-2)  # 默认下载当天的数据
+    else:
+        time_begin = timezone.datetime.strptime(
+            time_begin, '%Y-%m-%d %H:%M:%S')
+        time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
+    fix_records = PortErrorFixRecord.objects.all().order_by('-begin_time')
+    page_of_objects, page_range = pages(request, fix_records)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(
+        time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_end, '%Y-%m-%d+%H:%M:%S')
+    context['port_error_fix_record_search_form'] = PortErrorFixRecordSearchForm()
+    return render(request, 'port_error_fix_record_list.html', context)
+
+
+def search_porterror_fix(request):
+    context = {}
+    port_error_fix_record_search_form = PortErrorFixRecordSearchForm(request.GET)
+    if port_error_fix_record_search_form.is_valid():
+        time_begin = port_error_fix_record_search_form.cleaned_data['time_begin']
+        time_end = port_error_fix_record_search_form.cleaned_data['time_end']
+        fix_records = PortErrorFixRecord.objects.filter(begin_time__range=(time_begin, time_end)).order_by('-begin_time')
+    else:
+        context['port_error_fix_record_search_form'] = PortErrorFixRecordSearchForm()
+        return render(request, 'port_error_fix_record_list.html', context)
+
+    page_of_objects, page_range = pages(request, fix_records)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['time_begin'] = timezone.datetime.strftime(
+        time_begin, '%Y-%m-%d+%H:%M:%S')
+    context['time_end'] = timezone.datetime.strftime(
+        time_end, '%Y-%m-%d+%H:%M:%S')
+    context['port_error_fix_record_search_form'] = port_error_fix_record_search_form
+    return render(request, 'port_error_fix_record_list.html', context)
 
 
 def export_porterrorfix(request):

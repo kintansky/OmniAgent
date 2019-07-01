@@ -45,9 +45,7 @@
     {% for record in records %}
         <tr>
             <td>{{ record.device_name }}</td>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.port_description }}">
-                {{ record.port }}
-            </td>
+            <td>{{ record.port }}</td>
             <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
             {% if record.tx_state == 1 %}
