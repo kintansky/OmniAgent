@@ -11,81 +11,27 @@
     <li class="active">Port's Error</li>
 {% endblock %}
 
-{% block subheader %} 端口错包检查 {% endblock %}
-
-{% block new_button %}
-{% if user.is_authenticated %}
-    <a class="btn btn-danger" href="{% url 'my_port_error_tasks' %}" role="button">我的待办</a>
-{% else %}
-    <a class="btn btn-danger" href="{% url 'login' %}?from={{ request.get_full_path }}" role="button">我的待办</a>
-{% endif %}
-{% endblock %}
-
-{% block search_form %}
-    <form action="{% url 'search_port_error' %}" method="GET" class="form-inline">
-        {% for field in porterror_search_form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
-            </div>
-        {% endfor %}
-        <!-- 通过隐藏参数将order字段传给form -->
-        <div class="form-group">
-            <input type="hidden" name="order_field" class="form-control" value='{{ order_field }}'>
-        </div>
-        <button type="submit" class="btn btn-primary">搜索</button>
-    </form>
-{% endblock %}
-
-{% block export %}
-    <div class="btn-group" role="group">
-        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            导出
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li><a href="{% url 'export_porterror' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">巡检记录</a></li>
-            <li><a href="{% url 'export_porterrorfix' %}?time_begin={{ time_begin }}&time_end={{ time_end }}">处理记录</a></li>
-        </ul>
-    </div>
-{% endblock %}
+{% block subheader %} 我的待处理端口 {% endblock %}
 
 {% block alert_content %}
-    {% if porterror_search_form.errors %}
-        <br>
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <strong>Input Error: </strong>{{ porterror_search_form.errors.as_text }}
-        </div>
-    {% else %}
-        <br>
-        <div class="alert alert-info alert-dismissible" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <p>
-                <span class="glyphicon glyphicon-info-sign"></span>
-                处理时，先认领需要处理的端口，处理完成填写故障原因
-            </p>
-            <p>
-                <span class="glyphicon glyphicon-info-sign"></span>
-                请先<strong> 确认故障消除 </strong>，再对设备CRC和IPv4HeaderError进行<strong> 手工清零 </strong>
-            </p>           
-        </div>
-    {% endif %}
+    <div class="alert alert-info alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <p>
+            <span class="glyphicon glyphicon-info-sign"></span>
+            处理时，先认领需要处理的端口，处理完成填写故障原因
+        </p>
+        <p>
+            <span class="glyphicon glyphicon-info-sign"></span>
+            请先<strong> 确认故障消除 </strong>，再对设备CRC和IPv4HeaderError进行<strong> 手工清零 </strong>
+        </p>           
+    </div>
 {% endblock %}
 
 {% block table_title %}
     <th>设备名</th>
     <th>端口</th>
-    <th>
-        CRC增速(h) 
-        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
-    </th>
-    <th>
-        头错误增速(h) 
-        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
-    </th>
-    <th>端口状态</th>
+    <th>CRC增速(h) </th>
+    <th>头错误增速(h) </th>
     <th>BNG发光dBm</th>
     <th>BNG收光dBm</th>
     <th>带宽利用率In</th>
@@ -104,7 +50,6 @@
             </td>
             <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
-            <td>{{ record.port_status }}</td>
             {% if record.tx_state == 1 %}
                 <td data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
                     {{ record.tx_now_power }}
@@ -164,16 +109,9 @@
         {# 上一页 #}
         <li>
             {% if page_of_objects.has_previous %}
-                {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
-                {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                {% else %}
-                    <a href="?page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                {% endif %}
+                <a href="?page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
             {% else %}
                 <span aria-hidden="true">&laquo;</span>
             {% endif %}
@@ -186,26 +124,16 @@
                 {% if page_num == '...' %}
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
-                    {% if time_begin and time_end %}
-                        <li><a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_num }}">{{ page_num }}</a></li>
-                    {% else %}
-                        <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
-                    {% endif %}
+                    <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
                 {% endif %}
             {% endif %}
         {% endfor %}
         {# 下一页 #}
         <li>
             {% if page_of_objects.has_next %}
-                {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.next_page_number }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                {% else %}
-                    <a href="?page={{ page_of_objects.next_page_number }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                {% endif %}
+                <a href="?page={{ page_of_objects.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
             {% else %}
                 <span aria-hidden="true">&raquo;</span>
             {% endif %}

@@ -13,11 +13,7 @@ class MoudleSearchForm(TimeRangeForm):
 
 
 class PortErrorSearchForm(TimeRangeForm):
-    pwr_problem = forms.BooleanField(label='光功率异常', initial=False, required=False, widget=forms.CheckboxInput(attrs={'class': 'form-control'}))
-    only_me = forms.BooleanField(label='仅自己', initial=False, required=False, widget=forms.CheckboxInput(attrs={'class': 'form-control'}))
-
-    # def clean_only_me(self):
-    #     if 
+    pwr_problem = forms.BooleanField(label='仅光功率异常', initial=False, required=False, widget=forms.CheckboxInput(attrs={'class': 'form-control'}))
 
 
 class PortErrorOperationForm(forms.Form):

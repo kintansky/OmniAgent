@@ -223,21 +223,15 @@ def search_port_error(request):
         time_begin = porterror_search_form.cleaned_data['time_begin']
         time_end = porterror_search_form.cleaned_data['time_end']
         pwr_problem = porterror_search_form.cleaned_data['pwr_problem']
-        only_me = porterror_search_form.cleaned_data['only_me']
         otherCmd = ''
         if pwr_problem:
             otherCmd += 'HAVING '
-            otherCmd += 'new_tb.tx_state is TRUE OR new_tb.rx_state is TRUE '
-            if only_me:
-                if request.user.is_authenticated:
-                    otherCmd += 'AND fix_tb.worker = "{}"'.format(request.user.first_name)
-                else:
-                    print('未登录')
-        elif only_me:
-            if request.user.is_authenticated:
-                otherCmd += 'HAVING fix_tb.worker = "{}"'.format(request.user.first_name)
-            else:
-                print('未登录')
+            otherCmd += 'new_tb.tx_state = 0 OR new_tb.rx_state = 0 '
+        # elif only_me:
+        #     if request.user.is_authenticated:
+        #         otherCmd += 'HAVING fix_tb.worker = "{}"'.format(request.user.first_name)
+        #     else:
+        #         print('未登录')
         porterror_query = __queryline(order_field, otherCmd=otherCmd)
         porterror_all_list = PortErrorDiff.objects.raw(
             porterror_query, (time_begin, time_end, time_begin, time_end)
@@ -410,6 +404,37 @@ def ajax_port_operate(request, operation_type):
                         error_info += '填写错误字段{}: {}'.format(f, errorDict[f])
                 data['error_info'] = error_info
     return JsonResponse(data)
+
+
+__QUERY_MY_FIX_TASKS = "\
+    SELECT fix_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
+        SELECT * FROM(\
+            SELECT ped.*, pef.worker FROM \
+                omni_agent.inspection_porterrorfixrecord as pef \
+            left JOIN omni_agent.inspection_porterrordiff AS ped \
+            ON pef.device_name = ped.device_name AND pef.port = ped.port HAVING pef.worker = %s \
+            ORDER BY ped.record_time DESC \
+        ) AS recent_tb GROUP BY recent_tb.device_name, recent_tb.port \
+    ) AS fix_info \
+    LEFT JOIN omni_agent.inspection_portperf AS npp \
+    ON fix_info.device_name = npp.device_name AND fix_info.port = npp.port AND DATE_FORMAT(fix_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
+    ORDER BY fix_info.record_time DESC, fix_info.fix_status \
+"
+
+
+def my_port_error_tasks(request):
+    context = {}
+    worker = request.user.first_name
+    porterror_query = __QUERY_MY_FIX_TASKS
+    porterror_all_list = PortErrorDiff.objects.raw(
+        porterror_query, (worker,)
+    )
+    page_of_objects, page_range = pages(request, porterror_all_list)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    return render(request, 'my_port_error_tasks.html', context)
+
 
 
 # 单通设备检查模块
