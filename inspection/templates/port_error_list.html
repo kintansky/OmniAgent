@@ -15,9 +15,14 @@
 
 {% block new_button %}
 {% if user.is_authenticated %}
-    <a class="btn btn-danger" href="{% url 'my_port_error_tasks' %}" role="button">我的待办</a>
+    <a class="btn btn-danger" href="{% url 'my_port_error_tasks' %}" role="button">
+        待办 
+        <span class="badge">{{ my_tasks_cnt|default:'0' }}</span>
+    </a>
 {% else %}
-    <a class="btn btn-danger" href="{% url 'login' %}?from={{ request.get_full_path }}" role="button">我的待办</a>
+    <a class="btn btn-danger" href="{% url 'login' %}?from={{ request.get_full_path }}" role="button">
+        待办 
+    </a>
 {% endif %}
 {% endblock %}
 
@@ -79,11 +84,11 @@
     <th>端口</th>
     <th>
         CRC增速(h) 
-        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
+        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
     </th>
     <th>
         头错误增速(h) 
-        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
+        <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
     </th>
     <th>端口状态</th>
     <th>BNG发光dBm</th>
@@ -166,7 +171,7 @@
             {% if page_of_objects.has_previous %}
                 {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
                 {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&pwr_problem={{ pwr_problem }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 {% else %}
@@ -187,7 +192,7 @@
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
                     {% if time_begin and time_end %}
-                        <li><a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_num }}">{{ page_num }}</a></li>
+                        <li><a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&pwr_problem={{ pwr_problem }}&page={{ page_num }}">{{ page_num }}</a></li>
                     {% else %}
                         <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
                     {% endif %}
@@ -198,7 +203,7 @@
         <li>
             {% if page_of_objects.has_next %}
                 {% if time_begin and time_end %}
-                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&page={{ page_of_objects.next_page_number }}" aria-label="Next">
+                    <a href="?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field={{ order_field }}&pwr_problem={{ pwr_problem }}&page={{ page_of_objects.next_page_number }}" aria-label="Next">
                         <span aria-hidden="true">&raquo;</span>
                     </a>
                 {% else %}

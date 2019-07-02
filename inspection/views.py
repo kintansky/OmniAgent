@@ -166,6 +166,7 @@ def port_error_list(request):
         porterror_query, (time_begin, time_end, time_begin, time_end)
     )
     page_of_objects, page_range = pages(request, porterror_all_list)
+    my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
 
     context = {}
     context['records'] = page_of_objects.object_list
@@ -176,6 +177,7 @@ def port_error_list(request):
     context['time_end'] = timezone.datetime.strftime(
         time_range[1], '%Y-%m-%d+%H:%M:%S')
     context['order_field'] = order_field
+    context['my_tasks_cnt'] = my_tasks_cnt
     context['porterror_search_form'] = PortErrorSearchForm()
     return render(request, 'port_error_list.html', context)
 
@@ -225,8 +227,7 @@ def search_port_error(request):
         pwr_problem = porterror_search_form.cleaned_data['pwr_problem']
         otherCmd = ''
         if pwr_problem:
-            otherCmd += 'HAVING '
-            otherCmd += 'new_tb.tx_state = 0 OR new_tb.rx_state = 0 '
+            otherCmd += 'HAVING new_tb.tx_state = 0 OR new_tb.rx_state = 0 '
         porterror_query = __queryline(order_field, otherCmd=otherCmd)
         porterror_all_list = PortErrorDiff.objects.raw(
             porterror_query, (time_begin, time_end, time_begin, time_end)
@@ -236,6 +237,7 @@ def search_port_error(request):
         return render(request, 'port_error_list.html', context)
 
     page_of_objects, page_range = pages(request, porterror_all_list)
+    my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
 
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
@@ -245,6 +247,8 @@ def search_port_error(request):
     context['time_end'] = timezone.datetime.strftime(
         time_end, '%Y-%m-%d+%H:%M:%S')
     context['order_field'] = order_field
+    context['my_tasks_cnt'] = my_tasks_cnt
+    context['pwr_problem'] = pwr_problem
     context['porterror_search_form'] = porterror_search_form
     return render(request, 'port_error_list.html', context)
 
