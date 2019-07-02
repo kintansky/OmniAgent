@@ -15,9 +15,13 @@
 
 {% block new_button %}
 {% if user.is_authenticated %}
-    <a class="btn btn-danger" href="{% url 'my_port_error_tasks' %}" role="button">我的待办</a>
+    <a class="btn btn-danger" href="{% url 'my_port_error_tasks' %}" role="button">
+        待办 
+    </a>
 {% else %}
-    <a class="btn btn-danger" href="{% url 'login' %}?from={{ request.get_full_path }}" role="button">我的待办</a>
+    <a class="btn btn-danger" href="{% url 'login' %}?from={{ request.get_full_path }}" role="button">
+        待办
+    </a>
 {% endif %}
 {% endblock %}
 
