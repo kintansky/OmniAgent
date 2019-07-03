@@ -166,7 +166,9 @@ def port_error_list(request):
         porterror_query, (time_begin, time_end, time_begin, time_end)
     )
     page_of_objects, page_range = pages(request, porterror_all_list)
-    my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
+    my_tasks_cnt = 0
+    if request.user.is_authenticated:
+        my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
 
     context = {}
     context['records'] = page_of_objects.object_list
