@@ -150,7 +150,7 @@ __PORTERROR_QUERY = "\
 
 
 def __queryline(order_field, otherCmd=''):
-    if order_field == 'crc':
+    if order_field == 'crc' or order_field == '':
         porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateCRC'
     elif order_field == 'head':
         porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateIpv4HeadError'
