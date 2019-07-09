@@ -239,7 +239,9 @@ def search_port_error(request):
         return render(request, 'port_error_list.html', context)
 
     page_of_objects, page_range = pages(request, porterror_all_list)
-    my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
+    my_tasks_cnt = 0
+    if request.user.is_authenticated:
+        my_tasks_cnt = PortErrorFixRecord.objects.filter(worker=request.user.first_name, status=False).count()
 
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
