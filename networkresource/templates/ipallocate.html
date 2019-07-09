@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block navbar_resource_active %}active{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br>
+        <ol class="breadcrumb">
+            <li><a href="{% url 'dashboard' %}">Home</a></li>
+            <li><a href="">Resource</a></li>
+            <li><a href="{% url 'ip_record' %}">IP Records</a></li>
+            <li class="active">Allocate IP</li>
+        </ol>
+        <h2 class="sub-header">业务地址分配</h2>
+        {% if user.is_authenticated %}
+            {# user already login #}
+            <form action="" method="GET" class="form-inline">
+                {% for field in ip_target_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">生成地址</button>
+            </form>
+            <hr>
+            <form action="" method="POST">
+                {% for field in new_ip_allocation_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                    </div>
+                {% endfor %}
+                <hr>
+                {% for field in private_ip_extra_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">确认分配</button>
+            </form>
+        {% else %}
+            {# user no login #}
+            <div class="row">
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>
+                    Before allocating resource, please <a href="{% url 'login' %}?from={{ request.get_full_path }}"><strong>LOGIN</strong></a> first!
+                </div>
+            </div>
+        {% endif %}
+
+        
+
+    </div>
+{% endblock %}
+
+{% block tail_script %}
+
+{% endblock %}

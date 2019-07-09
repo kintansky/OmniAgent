@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord
-from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm
+from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, PrivateIPExtraForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -498,3 +498,14 @@ def ip_allocation_mod(request, ip_type):
                     error_info += '填写错误字段{}: {}'.format(f, error2Dict[f])
                 data['error_info'] = error_info
         return JsonResponse(data)
+
+
+def new_allocate_ip(request):
+    context = {}
+    ip_target_form = IPTargetForm()
+    new_ip_allocation_form = NewIPAllocationForm()
+    private_ip_extra_form = PrivateIPExtraForm()
+    context['ip_target_form'] = ip_target_form
+    context['new_ip_allocation_form'] = new_ip_allocation_form
+    context['private_ip_extra_form'] = private_ip_extra_form
+    return render(request, 'ipallocate.html', context)

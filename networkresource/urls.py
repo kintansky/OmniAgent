@@ -6,6 +6,8 @@ urlpatterns = [
     path('ip/search/', views.search_ip, name='search_ip'),
     path('ip/download/', views.export_ip, name='export_ip'),
     path('ip/<str:ip_type>/allocate/', views.allocate_ip, name='allocate_ip'),
+    # new ip allocate
+    path('ip/allocate/', views.new_allocate_ip, name='new_ip_allocate'),
 
     path('allocated_ip/<str:ip_type>/', views.allocate_ip_list, name='allocated_ip_list'),
     path('allocated_ip/<str:ip_type>/search/', views.search_allocated_ip, name='search_allocated_ip'),

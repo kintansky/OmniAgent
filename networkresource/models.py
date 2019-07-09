@@ -242,3 +242,34 @@ class ZxClientInfo(models.Model):
         indexes = [
             models.Index(fields=['ip']),
         ]
+
+
+class IPAllocation(models.Model):
+    order_num = models.CharField(max_length=255, null=True)
+    client_name = models.CharField(max_length=255, null=True)
+    state = models.CharField(max_length=5, null=True)
+    ip = models.CharField(max_length=200, null=True)
+    gateway = models.GenericIPAddressField(protocol='both', null=True)
+    bng = models.CharField(max_length=255, null=True)
+    logic_port = models.CharField(max_length=20, null=True)
+    svlan = models.PositiveIntegerField(default=0)
+    cevlan = models.PositiveIntegerField(default=0)
+    description = models.CharField(max_length=255, null=True)
+    ip_func = models.CharField(max_length=4, null=True)
+    olt = models.CharField(max_length=255, null=True)
+    service_id = models.PositiveIntegerField(default=0)
+    brand_width = models.PositiveIntegerField(default=0)
+    group_id = models.PositiveIntegerField(default=0)
+    client_id = models.PositiveIntegerField(default=0)
+    network_type = models.CharField(max_length=5, null=True)
+    community = models.CharField(max_length=50, null=True)
+    rt = models.CharField(max_length=50, blank=True, null=True)
+    rd = models.CharField(max_length=50, blank=True, null=True)
+    comment = models.CharField(max_length=255, null=True)
+    alc_user = models.CharField(max_length=10, null=True)
+    alc_time = models.DateTimeField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['ip']),
+        ]
