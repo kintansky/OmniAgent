@@ -128,32 +128,41 @@ __PORTERROR_QUERY = "\
 '''
 
 __PORTERROR_QUERY = "\
-    SELECT new_tb.*, fix_tb.worker, fix_tb.claim FROM (\
-        SELECT error_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
-            SELECT np.*, ni.port_description, ni.port_status \
-                FROM omni_agent.inspection_porterrordiff as np \
-                LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
-                ON np.device_name = ni.device_name AND np.port = ni.port \
-                HAVING np.record_time BETWEEN %s AND %s AND (np.stateCRC >= 60 OR np.stateIpv4HeadError >= 1000) \
-            ) AS error_info \
-        LEFT JOIN (\
-            SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
-                FROM omni_agent.inspection_portperf \
-                WHERE record_time BETWEEN %s AND %s\
-            ) AS npp \
-        ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
-        AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
-    ) AS new_tb LEFT JOIN (SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1) AS fix_tb \
-    ON new_tb.device_name = fix_tb.device_name AND new_tb.port = fix_tb.port \
+    SELECT error_detail.*, error_cnt_tb.cnt FROM ( \
+        SELECT new_tb.*, fix_tb.worker, fix_tb.claim FROM (\
+            SELECT error_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
+                SELECT np.*, ni.port_description, ni.port_status \
+                    FROM omni_agent.inspection_porterrordiff as np \
+                    LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
+                    ON np.device_name = ni.device_name AND np.port = ni.port \
+                    HAVING np.record_time BETWEEN %s AND %s AND (np.stateCRC >= 60 OR np.stateIpv4HeadError >= 1000) \
+                ) AS error_info \
+            LEFT JOIN (\
+                SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
+                    FROM omni_agent.inspection_portperf \
+                    WHERE record_time BETWEEN %s AND %s\
+                ) AS npp \
+            ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
+            AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
+        ) AS new_tb LEFT JOIN (SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1) AS fix_tb \
+        ON new_tb.device_name = fix_tb.device_name AND new_tb.port = fix_tb.port \
+    ) AS error_detail \
+    LEFT JOIN ( \
+        SELECT cnt_tb.*, COUNT(*) AS cnt FROM ( \
+            SELECT device_name, `port` FROM omni_agent.inspection_porterrordiff \
+            WHERE (stateCRC >= 60 or stateIpv4HeadError >= 1000) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE() \
+        ) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.`port` \
+    ) AS error_cnt_tb \
+    ON error_detail.device_name = error_cnt_tb.device_name AND error_detail.`port` = error_cnt_tb.`port` \
 "
 # 注意修改__queryline的排序字段
 
 
 def __queryline(order_field, otherCmd=''):
     if order_field == 'crc' or order_field == '':
-        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateCRC'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateCRC'
     elif order_field == 'head':
-        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -new_tb.stateIpv4HeadError'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateIpv4HeadError'
     return porterror_query
 
 

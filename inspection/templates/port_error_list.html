@@ -82,6 +82,7 @@
 {% block table_title %}
     <th>设备名</th>
     <th>端口</th>
+    <th>7天累积</th>
     <th>
         CRC增速(h) 
         <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
@@ -91,11 +92,11 @@
         <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
     </th>
     <th>端口状态</th>
-    <th>BNG发光dBm</th>
-    <th>BNG收光dBm</th>
-    <th>带宽利用率In</th>
-    <th>带宽利用率Out</th>
-    <th>时间</th>
+    <th>BNG发光</th>
+    <th>BNG收光</th>
+    <th>利用率In</th>
+    <th>利用率Out</th>
+    <th>记录时间</th>
     <th>影响</th>
     <th>处理</th>
 {% endblock %}
@@ -107,6 +108,7 @@
             <td data-toggle="tooltip" data-placement="top" title="{{ record.port_description }}">
                 {{ record.port }}
             </td>
+            <td>{{ record.cnt|default:"0" }}次</td>
             <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
             <td>{{ record.port_status }}</td>
