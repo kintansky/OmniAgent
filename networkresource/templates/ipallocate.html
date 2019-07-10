@@ -19,7 +19,8 @@
         <h2 class="sub-header">业务地址分配</h2>
         {% if user.is_authenticated %}
             {# user already login #}
-            <form action="" method="GET" class="form-inline">
+            <form action="" method="POST" class="form-inline">
+                <p>分配的地址</p>
                 {% for field in ip_target_form %}
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -27,26 +28,35 @@
                         <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
                     </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary">生成地址</button>
+                <button type="submit" class="btn btn-success">添加</button>
             </form>
             <hr>
             <form action="" method="POST">
                 {% for field in new_ip_allocation_form %}
                     <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
+                        <label for="{{ field.id_for_label }}" class="col-sm-2">{{ field.label }}</label>
+                        <div class="col-sm-4">
+                            {{ field }}
+                        </div>
                         <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
                     </div>
                 {% endfor %}
-                <hr>
+                <div class="col-sm-12">
+                    <hr>
+                    <p>以下仅私网填写</p>
+                </div>
                 {% for field in private_ip_extra_form %}
                     <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
+                        <label for="{{ field.id_for_label }}" class="col-sm-2">{{ field.label }}</label>
+                        <div class="col-sm-4">
+                            {{ field }}
+                        </div>
                         <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
                     </div>
                 {% endfor %}
-                <button type="submit" class="btn btn-primary">确认分配</button>
+                <div class="col-sm-offset-11 col-sm-1">
+                    <button type="submit" class="btn btn-success">确认分配</button>
+                </div>
             </form>
         {% else %}
             {# user no login #}
