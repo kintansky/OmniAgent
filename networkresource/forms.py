@@ -237,10 +237,26 @@ class IPTargetForm(forms.Form):
         ('已停用', '已停用'),
     )
     ip_func = forms.ChoiceField(label='IP类型', choices=IPFUNC_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
-    ip = forms.GenericIPAddressField(label='起始IP', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.4'}))
-    ip_num = forms.IntegerField(label='IP数量', widget=forms.NumberInput(attrs={'class': 'form-control', 'value': 1}))
-    # gateway = forms.GenericIPAddressField(label='网关', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.1'}))
     state = forms.ChoiceField(label='状态', choices=STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    first_ip = forms.GenericIPAddressField(label='起始IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:50%', 'placeholder': '192.168.1.4'}))
+    ip_num = forms.IntegerField(label='IP数量', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:15%'}))
+    ip_segment = forms.CharField(label='IP网段', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0/24'}))
+    # gateway = forms.GenericIPAddressField(label='网关', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.1'}))
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        first_ip = cleaned_data.get('first_ip')
+        ip_num = cleaned_data.get('ip_num')
+        ip_segment = cleaned_data.get('ip_segment')
+        if ip_segment == '':
+            if first_ip == '' and ip_num is None:
+                raise forms.ValidationError('IP地址段/(起始IP+IP数量)必填其一')
+        else:
+            if re.match(r'(\d+\.){3}\d+/\d{1,2}', ip_segment):
+                if first_ip and ip_num:
+                    raise forms.ValidationError('每次分配：IP地址段/(起始IP+IP数量)只填其一')
+            else:
+                raise forms.ValidationError('IP地址段格式有误，请参考192.168.1.0/24')
 
 
 class NewIPAllocationForm(forms.Form):
@@ -248,37 +264,33 @@ class NewIPAllocationForm(forms.Form):
         ('双上联', '双上联'),
         ('单上联', '单上联'),
     )
-    order_num = forms.CharField(label='服开单号', widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    client_name = forms.CharField(label='客户名称', widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    # ip_func = forms.ChoiceField(label='IP类型', choices=IPFUNC_CHOICES, widget=forms.Select(attrs={'class': 'form-control allocate'}))
-    # ip = forms.GenericIPAddressField(label='起始IP', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '192.168.1.4'}))
-    # ip_num = forms.IntegerField(label='IP数量', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    # gateway = forms.GenericIPAddressField(label='网关', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': '192.168.1.1'}))
-
-    # 子接口与内外层vlan关系
-    logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control allocate', 'placeholder': 'lag-100.200.0 或 Eth-Trunk1.200.0'}))
-    # svlan = forms.IntegerField(label='外层VLAN', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    # cevlan = forms.IntegerField(label='内层VLAN', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    
-    # 描述与带宽的关系
-    description = forms.CharField(label='描述', widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    # brand_width = forms.IntegerField(label='带宽', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
+    order_num = forms.CharField(label='服开单号', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    client_name = forms.CharField(label='客户名称', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    # ip_func = forms.ChoiceField(label='IP类型', choices=IPFUNC_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    # ip = forms.GenericIPAddressField(label='起始IP', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.4'}))
+    # ip_num = forms.IntegerField(label='IP数量', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    # gateway = forms.GenericIPAddressField(label='网关', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.1'}))
     
     # olt与bng关系处理
-    olt = forms.CharField(label='OLT', widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-
-    service_id = forms.IntegerField(label='业务ID', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    group_id = forms.IntegerField(label='集团客户编号', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    client_id = forms.IntegerField(label='集团产品编号', widget=forms.NumberInput(attrs={'class': 'form-control allocate'}))
-    network_type = forms.ChoiceField(label='组网类型', choices=NET_CHOICES, widget=forms.Select(attrs={'class': 'form-control allocate'}))
+    olt = forms.CharField(label='OLT', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    # 子接口与内外层vlan关系
+    logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'lag-100.200.0 或 Eth-Trunk1.200.0', 'style': 'width:70%'}))
+    # svlan = forms.IntegerField(label='外层VLAN', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    # cevlan = forms.IntegerField(label='内层VLAN', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    # 描述与带宽的关系
+    description = forms.CharField(label='描述', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    # brand_width = forms.IntegerField(label='带宽', widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    
+    service_id = forms.IntegerField(label='业务ID', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    group_id = forms.IntegerField(label='集团客户编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    product_id = forms.IntegerField(label='集团产品编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    network_type = forms.ChoiceField(label='组网类型', choices=NET_CHOICES, widget=forms.Select(attrs={'class': 'form-control', 'style': 'width:70%'}))
 
     # 其他信息
-    comment = forms.CharField(label='备注', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-
-
-class PrivateIPExtraForm(forms.Form):   # 不要单独使用，需配合NewIPAllocationForm使用
-    # 私网IP的额外信息
-    community = forms.CharField(label='COMMUNITY', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    rt = forms.CharField(label='RT', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
-    rd = forms.CharField(label='RD', required=False, widget=forms.TextInput(attrs={'class': 'form-control allocate'}))
+    comment = forms.CharField(label='备注', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '最多255个字符'}))
+    # 私网信息
+    community = forms.CharField(label='COMMUNITY', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'community', 'style': 'width:70%'}))
+    rt = forms.CharField(label='RT', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rt', 'style': 'width:70%'}))
+    rd = forms.CharField(label='RD', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rd', 'style': 'width:70%'}))
+    

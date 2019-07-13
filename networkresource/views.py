@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord
-from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, PrivateIPExtraForm
+from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,6 +8,8 @@ import re
 from omni.settings.base import BASE_DIR
 import os
 from django.utils import timezone
+from IPy import IP
+import json
 
 # Create your views here.
 
@@ -504,8 +506,66 @@ def new_allocate_ip(request):
     context = {}
     ip_target_form = IPTargetForm()
     new_ip_allocation_form = NewIPAllocationForm()
-    private_ip_extra_form = PrivateIPExtraForm()
     context['ip_target_form'] = ip_target_form
     context['new_ip_allocation_form'] = new_ip_allocation_form
-    context['private_ip_extra_form'] = private_ip_extra_form
     return render(request, 'ipallocate.html', context)
+
+
+def ajax_generate_ip_list(request):
+    data = {}
+    ip_target_form = IPTargetForm(request.POST)
+    target_list = request.POST.get('target-list', '{}')
+    if target_list == '':
+        target_list = '{}'
+    target_dict = json.loads(target_list)
+    if ip_target_form.is_valid():
+        ip_func = ip_target_form.cleaned_data['ip_func']
+        first_ip = ip_target_form.cleaned_data['first_ip']
+        ip_num = ip_target_form.cleaned_data['ip_num']
+        ip_segment = ip_target_form.cleaned_data['ip_segment']
+        state = ip_target_form.cleaned_data['state']
+        if ip_num:
+            ip_sep = first_ip.split('.')
+            last_num = int(ip_sep[3]) + ip_num - 1
+            if last_num > 255:
+                last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), '0'])
+            else:
+                last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
+            data['target'] = first_ip + 'p' + str(ip_num)
+        elif ip_segment:
+            subnet = IP.make_net(*ip_segment.split('/'))
+            first_ip = subnet[0].strNormal()
+            last_ip = subnet[-1].strNormal()
+            data['target'] = subnet.strNormal()
+        target_dict[data['target']] = [ip_func, state]
+        data['target_list'] = json.dumps(target_dict)   # 通过json传回
+        data['ip_func'] = ip_func
+        data['first_ip'] = first_ip
+        data['last_ip'] = last_ip
+        data['gw'] = '1.1.1.1'
+        data['state'] = state
+        data['status'] = 'success'
+    else:
+        data['target_list'] = json.dumps(target_dict)
+        data['status'] = 'error'
+        error_info = ''
+        errorDict = ip_target_form.errors.as_data()
+        for f in errorDict:
+            error_info += '填写错误字段{}: {}'.format(f, errorDict[f])
+        data['error_info'] = error_info
+    return JsonResponse(data)
+
+
+def ajax_remove_ip(request):
+    data = {}
+    target_dict = json.loads(request.POST.get('target-list', '{}'))
+    remove_target = request.POST.get('remove-target', '').replace(' ', 'p')
+    for t in target_dict:
+        if t == remove_target:
+            target_dict.pop(t)
+            break
+    data['target_list'] = json.dumps(target_dict)
+    data['status'] = 'success'
+    return JsonResponse(data)
+    
+    

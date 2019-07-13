@@ -8,6 +8,8 @@ urlpatterns = [
     path('ip/<str:ip_type>/allocate/', views.allocate_ip, name='allocate_ip'),
     # new ip allocate
     path('ip/allocate/', views.new_allocate_ip, name='new_ip_allocate'),
+    path('ip/allocate/generate_ip/', views.ajax_generate_ip_list, name='generate_ip'),
+    path('ip/allocate/remove_ip/', views.ajax_remove_ip, name='remove_ip'),
 
     path('allocated_ip/<str:ip_type>/', views.allocate_ip_list, name='allocated_ip_list'),
     path('allocated_ip/<str:ip_type>/search/', views.search_allocated_ip, name='search_allocated_ip'),

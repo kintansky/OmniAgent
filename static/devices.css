@@ -4,12 +4,12 @@ div.paginator {
 div.counter {
     text-align: left;
 }
-input.allocate {
+/* input.allocate {
     margin-bottom: 1em;
 }
 select.allocate {
     margin-bottom: 1em;
-}
+} */
 div.container-fluid {
     padding-left: 4em;
     padding-right: 4em;
@@ -17,6 +17,7 @@ div.container-fluid {
 div.popover {
     width: 500px;
 }
+
 
 /* Sticky footer styles
 -------------------------------------------------- */
