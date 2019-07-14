@@ -34,7 +34,7 @@
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <span class="label label-danger">请填写以下其一</span>
+                                        <span class="label label-danger">请填写以下连续地址或地址段信息</span>
                                     </div>
                                 </div>
                                 <br>
@@ -73,7 +73,10 @@
                 </div>
                 <div class="col-md-8">
                     <div class="panel panel-info">
-                        <div class="panel-heading">目标IP清单</div>
+                        <div class="panel-heading">
+                            目标IP清单
+                            <button id="clear-all-target-btn" type="submit" class="btn btn-danger btn-xs pull-right">点击重置</button>
+                        </div>
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
@@ -95,10 +98,11 @@
             <hr>
             <div class="row">
                 <div class="panel panel-default">
-                    <div class="panel-heading">其他分配信息</div>
+                    <div class="panel-heading">详细信息</div>
                     <div class="panel-body">
                         <form id="ip-detail-form" action="{% url 'new_ip_allocate' %}" method="POST">
-                            <div class="form-group">
+                            <!-- 隐藏内容，调试可关闭style -->
+                            <div class="form-group" style="display: none;">
                                 <input name="target-list" id='target-list' class="form-control" readonly="readonly">
                                 <label for="{{ new_ip_allocation_form.include_private_ip.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.include_private_ip.label }}</label>
                                 {{ new_ip_allocation_form.include_private_ip }}
@@ -106,7 +110,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <span class="label label-success">主要信息</span>
+                                    <span class="label label-warning">客户信息</span>
                                 </div>
                             </div>
                             <br>
@@ -126,6 +130,40 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.service_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.service_id.label }}</label>
+                                        {{ new_ip_allocation_form.service_id }}
+                                        <p class="text-danger error-data" id="id_error_service_id">{{ new_ip_allocation_form.service_id.errors.as_text }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.group_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.group_id.label }}</label>
+                                        {{ new_ip_allocation_form.group_id }}
+                                        <p class="text-danger error-data" id="id_error_group_id">{{ new_ip_allocation_form.group_id.errors.as_text }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.product_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.product_id.label }}</label>
+                                        {{ new_ip_allocation_form.product_id }}
+                                        <p class="text-danger error-data" id="id_error_product_id">{{ new_ip_allocation_form.product_id.errors.as_text }}</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <span class="label label-success">网络信息</span>
+                                </div>
+                            </div>
+                            <br>
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
@@ -161,32 +199,16 @@
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.service_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.service_id.label }}</label>
-                                        {{ new_ip_allocation_form.service_id }}
-                                        <p class="text-danger error-data" id="id_error_service_id">{{ new_ip_allocation_form.service_id.errors.as_text }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.group_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.group_id.label }}</label>
-                                        {{ new_ip_allocation_form.group_id }}
-                                        <p class="text-danger error-data" id="id_error_group_id">{{ new_ip_allocation_form.group_id.errors.as_text }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.product_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.product_id.label }}</label>
-                                        {{ new_ip_allocation_form.product_id }}
-                                        <p class="text-danger error-data" id="id_error_product_id">{{ new_ip_allocation_form.product_id.errors.as_text }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.network_type.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.network_type.label }}</label>
                                         {{ new_ip_allocation_form.network_type }}
                                         <p class="text-danger error-data" id="id_error_network_type">{{ new_ip_allocation_form.network_type.errors.as_text }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.access_type.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.access_type.label }}</label>
+                                        {{ new_ip_allocation_form.access_type }}
+                                        <p class="text-danger error-data" id="id_error_access_type">{{ new_ip_allocation_form.access_type.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -296,8 +318,8 @@
                     if(data['status'] == 'success'){
                         // console.log(data);
                         remove_target.remove();
-                        $('#target-list').val(data['target_list']); // 更新清单
-                        $('#id_include_private_ip').val(data['include_private_ip']);
+                        $("#target-list").val(data['target_list']); // 更新清单
+                        $("#id_include_private_ip").val(data['include_private_ip']);
                     }else{
                         console.log(data);
                         alert('error');
@@ -318,8 +340,9 @@
                 success: function(data){
                     if(data['status'] == 'success'){
                         // console.log(data);
-                        $('#id_olt').val(data['olt_full_name']);
-                        $('#id_bng').val(data['bngs']); // 更新清单
+                        $("#id_olt").val(data['olt_full_name']);
+                        $("#id_bng").val(data['bngs']); // 更新清单
+                        $("#id_access_type").val(data['access_type']);
                     }else{
                         console.log(data);
                         alert('error');
@@ -332,7 +355,6 @@
         });
         // 确认分配
         $("#confirm-allocate-btn").click(function(){
-            var target_tb = $("#target-id-table").html();
             $.ajax({
                 url: "{% url 'confirm_allocate' %}",
                 type: 'POST',
@@ -340,9 +362,11 @@
                 cache: false,
                 success: function(data){
                     if(data['status'] == 'success'){
-                        console.log(data);
-                        $("p.error-data").text("");
-                        alert("success");
+                        // console.log(data);
+                        $("p.error-data").text(""); // 清空错误信息
+                        document.getElementById('ip-detail-form').reset();  // 清空form
+                        $("#target-id-table").html(""); // 清空目标table
+                        alert("分配成功");
                     }else{
                         // console.log(data);
                         $("p.error-data").text("");
@@ -391,6 +415,11 @@
                     console.log(xhr);
                 }
             });
+        });
+        // 清理所有目标地址
+        $("#clear-all-target-btn").click(function(){
+            $("#target-id-table").html("");
+            $("#target-list").val("{}");
         });
     });
 </script>

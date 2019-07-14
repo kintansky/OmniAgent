@@ -257,6 +257,7 @@ class IPAllocation(models.Model):
     description = models.CharField(max_length=255, null=True)
     ip_func = models.CharField(max_length=4, null=True)
     olt = models.CharField(max_length=255, null=True)
+    access_type = models.CharField(max_length=10, null=True)
     service_id = models.PositiveIntegerField(default=0)
     brand_width = models.PositiveIntegerField(default=0)
     group_id = models.PositiveIntegerField(default=0)

@@ -264,14 +264,20 @@ class NewIPAllocationForm(forms.Form):
         ('双上联', '双上联'),
         ('单上联', '单上联'),
     )
+    ACCESS_CHOICES = (
+        ('GPON', 'GPON'),
+        ('PTN', 'PTN'),
+        ('OTHER', 'OTHER'),
+    )
     order_num = forms.CharField(label='服开单号', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     client_name = forms.CharField(label='客户名称', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     
     # olt与bng关系处理
-    olt = forms.CharField(label='OLT', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'olt名字可模糊匹配', 'style': 'width:70%'}))
+    olt = forms.CharField(label='OLT/PTN', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'olt名字可模糊匹配', 'style': 'width:70%'}))
+    access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'form-control', 'style': 'width:70%'}))
     bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bng由olt生成，如无法找到，请手工填入', 'style': 'width:70%'}))
     # 子接口与内外层vlan关系
-    logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'lag-100.200.0 或 Eth-Trunk1.200.0', 'style': 'width:70%'}))
+    logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'lag-100:200.0 或 Eth-Trunk1:200.0', 'style': 'width:70%'}))
     # svlan = forms.IntegerField(label='外层VLAN', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
     # cevlan = forms.IntegerField(label='内层VLAN', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
     # 描述与带宽的关系

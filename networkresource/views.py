@@ -590,13 +590,20 @@ def ajax_get_bng(request):
         data['bngs'] = ''
     else:
         # TODO: 1.找到OLT详细名，2.根据OLT返回BNG
-        data['olt_full_name'] = 'olt_full_name'
+        data['olt_full_name'] = 'ptn1'
         bngs = 'bng1/bng2'
         if bngs is None:
             bngs = ''
         data['bngs'] = bngs
+        if 'olt' in olt.lower():
+            data['access_type'] = 'GPON'
+        elif 'ptn' in olt.lower():
+            data['access_type'] = 'PTN'
+        else:
+            data['access_type'] = 'OTHER'
     data['status'] = 'success'
     return JsonResponse(data)
+
 
 def ajax_confirm_allocate(request):
     data = {}
@@ -605,49 +612,53 @@ def ajax_confirm_allocate(request):
     if target_list != '' and target_list != '{}':
         target_dict = json.loads(target_list)
         if new_ip_allocation_form.is_valid():
-            print(new_ip_allocation_form.cleaned_data)
+            # print(new_ip_allocation_form.cleaned_data)
+            bngs = new_ip_allocation_form.cleaned_data['bng'].split('/')
             for target in target_dict:
                 ipData = target_dict[target]    # target_dict[data['target']] = [ip_func, state, gateway]
                 if 'p' in target:
                     first_ip, ip_num = target.split('p')
                     ip_sep = first_ip.split('.')
-                    for i in range(int(ip_num)):
-                        bngs = new_ip_allocation_form.cleaned_data['bng']
-                        for bng in bngs.split('/'):
-                            targetIp = '.'.join(ip_sep[0:3]+[str(int(ip_sep[3])+i),])
-                            ip_allocation = IPAllocation()
-                            ip_allocation.ip = targetIp
-                            ip_allocation.ip_func = ipData[0]
-                            if ipData[0] == '私网':
-                                ip_allocation.community = new_ip_allocation_form.cleaned_data['community']
-                                ip_allocation.rt = new_ip_allocation_form.cleaned_data['rt']
-                                ip_allocation.rd = new_ip_allocation_form.cleaned_data['rd']
-                            else:
-                                ip_allocation.community = ""
-                                ip_allocation.rt = ""
-                                ip_allocation.rd = ""
-                            ip_allocation.state = ipData[1]
-                            ip_allocation.gateway = ipData[2]
+                    ready_to_allocate_ips = ['.'.join(ip_sep[0:3]+[str(int(ip_sep[3])+i),]) for i in range(int(ip_num))]
+                elif '/' in target:
+                    subnet = IP.make_net(*target.split('/'))
+                    ready_to_allocate_ips = [ip.strNormal() for ip in subnet]
 
-                            ip_allocation.order_num = new_ip_allocation_form.cleaned_data['order_num']
-                            ip_allocation.client_name = new_ip_allocation_form.cleaned_data['client_name']
-                            ip_allocation.olt = new_ip_allocation_form.cleaned_data['olt']
-                            ip_allocation.bng = bng
-                            ip_allocation.logic_port = new_ip_allocation_form.cleaned_data['logic_port']
-                            ip_allocation.svlan = new_ip_allocation_form.cleaned_data['svlan']
-                            ip_allocation.cevlan = new_ip_allocation_form.cleaned_data['cevlan']
-                            ip_allocation.description = new_ip_allocation_form.cleaned_data['description']
-                            ip_allocation.brand_width = new_ip_allocation_form.cleaned_data['brand_width']
-                            ip_allocation.service_id = new_ip_allocation_form.cleaned_data['service_id']
-                            ip_allocation.group_id = new_ip_allocation_form.cleaned_data['group_id']
-                            ip_allocation.product_id = new_ip_allocation_form.cleaned_data['product_id']
-                            ip_allocation.network_type = new_ip_allocation_form.cleaned_data['network_type']
+                for targetIp in ready_to_allocate_ips:
+                    for bng in bngs:
+                        ip_allocation = IPAllocation()
+                        ip_allocation.ip = targetIp
+                        ip_allocation.ip_func = ipData[0]
+                        if ipData[0] == '私网':
+                            ip_allocation.community = new_ip_allocation_form.cleaned_data['community']
+                            ip_allocation.rt = new_ip_allocation_form.cleaned_data['rt']
+                            ip_allocation.rd = new_ip_allocation_form.cleaned_data['rd']
+                        else:
+                            ip_allocation.community = ""
+                            ip_allocation.rt = ""
+                            ip_allocation.rd = ""
+                        ip_allocation.state = ipData[1]
+                        ip_allocation.gateway = ipData[2]
 
-                            ip_allocation.comment = new_ip_allocation_form.cleaned_data['comment']
-                            ip_allocation.alc_user = request.user.first_name
-                            ip_allocation.alc_time = timezone.datetime.now()
+                        ip_allocation.order_num = new_ip_allocation_form.cleaned_data['order_num']
+                        ip_allocation.client_name = new_ip_allocation_form.cleaned_data['client_name']
+                        ip_allocation.olt = new_ip_allocation_form.cleaned_data['olt']
+                        ip_allocation.bng = bng
+                        ip_allocation.access_type = new_ip_allocation_form.cleaned_data['access_type']
+                        ip_allocation.logic_port = new_ip_allocation_form.cleaned_data['logic_port']
+                        ip_allocation.svlan = new_ip_allocation_form.cleaned_data['svlan']
+                        ip_allocation.cevlan = new_ip_allocation_form.cleaned_data['cevlan']
+                        ip_allocation.description = new_ip_allocation_form.cleaned_data['description']
+                        ip_allocation.brand_width = new_ip_allocation_form.cleaned_data['brand_width']
+                        ip_allocation.service_id = new_ip_allocation_form.cleaned_data['service_id']
+                        ip_allocation.group_id = new_ip_allocation_form.cleaned_data['group_id']
+                        ip_allocation.product_id = new_ip_allocation_form.cleaned_data['product_id']
+                        ip_allocation.network_type = new_ip_allocation_form.cleaned_data['network_type']
+                        ip_allocation.comment = new_ip_allocation_form.cleaned_data['comment']
+                        ip_allocation.alc_user = request.user.first_name
+                        ip_allocation.alc_time = timezone.datetime.now()
 
-                            ip_allocation.save()
+                        ip_allocation.save()
 
             data['status'] = 'success'
         else:
