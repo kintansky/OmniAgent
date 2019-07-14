@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord
+from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord, IPAllocation
 from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
@@ -504,10 +504,11 @@ def ip_allocation_mod(request, ip_type):
 
 def new_allocate_ip(request):
     context = {}
-    ip_target_form = IPTargetForm()
-    new_ip_allocation_form = NewIPAllocationForm()
-    context['ip_target_form'] = ip_target_form
-    context['new_ip_allocation_form'] = new_ip_allocation_form
+    if request.method == 'GET':
+        ip_target_form = IPTargetForm()
+        new_ip_allocation_form = NewIPAllocationForm()
+        context['ip_target_form'] = ip_target_form
+        context['new_ip_allocation_form'] = new_ip_allocation_form
     return render(request, 'ipallocate.html', context)
 
 
@@ -515,6 +516,7 @@ def ajax_generate_ip_list(request):
     data = {}
     ip_target_form = IPTargetForm(request.POST)
     target_list = request.POST.get('target-list', '{}')
+    include_private_ip = 'n'
     if target_list == '':
         target_list = '{}'
     target_dict = json.loads(target_list)
@@ -524,6 +526,7 @@ def ajax_generate_ip_list(request):
         ip_num = ip_target_form.cleaned_data['ip_num']
         ip_segment = ip_target_form.cleaned_data['ip_segment']
         state = ip_target_form.cleaned_data['state']
+        gateway = ip_target_form.cleaned_data['gateway']
         if ip_num:
             ip_sep = first_ip.split('.')
             last_num = int(ip_sep[3]) + ip_num - 1
@@ -537,7 +540,12 @@ def ajax_generate_ip_list(request):
             first_ip = subnet[0].strNormal()
             last_ip = subnet[-1].strNormal()
             data['target'] = subnet.strNormal()
-        target_dict[data['target']] = [ip_func, state]
+        target_dict[data['target']] = [ip_func, state, gateway]
+        for t in target_dict:
+            if '私网' in target_dict[t]:
+                include_private_ip = 'y'
+                break
+        data['include_private_ip'] = include_private_ip
         data['target_list'] = json.dumps(target_dict)   # 通过json传回
         data['ip_func'] = ip_func
         data['first_ip'] = first_ip
@@ -549,23 +557,105 @@ def ajax_generate_ip_list(request):
         data['target_list'] = json.dumps(target_dict)
         data['status'] = 'error'
         error_info = ''
-        errorDict = ip_target_form.errors.as_data()
+        errorDict = ip_target_form.errors.get_json_data()
         for f in errorDict:
-            error_info += '填写错误字段{}: {}'.format(f, errorDict[f])
+            error_info += '填写错误字段{}: {}'.format(f, errorDict[f][0]['message'])
         data['error_info'] = error_info
     return JsonResponse(data)
 
 
 def ajax_remove_ip(request):
     data = {}
+    include_private_ip = 'n'
     target_dict = json.loads(request.POST.get('target-list', '{}'))
     remove_target = request.POST.get('remove-target', '').replace(' ', 'p')
     for t in target_dict:
         if t == remove_target:
             target_dict.pop(t)
             break
+    for t in target_dict:
+        if '私网' in target_dict[t]:
+            include_private_ip = 'y'
+            break
+    data['include_private_ip'] = include_private_ip
     data['target_list'] = json.dumps(target_dict)
     data['status'] = 'success'
     return JsonResponse(data)
-    
-    
+
+
+def ajax_get_bng(request):
+    data = {}
+    olt = request.POST.get('olt', '').strip()
+    if olt == '':
+        data['bngs'] = ''
+    else:
+        # TODO: 1.找到OLT详细名，2.根据OLT返回BNG
+        data['olt_full_name'] = 'olt_full_name'
+        bngs = 'bng1/bng2'
+        if bngs is None:
+            bngs = ''
+        data['bngs'] = bngs
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+def ajax_confirm_allocate(request):
+    data = {}
+    new_ip_allocation_form = NewIPAllocationForm(request.POST)
+    target_list = request.POST.get('target-list', '{}')
+    if target_list != '' and target_list != '{}':
+        target_dict = json.loads(target_list)
+        if new_ip_allocation_form.is_valid():
+            print(new_ip_allocation_form.cleaned_data)
+            for target in target_dict:
+                ipData = target_dict[target]    # target_dict[data['target']] = [ip_func, state, gateway]
+                if 'p' in target:
+                    first_ip, ip_num = target.split('p')
+                    ip_sep = first_ip.split('.')
+                    for i in range(int(ip_num)):
+                        bngs = new_ip_allocation_form.cleaned_data['bng']
+                        for bng in bngs.split('/'):
+                            targetIp = '.'.join(ip_sep[0:3]+[str(int(ip_sep[3])+i),])
+                            ip_allocation = IPAllocation()
+                            ip_allocation.ip = targetIp
+                            ip_allocation.ip_func = ipData[0]
+                            if ipData[0] == '私网':
+                                ip_allocation.community = new_ip_allocation_form.cleaned_data['community']
+                                ip_allocation.rt = new_ip_allocation_form.cleaned_data['rt']
+                                ip_allocation.rd = new_ip_allocation_form.cleaned_data['rd']
+                            else:
+                                ip_allocation.community = ""
+                                ip_allocation.rt = ""
+                                ip_allocation.rd = ""
+                            ip_allocation.state = ipData[1]
+                            ip_allocation.gateway = ipData[2]
+
+                            ip_allocation.order_num = new_ip_allocation_form.cleaned_data['order_num']
+                            ip_allocation.client_name = new_ip_allocation_form.cleaned_data['client_name']
+                            ip_allocation.olt = new_ip_allocation_form.cleaned_data['olt']
+                            ip_allocation.bng = bng
+                            ip_allocation.logic_port = new_ip_allocation_form.cleaned_data['logic_port']
+                            ip_allocation.svlan = new_ip_allocation_form.cleaned_data['svlan']
+                            ip_allocation.cevlan = new_ip_allocation_form.cleaned_data['cevlan']
+                            ip_allocation.description = new_ip_allocation_form.cleaned_data['description']
+                            ip_allocation.brand_width = new_ip_allocation_form.cleaned_data['brand_width']
+                            ip_allocation.service_id = new_ip_allocation_form.cleaned_data['service_id']
+                            ip_allocation.group_id = new_ip_allocation_form.cleaned_data['group_id']
+                            ip_allocation.product_id = new_ip_allocation_form.cleaned_data['product_id']
+                            ip_allocation.network_type = new_ip_allocation_form.cleaned_data['network_type']
+
+                            ip_allocation.comment = new_ip_allocation_form.cleaned_data['comment']
+                            ip_allocation.alc_user = request.user.first_name
+                            ip_allocation.alc_time = timezone.datetime.now()
+
+                            ip_allocation.save()
+
+            data['status'] = 'success'
+        else:
+            data['status'] = 'error'
+            errorDict = new_ip_allocation_form.errors.get_json_data()
+            for f in errorDict:
+                data['error_'+f] = errorDict[f][0]['message']
+    else:
+        data['status'] = 'error'
+        data['other_error'] = '分配目标地址为空'
+    return JsonResponse(data)

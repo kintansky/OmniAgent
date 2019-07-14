@@ -38,7 +38,7 @@
                                     </div>
                                 </div>
                                 <br>
-                                <div class="form-group allocate">
+                                <div class="form-group">
                                     <label for="{{ ip_target_form.first_ip.id_for_label }}">{{ ip_target_form.first_ip.label }}</label>
                                     {{ ip_target_form.first_ip }}
                                     <label for="{{ ip_target_form.ip_num.id_for_label }}">+{{ ip_target_form.ip_num.label }}</label>
@@ -51,9 +51,20 @@
                                     </div>
                                 </div>
                                 <br>
-                                <div class="form-group allocate">
+                                <div class="form-group">
                                     <label for="{{ ip_target_form.ip_segment.id_for_label }}">{{ ip_target_form.ip_segment.label }}</label>
                                     {{ ip_target_form.ip_segment }}
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <span class="label label-info">网关信息</span>
+                                    </div>
+                                </div>
+                                <br>
+                                <div class="form-group">
+                                    <label for="{{ ip_target_form.gateway.id_for_label }}">{{ ip_target_form.gateway.label }}</label>
+                                    {{ ip_target_form.gateway }}
                                 </div>
                             </form>
                             <button type="submit" class="btn btn-success generate-ip pull-right">添加地址</button>
@@ -80,14 +91,18 @@
                     </div>
                 </div>
             </div>
+
             <hr>
             <div class="row">
                 <div class="panel panel-default">
                     <div class="panel-heading">其他分配信息</div>
                     <div class="panel-body">
-                        <form action="" method="POST">
+                        <form id="ip-detail-form" action="{% url 'new_ip_allocate' %}" method="POST">
                             <div class="form-group">
                                 <input name="target-list" id='target-list' class="form-control" readonly="readonly">
+                                <label for="{{ new_ip_allocation_form.include_private_ip.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.include_private_ip.label }}</label>
+                                {{ new_ip_allocation_form.include_private_ip }}
+                                <!-- <p class="text-danger error-data">{{ field.errors.as_text }}</p> -->
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
@@ -100,14 +115,14 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.order_num.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.order_num.label }}</label>
                                         {{ new_ip_allocation_form.order_num }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_order_num">{{ new_ip_allocation_form.order_num.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.client_name.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.client_name.label }}</label>
                                         {{ new_ip_allocation_form.client_name }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_client_name">{{ new_ip_allocation_form.client_name.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -116,14 +131,14 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.olt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.olt.label }}</label>
                                         {{ new_ip_allocation_form.olt }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_olt">{{ new_ip_allocation_form.olt.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.bng.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.bng.label }}</label>
                                         {{ new_ip_allocation_form.bng }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_bng">{{ new_ip_allocation_form.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -132,14 +147,14 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.logic_port.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.logic_port.label }}</label>
                                         {{ new_ip_allocation_form.logic_port }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_logic_port">{{ new_ip_allocation_form.logic_port.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.description.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.description.label }}</label>
                                         {{ new_ip_allocation_form.description }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_description">{{ new_ip_allocation_form.description.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -148,14 +163,14 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.service_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.service_id.label }}</label>
                                         {{ new_ip_allocation_form.service_id }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_service_id">{{ new_ip_allocation_form.service_id.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.group_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.group_id.label }}</label>
                                         {{ new_ip_allocation_form.group_id }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_group_id">{{ new_ip_allocation_form.group_id.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -164,21 +179,21 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.product_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.product_id.label }}</label>
                                         {{ new_ip_allocation_form.product_id }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_product_id">{{ new_ip_allocation_form.product_id.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.network_type.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.network_type.label }}</label>
                                         {{ new_ip_allocation_form.network_type }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_network_type">{{ new_ip_allocation_form.network_type.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
                             <hr>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <span class="label label-danger">私网附加信息</span>
+                                    <span class="label label-danger">私网附加信息(分配私网IP时必须填写)</span>
                                 </div>
                             </div>
                             <br>
@@ -187,7 +202,7 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.community.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.community.label }}</label>
                                         {{ new_ip_allocation_form.community }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <p class="text-danger error-data" id="id_error_community">{{  new_ip_allocation_form.community.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -196,14 +211,14 @@
                                         <div class="form-group">
                                             <label for="{{ new_ip_allocation_form.rt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rt.label }}</label>
                                             {{ new_ip_allocation_form.rt }}
-                                            <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                            <p class="text-danger error-data" id="id_error_rt">{{ new_ip_allocation_form.rt.errors.as_text }}</p>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
                                         <div class="form-group">
                                             <label for="{{ new_ip_allocation_form.rd.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rd.label }}</label>
                                             {{ new_ip_allocation_form.rd }}
-                                            <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                            <p class="text-danger error-data" id="id_error_rd">{{ new_ip_allocation_form.rd.errors.as_text }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -219,17 +234,12 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.comment.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.comment.label }}</label>
                                         {{ new_ip_allocation_form.comment }}
-                                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                                        <!-- <p class="text-danger error-data">{{ field.errors.as_text }}</p> -->
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-sm-2 pull-right">
-                                    <button type="submit" class="btn btn-success">确认分配</button>
-                                    <button type="reset" class="btn btn-danger">清空</button>
-                                </div>
-                            </div>
                         </form>
+                        <button type="submit" id="confirm-allocate-btn" class="btn btn-success pull-right">确认分配</button>
                     </div>
                 </div>
             </div>
@@ -250,17 +260,19 @@
 {% block tail_script %}
 <script>
     $(document).ready(function(){
+        // 生成IP
         $(".generate-ip").click(function(){
             $.ajax({
                 url: "{% url 'generate_ip' %}",
                 type: 'POST',
-                data:  $('#target-list').serialize()+ "&" + $('#generate-ip-form').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                data:  $('#target-list').serialize() + "&" + $('#generate-ip-form').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
                     if(data['status'] == 'success'){
                         // console.log(data);
                         $('#target-id-table').prepend("<tr><td>"+data['ip_func']+"</td><td>"+data['first_ip']+"</td><td>"+data['last_ip']+"</td><td>"+data['gw']+"</td><td>"+data['state']+"</td><td><button id=\""+data['target']+"\" type=\"button\" class=\"btn btn-danger btn-xs remove-ip-btn\">取消</button></td></tr>");
                         $('#target-list').val(data['target_list']);
+                        $('#id_include_private_ip').val(data['include_private_ip']);
                         document.getElementById('generate-ip-form').reset();
                     }else{
                         console.log(data);
@@ -272,7 +284,7 @@
                 }
             });
         });
-
+        // 删除目标IP
         $(document).on("click", ".remove-ip-btn", function(){   // 动态绑定需要使用.on
             var remove_target = $(this).parent().parent();  // 需要删除的对象为btn的祖父
             $.ajax({
@@ -285,9 +297,94 @@
                         // console.log(data);
                         remove_target.remove();
                         $('#target-list').val(data['target_list']); // 更新清单
+                        $('#id_include_private_ip').val(data['include_private_ip']);
                     }else{
                         console.log(data);
                         alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 获取上联BNG
+        $("#id_bng").click(function(){
+            $.ajax({
+                url: "{% url 'get_bng' %}",
+                type: 'POST',
+                data: $('#id_olt').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        $('#id_olt').val(data['olt_full_name']);
+                        $('#id_bng').val(data['bngs']); // 更新清单
+                    }else{
+                        console.log(data);
+                        alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 确认分配
+        $("#confirm-allocate-btn").click(function(){
+            var target_tb = $("#target-id-table").html();
+            $.ajax({
+                url: "{% url 'confirm_allocate' %}",
+                type: 'POST',
+                data: $('#ip-detail-form').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        console.log(data);
+                        $("p.error-data").text("");
+                        alert("success");
+                    }else{
+                        // console.log(data);
+                        $("p.error-data").text("");
+                        if("error_order_num" in data){
+                            $("#id_error_order_num").text(data["error_order_num"]);
+                        }
+                        if("error_client_name" in data){
+                            $("#id_error_client_name").text(data["error_client_name"]);
+                        }
+                        if("error_olt" in data){
+                            $("#id_error_olt").text(data["error_olt"]);
+                        }
+                        if("error_bng" in data){
+                            $("#id_error_bng").text(data["error_bng"]);
+                        }
+                        if("error_logic_port" in data){
+                            $("#id_error_logic_port").text(data["error_logic_port"]);
+                        }
+                        if("error_description" in data){
+                            $("#id_error_description").text(data["error_description"]);
+                        }
+                        if("error_service_id" in data){
+                            $("#id_error_service_id").text(data["error_service_id"]);
+                        }
+                        if("error_group_id" in data){
+                            $("#id_error_group_id").text(data["error_group_id"]);
+                        }
+                        if("error_product_id" in data){
+                            $("#id_error_product_id").text(data["error_product_id"]);
+                        }
+                        if("error_community" in data){
+                            $("#id_error_community").text(data["error_community"]);
+                        }
+                        if("error_rt" in data){
+                            $("#id_error_rt").text(data["error_rt"]);
+                        }
+                        if("error_rd" in data){
+                            $("#id_error_rd").text(data["error_rd"]);
+                        }
+                        if("other_error" in data){
+                            alert(data["other_error"]);
+                        }
                     }
                 },
                 error: function(xhr){

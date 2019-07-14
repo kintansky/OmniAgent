@@ -260,7 +260,7 @@ class IPAllocation(models.Model):
     service_id = models.PositiveIntegerField(default=0)
     brand_width = models.PositiveIntegerField(default=0)
     group_id = models.PositiveIntegerField(default=0)
-    client_id = models.PositiveIntegerField(default=0)
+    product_id = models.PositiveIntegerField(default=0)
     network_type = models.CharField(max_length=5, null=True)
     community = models.CharField(max_length=50, null=True)
     rt = models.CharField(max_length=50, blank=True, null=True)
