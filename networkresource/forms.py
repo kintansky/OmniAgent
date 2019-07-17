@@ -26,8 +26,9 @@ class IPsearchForm(forms.Form):
 
 # IP 分配操作相关
 class IPAllocateSearchForm(forms.Form):
-    ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1', 'style':'width:150px'}))
-    client_name = forms.CharField(label='ClientName', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '**公司', 'style':'width:300px'}))
+    ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1', 'style':'width:80%'}))
+    client_name = forms.CharField(label='客户', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '**公司', 'style':'width:80%'}))
+    product_id = forms.IntegerField(label='or 产品编号', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:60%'}))
 
     def clean_client_name(self):
         return self.cleaned_data['client_name'].strip()
@@ -277,13 +278,10 @@ class NewIPAllocationForm(forms.Form):
     access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'form-control', 'style': 'width:70%'}))
     bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bng由olt生成，如无法找到，请手工填入', 'style': 'width:70%'}))
     # 子接口与内外层vlan关系
+    # TODO: 确认下私网是否需要填写子接口
     logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'lag-100:200.0 或 Eth-Trunk1:200.0', 'style': 'width:70%'}))
-    # svlan = forms.IntegerField(label='外层VLAN', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
-    # cevlan = forms.IntegerField(label='内层VLAN', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
     # 描述与带宽的关系
-    description = forms.CharField(label='描述', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
-    # brand_width = forms.IntegerField(label='带宽', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
-    
+    description = forms.CharField(label='描述', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))    
     service_id = forms.IntegerField(label='业务ID', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     group_id = forms.IntegerField(label='集团客户编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     product_id = forms.IntegerField(label='集团产品编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))

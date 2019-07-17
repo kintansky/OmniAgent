@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord, IPAllocation
+from .models import IpmanResource, IpRecord, PublicIpAllocation, PrivateIpAllocation, PublicIpModRecord, PrivateIpModRecord, IPAllocation, IPMod
 from .forms import IPsearchForm, IpAllocateForm, IpPrivateAllocateForm, IpModForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
@@ -550,7 +550,7 @@ def ajax_generate_ip_list(request):
         data['ip_func'] = ip_func
         data['first_ip'] = first_ip
         data['last_ip'] = last_ip
-        data['gw'] = '1.1.1.1'
+        data['gw'] = gateway
         data['state'] = state
         data['status'] = 'success'
     else:
@@ -583,25 +583,29 @@ def ajax_remove_ip(request):
     return JsonResponse(data)
 
 
-def ajax_get_bng(request):
+def ajax_get_olt_bng(request, device_type):
     data = {}
-    olt = request.POST.get('olt', '').strip()
-    if olt == '':
-        data['bngs'] = ''
-    else:
-        # TODO: 1.找到OLT详细名，2.根据OLT返回BNG
-        data['olt_full_name'] = 'ptn1'
-        bngs = 'bng1/bng2'
-        if bngs is None:
-            bngs = ''
-        data['bngs'] = bngs
-        if 'olt' in olt.lower():
-            data['access_type'] = 'GPON'
-        elif 'ptn' in olt.lower():
-            data['access_type'] = 'PTN'
-        else:
-            data['access_type'] = 'OTHER'
-    data['status'] = 'success'
+    if device_type == 'olt':
+        olt = request.GET.get('olt', '').strip()
+        rawQueryCmd = 'select id, olt from omni_agent.olt_bng_info where olt LIKE "%{}%" GROUP BY olt'.format(olt)
+        olts = IpmanResource.objects.raw(rawQueryCmd)
+        olt_list = [d.olt for d in olts]
+        # if len(olt_list) >= 5:
+        #     data['olt-list'] = '候选结果过多'
+        #     data['status'] = 'error'
+        # else:
+        data['olt_list'] = ','.join(olt_list)
+        data['access_type'] = 'GPON'
+        data['status'] = 'success'
+    elif device_type == 'bng':
+        olt = request.GET.get('olt', '').strip()
+        rawQueryCmd = 'select id, bng from omni_agent.olt_bng_info where olt =%s GROUP BY bng'
+        bngs = IpmanResource.objects.raw(rawQueryCmd, (olt,))
+        bng_list = '/'.join([b.bng for b in bngs])
+        print(bng_list)
+        data['bng_list'] = bng_list
+        data['status'] = 'success'
+
     return JsonResponse(data)
 
 
@@ -669,4 +673,153 @@ def ajax_confirm_allocate(request):
     else:
         data['status'] = 'error'
         data['other_error'] = '分配目标地址为空'
+    return JsonResponse(data)
+
+
+def ip_allocated_list(request):
+    context = {}
+    ip_all_list = IPAllocation.objects.all()
+    page_of_objects, page_range = pages(request, ip_all_list)
+    context['count'] = ip_all_list.count()
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['ip_search_form'] = IPAllocateSearchForm()
+    return render(request, 'ip_allocated_list.html', context)
+
+
+def ip_allocated_search(request):
+    context = {}
+    ip_search_form = IPAllocateSearchForm(request.GET)
+    if ip_search_form.is_valid():
+        ip_address = ip_search_form.cleaned_data['ip_address']
+        client_name = ip_search_form.cleaned_data['client_name']
+        product_id = ip_search_form.cleaned_data['product_id']
+        if ip_address != '':
+            ip_all_list = IPAllocation.objects.filter(ip=ip_address)
+        elif client_name != '':
+            ip_all_list = IPAllocation.objects.filter(client_name__icontains=client_name)
+        elif product_id is not None:
+            ip_all_list = IPAllocation.objects.filter(product_id=product_id)
+        else:
+            ip_all_list = IPAllocation.objects.all()
+    else:
+        context['ip_search_form'] = ip_search_form
+        return render(request, 'ip_allocated_list.html', context)
+
+    page_of_objects, page_range = pages(request, ip_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['search_ip_address'] = ip_address
+    context['search_client_name'] = client_name
+    context['search_product_id'] = product_id
+    context['ip_search_form'] = ip_search_form
+    return render(request, 'ip_allocated_list.html', context)
+
+
+def ajax_locate_allocated_ip(request):
+    data = {}
+    rid = request.GET.get('rid')
+    try:
+        record = IPAllocation.objects.get(id=rid)
+        data = objectDataSerializer(record, data)
+        if data['svlan'] is not None:
+            if data['cevlan'] is not None:
+                data['logic_port'] = data['logic_port']+':'+str(data['svlan'])+'.'+str(data['cevlan'])
+            else:
+                data['logic_port'] = data['logic_port']+':'+str(data['svlan'])+'.'+'0'
+        else:
+            data['logic_port'] = data['logic_port']+':'+'0.0'
+        data['status'] = 'success'
+    except ObjectDoesNotExist:
+        data['status'] = 'error'
+        data['error_info'] = '无法找到相应记录'
+    return JsonResponse(data)
+
+
+def ajax_mod_allocated_ip(request):
+    data = {}
+    rid = request.POST.get('rid')
+    form1Dict = request.POST.dict()
+    if form1Dict['ip_func'] == '私网':
+        form1Dict['include_private_ip'] = 'y'
+    else:
+        form1Dict['include_private_ip'] = 'n'
+    new_ip_allocation_form = NewIPAllocationForm(form1Dict)
+    form2Dict = {}
+    form2Dict['ip_func'] = request.POST.get('ip_func')
+    form2Dict['state'] = request.POST.get('state')
+    form2Dict['first_ip'] = request.POST.get('ip')
+    form2Dict['ip_num'] = 1
+    form2Dict['gateway'] = request.POST.get('gateway')
+    ip_target_form = IPTargetForm(form2Dict)    # form实例化可以直接传入dict, model不行
+    if ip_target_form.is_valid() and new_ip_allocation_form.is_valid():
+        mod_target = IPAllocation.objects.get(id=rid)
+        old_data = objectDataSerializer(mod_target, {})
+        # 备份旧数据
+        # print(new_ip_allocation_form.cleaned_data)
+        # print(ip_target_form.cleaned_data)
+        old_data.pop('id')
+        old_data.pop('comment')
+        old_data.pop('alc_user')
+        old_data.pop('alc_time')
+        if request.POST.get('mod_order_num') is None:
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        elif request.POST.get('mod_order_num').strip() == '':
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        else:
+            old_data['mod_order_num'] = request.POST.get('mod_order_num').strip()
+        if request.POST.get('mod_msg') is not None:
+            old_data['mod_msg'] = request.POST.get('mod_msg').strip()
+        # 需要处理数据库对0时返回None的情况
+        if old_data['svlan'] is None:
+            old_data['svlan'] = 0
+        if old_data['cevlan'] is None:
+            old_data['cevlan'] = 0
+        old_data['mod_user'] = request.user.first_name
+        old_data['mod_time'] = timezone.datetime.now()
+        mod_record = IPMod(**old_data)
+        mod_record.save()
+        # 更新新数据
+        mod_target.client_name = new_ip_allocation_form.cleaned_data['client_name']
+        mod_target.state = ip_target_form.cleaned_data['state']
+        mod_target.ip = ip_target_form.cleaned_data['first_ip']
+        mod_target.gateway = ip_target_form.cleaned_data['gateway']
+        mod_target.bng = new_ip_allocation_form.cleaned_data['bng']
+        mod_target.logic_port = new_ip_allocation_form.cleaned_data['logic_port']
+        mod_target.svlan = new_ip_allocation_form.cleaned_data['svlan']
+        mod_target.cevlan = new_ip_allocation_form.cleaned_data['cevlan']
+        mod_target.description = new_ip_allocation_form.cleaned_data['description']
+        mod_target.ip_func = ip_target_form.cleaned_data['ip_func']     
+        mod_target.olt = new_ip_allocation_form.cleaned_data['olt']
+        mod_target.service_id = new_ip_allocation_form.cleaned_data['service_id']
+        mod_target.brand_width = new_ip_allocation_form.cleaned_data['brand_width']
+        mod_target.group_id = new_ip_allocation_form.cleaned_data['group_id']
+        mod_target.product_id = new_ip_allocation_form.cleaned_data['product_id']
+        mod_target.network_type = new_ip_allocation_form.cleaned_data['network_type']
+        if new_ip_allocation_form.cleaned_data['include_private_ip'] == 'y':
+            mod_target.community = new_ip_allocation_form.cleaned_data['community']
+            mod_target.rt = new_ip_allocation_form.cleaned_data['rt']
+            mod_target.rd = new_ip_allocation_form.cleaned_data['rd']
+        mod_target.comment = old_data['mod_msg']
+        mod_target.save()
+        data['status'] = 'success'
+    else:
+        data['status'] = 'error'
+        errorDict = ip_target_form.errors.get_json_data()
+        # print(errorDict)
+        for f in errorDict:
+            data['error_info'] = '无效字段{}：{}'.format(f, errorDict[f][0]['message'])
+        errorDict = new_ip_allocation_form.errors.get_json_data()
+        # print(errorDict)
+        for f in errorDict:
+            data['error_info'] = '无效字段{}：{}'.format(f, errorDict[f][0]['message'])
+
     return JsonResponse(data)

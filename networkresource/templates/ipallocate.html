@@ -100,7 +100,7 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">详细信息</div>
                     <div class="panel-body">
-                        <form id="ip-detail-form" action="{% url 'new_ip_allocate' %}" method="POST">
+                        <form id="ip-detail-form" action="" method="POST">
                             <!-- 隐藏内容，调试可关闭style -->
                             <div class="form-group" style="display: none;">
                                 <input name="target-list" id='target-list' class="form-control" readonly="readonly">
@@ -169,6 +169,8 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.olt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.olt.label }}</label>
                                         {{ new_ip_allocation_form.olt }}
+                                        <div id="olt-list" class="olt-list">
+                                        </div>
                                         <p class="text-danger error-data" id="id_error_olt">{{ new_ip_allocation_form.olt.errors.as_text }}</p>
                                     </div>
                                 </div>
@@ -229,21 +231,21 @@
                                 </div>
                             </div>
                             <div class="row">
-                                    <div class="col-sm-6">
-                                        <div class="form-group">
-                                            <label for="{{ new_ip_allocation_form.rt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rt.label }}</label>
-                                            {{ new_ip_allocation_form.rt }}
-                                            <p class="text-danger error-data" id="id_error_rt">{{ new_ip_allocation_form.rt.errors.as_text }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <div class="form-group">
-                                            <label for="{{ new_ip_allocation_form.rd.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rd.label }}</label>
-                                            {{ new_ip_allocation_form.rd }}
-                                            <p class="text-danger error-data" id="id_error_rd">{{ new_ip_allocation_form.rd.errors.as_text }}</p>
-                                        </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.rt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rt.label }}</label>
+                                        {{ new_ip_allocation_form.rt }}
+                                        <p class="text-danger error-data" id="id_error_rt">{{ new_ip_allocation_form.rt.errors.as_text }}</p>
                                     </div>
                                 </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label for="{{ new_ip_allocation_form.rd.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.rd.label }}</label>
+                                        {{ new_ip_allocation_form.rd }}
+                                        <p class="text-danger error-data" id="id_error_rd">{{ new_ip_allocation_form.rd.errors.as_text }}</p>
+                                    </div>
+                                </div>
+                            </div>
                             <hr>
                             <div class="row">
                                 <div class="col-sm-12">
@@ -330,29 +332,6 @@
                 }
             });
         });
-        // 获取上联BNG
-        $("#id_bng").click(function(){
-            $.ajax({
-                url: "{% url 'get_bng' %}",
-                type: 'POST',
-                data: $('#id_olt').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
-                cache: false,
-                success: function(data){
-                    if(data['status'] == 'success'){
-                        // console.log(data);
-                        $("#id_olt").val(data['olt_full_name']);
-                        $("#id_bng").val(data['bngs']); // 更新清单
-                        $("#id_access_type").val(data['access_type']);
-                    }else{
-                        console.log(data);
-                        alert('error');
-                    }
-                },
-                error: function(xhr){
-                    console.log(xhr);
-                }
-            });
-        });
         // 确认分配
         $("#confirm-allocate-btn").click(function(){
             $.ajax({
@@ -420,6 +399,70 @@
         $("#clear-all-target-btn").click(function(){
             $("#target-id-table").html("");
             $("#target-list").val("{}");
+        });
+        // 模糊匹配OLT清单
+        $("#id_olt").keyup(function(){
+            if($(this).val() == ""){
+                $("#olt-list").css("display", "none");
+                return;
+            }
+            $.ajax({
+                url: "{% url 'get_olt_bng' 'olt' %}",
+                type: 'GET',
+                data: $(this).serialize(),
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        console.log(data);
+                        var olts = data['olt_list'].split(",");
+                        var t = "<ul class=\"list-group\">";
+                        for(var i=0;i<olts.length;i++){
+                            // console.log(olts[i]);
+                            t += "<li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+olts[i]+"</li>"
+                        }
+                        t += "</ul>"
+                        $("#olt-list").html(t);
+                        $("#olt-list").css("display", "block");
+                    }else{
+                        alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 选择olt
+        $(document).on("click", ".olt-item", function(){
+            var auto_item = $(this).text();
+            $("#id_olt").val(auto_item);
+            $("#olt-list").css("display", "none");
+            $("#id_access_type").val(data['access_type']);
+        });
+        // 设置失去焦点时隐藏，避免遮挡
+        $("#id_olt").blur(function(){
+            $("#olt-list").css("display", "none");
+        });
+        // BNG 回填
+        $("#id_bng").click(function(){
+            $.ajax({
+                url: "{% url 'get_olt_bng' 'bng' %}",
+                type: 'GET',
+                data: $('#id_olt').serialize(),
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        $("#id_bng").val(data['bng_list']); // 更新清单
+                    }else{
+                        console.log(data);
+                        alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
         });
     });
 </script>
