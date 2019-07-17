@@ -590,19 +590,21 @@ def ajax_get_olt_bng(request, device_type):
         rawQueryCmd = 'select id, olt from omni_agent.olt_bng_info where olt LIKE "%{}%" GROUP BY olt'.format(olt)
         olts = IpmanResource.objects.raw(rawQueryCmd)
         olt_list = [d.olt for d in olts]
-        # if len(olt_list) >= 5:
-        #     data['olt-list'] = '候选结果过多'
-        #     data['status'] = 'error'
-        # else:
-        data['olt_list'] = ','.join(olt_list)
-        data['access_type'] = 'GPON'
-        data['status'] = 'success'
+        if len(olt_list) > 10:
+            data['olt_list'] = '候选结果过多，请提关键字眼'
+            data['status'] = 'error'
+        elif len(olt_list) == 0:
+            data['olt_list'] = '无候选结果'
+            data['status'] = 'error'
+        else:
+            data['olt_list'] = ','.join(olt_list)
+            data['access_type'] = 'GPON'
+            data['status'] = 'success'
     elif device_type == 'bng':
         olt = request.GET.get('olt', '').strip()
-        rawQueryCmd = 'select id, bng from omni_agent.olt_bng_info where olt =%s GROUP BY bng'
+        rawQueryCmd = 'select id, bng from omni_agent.olt_bng_info where olt = %s GROUP BY bng'
         bngs = IpmanResource.objects.raw(rawQueryCmd, (olt,))
         bng_list = '/'.join([b.bng for b in bngs])
-        print(bng_list)
         data['bng_list'] = bng_list
         data['status'] = 'success'
 

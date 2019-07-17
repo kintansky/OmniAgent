@@ -418,13 +418,15 @@
                         var t = "<ul class=\"list-group\">";
                         for(var i=0;i<olts.length;i++){
                             // console.log(olts[i]);
-                            t += "<li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+olts[i]+"</li>"
+                            t += "<li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+olts[i]+"</li>";
                         }
-                        t += "</ul>"
+                        t += "</ul>";
                         $("#olt-list").html(t);
                         $("#olt-list").css("display", "block");
                     }else{
-                        alert('error');
+                        // alert('error');
+                        var t = "<ul class=\"list-group\"><li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+data["olt_list"]+"</li>";
+                        $("#olt-list").html(t);
                     }
                 },
                 error: function(xhr){
