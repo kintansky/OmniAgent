@@ -461,7 +461,7 @@ def ajax_port_operate(request, operation_type):
 __QUERY_MY_FIX_TASKS = "\
 SELECT fix_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
 	SELECT * FROM(\
-	 	SELECT ped.*, pef.worker, pef.claim FROM \
+	 	SELECT ped.*, pef.worker, pef.claim, pef.status, pef.begin_time FROM \
 		omni_agent.inspection_porterrorfixrecord as pef \
 		left JOIN omni_agent.inspection_porterrordiff AS ped \
 		ON pef.device_name = ped.device_name AND pef.port = ped.port \
@@ -471,7 +471,7 @@ SELECT fix_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_s
 ) AS fix_info \
 LEFT JOIN omni_agent.inspection_portperf AS npp \
 ON fix_info.device_name = npp.device_name AND fix_info.port = npp.port AND DATE_FORMAT(fix_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
-ORDER BY fix_info.record_time DESC, fix_info.fix_status \
+ORDER BY fix_info.begin_time DESC, fix_info.fix_status \
 "
 
 
