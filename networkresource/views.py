@@ -415,7 +415,7 @@ def ajax_mod_allocated_ip(request):
         # 备份旧数据
         # print(new_ip_allocation_form.cleaned_data)
         # print(ip_target_form.cleaned_data)
-        old_data.pop('id')
+        old_data['mod_target_id'] = old_data.pop('id')
         old_data.pop('comment')
         old_data.pop('alc_user')
         old_data.pop('alc_time')

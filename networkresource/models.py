@@ -139,6 +139,7 @@ class IPMod(IPAllocationBase):
     mod_msg = models.CharField(max_length=255, null=True)
     mod_user = models.CharField(max_length=10, null=True)
     mod_time = models.DateTimeField()
+    mod_target_id = models.IntegerField()
 
     class Meta:
         ordering = ['-mod_time']
