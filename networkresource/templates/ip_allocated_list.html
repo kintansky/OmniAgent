@@ -1,0 +1,485 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} IP地址记录 {% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
+
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li><a href="">Resource</a></li>
+    <li class="active">IP Record</li>
+{% endblock %}
+
+{% block subheader %}
+    已分配的IP地址
+{% endblock %}
+
+{% block new_button %}
+    <a class="btn btn-success" href="{% url 'new_ip_allocate' %}" role="button">新增</a>
+{% endblock %}
+
+{% block search_form %}
+    <form action="{% url 'ip_allocates_search' %}" method="GET" class="form-inline">
+        {% for field in ip_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
+{% block alert_content %}
+    {% if ip_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block table_title %}
+        <th>工单号</th>
+        <th>IP</th>
+        <th>客户</th>
+        <th>接入设备</th>
+        <th>上联设备</th>
+        <th>子接口</th>
+        <th>下行带宽(M)</th>
+        <th>分配人</th>
+        <th>操作</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for record in records %}
+        {% if record.state == '已停用' %}
+            <tr class="danger">
+        {% else %}
+            <tr>
+        {% endif %}
+            <td>
+                {% if record.state == '预分配' %}
+                    <span class="label label-info">{{ record.state }}</span>
+                {% elif record.state == '已启用' %}
+                    <span class="label label-success">{{ record.state }}</span>
+                {% elif record.state == '已停用' %}
+                    <span class="label label-danger">{{ record.state }}</span>
+                {% endif %}
+                {{ record.order_num|truncatechars:15 }}
+            </td>
+            <td data-toggle="tooltip" data-placement="top" title="网关: {{ record.gateway }}">
+                {{ record.ip }}
+                {% if record.ip_func == '公网' %}
+                    <span class="label label-danger">公网</span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="label label-info">{{ record.product_id }}</span>
+                {{ record.client_name|truncatechars:15 }}
+            </td>
+            <td>
+                {% if record.access_type == 'GPON' %}
+                    <span class="label label-success">{{ record.access_type }}</span>
+                {% elif record.access_type == 'PTN' %}
+                    <span class="label label-warning">{{ record.access_type }}</span>
+                {% endif %}
+                {{ record.olt }}
+            </td>
+            <td>{{ record.bng|truncatechars:15 }}</td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.description }}">
+                {{ record.logic_port }}:{{ record.svlan|default:'0' }}.{{ record.cevlan|default:'0' }}
+            </td>
+            <td>{{ record.brand_width }}</td>
+            <td>{{ record.alc_user }}</td>
+            {% if user.is_authenticated %}
+                <td>
+                    <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}">
+                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                    </a>
+                </td>
+            {% else %}
+            {# user no login #}
+                <td>
+                    <a href="{% url 'login' %}?from={{ request.get_full_path }}">
+                        <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                    </a>
+                </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+
+{% endblock %}
+
+{% block paginator %}
+<div class="paginator">
+    <ul class="pagination">
+        {# 上一页 #}
+        <li>
+            {% if page_of_objects.has_previous %}
+                {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
+                {% if search_ip_address or search_client_name or search_product_id %}
+                    <a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                {% else %}
+                    <a href="?page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <span aria-hidden="true">&laquo;</span>
+            {% endif %}
+        </li>
+        {# 中间页码 #}
+        {% for page_num in page_range %}
+            {% if page_num == page_of_objects.number %}
+                <li class='active'><span>{{ page_num }}</span></li>
+            {% else %}
+                {% if page_num == '...' %}
+                    <li><span>{{ page_num }}</span></li>
+                {% else %}
+                    {% if search_ip_address or search_client_name or search_product_id %}
+                        <li><a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_num }}">{{ page_num }}</a></li>
+                    {% else %}
+                        <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {# 下一页 #}
+        <li>
+            {% if page_of_objects.has_next %}
+                {% if search_ip_address or search_client_name or search_product_id %}
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_num }}">{{ page_num }}
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                {% else %}
+                    <a href="?page={{ page_of_objects.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <span aria-hidden="true">&raquo;</span>
+            {% endif %}
+        </li>
+    </ul>
+</div>
+{% endblock%}
+
+{% block other_content %}
+{# modal #}
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">详细信息</h4>
+            </div>
+            <div class="modal-body">
+                <form id="mod_form" action="" method="POST" rid="">
+                    <!-- 隐藏内容，调试可关闭style -->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <span class="label label-info">IP信息</span>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="ip" class="col-sm-2 control-label">IP</label>
+                                <input type="text" name="ip" id="ip" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="gateway" class="col-sm-2 control-label">网关</label>
+                                <input type="text" name="gateway" id="gateway" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="state" class="col-sm-2 control-label">状态</label>
+                                <select name="state" class="form-control" id="state" style="width:70%">
+                                    <option value="预分配">预分配</option>
+                                    <option value="已启用">已启用</option>
+                                    <option value="已停用">已停用</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="ip_func" class="col-sm-2 control-label">类型</label>
+                                <select name="ip_func" class="form-control" id="ip_func" style="width:70%">
+                                    <option value="公网">公网</option>
+                                    <option value="私网">私网</option>
+                                    <option value="特殊">特殊</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <span class="label label-warning">客户信息</span>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="order_num" class="col-sm-2 control-label">分配单号</label>
+                                <input type="text" name="order_num" id="order_num" class="form-control" style="width:70%" readonly>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="client_name" class="col-sm-2 control-label">客户</label>
+                                <input type="text" name="client_name" id="client_name" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="service_id" class="col-sm-2 control-label">业务ID</label>
+                                <input type="number" name="service_id" id="service_id" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="group_id" class="col-sm-2 control-label">集团客户编号</label>
+                                <input type="number" name="group_id" id="group_id" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="product_id" class="col-sm-2 control-label">产品编号</label>
+                                <input type="number" name="product_id" id="product_id" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <span class="label label-success">网络信息</span>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="olt" class="col-sm-2 control-label">OLT/PTN</label>
+                                <input type="text" name="olt" id="olt" class="form-control olt-input" style="width:70%">
+                                <div id="olt-list" class="olt-list">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="bng" class="col-sm-2 control-label">BNG/SR</label>
+                                <input type="text" name="bng" id="bng" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="logic_port" class="col-sm-2 control-label">子接口</label>
+                                <input type="text" name="logic_port" id="logic_port" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="description" class="col-sm-2 control-label">描述</label>
+                                <input type="text" name="description" id="description" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="network_type" class="col-sm-2 control-label">组网类型</label>
+                                <select name="network_type" class="form-control" id="network_type" style="width:70%">
+                                    <option value="双上联">双上联</option>
+                                    <option value="单上联">单上联</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="access_type" class="col-sm-2 control-label">接入方式</label>
+                                <select name="access_type" class="form-control" id="access_type" style="width:70%">
+                                    <option value="GPON">GPON</option>
+                                    <option value="PTN">PTN</option>
+                                    <option value="OTHER">OTHER</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <span class="label label-danger">私网附加信息(分配私网IP时必须填写)</span>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="community=" class="col-sm-2 control-label">COMMUNITY</label>
+                                <input type="text" name="community" id="community" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="rt" class="col-sm-2 control-label">RT</label>
+                                <input type="text" name="rt" id="rt" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="rd" class="col-sm-2 control-label">RD</label>
+                                <input type="text" name="rd" id="rd" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <span class="label label-danger">变更信息</span>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="mod_order_num" class="col-sm-2 control-label">变更单号</label>
+                                <input type="text" name="mod_order_num" id="mod_order_num" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="mod_msg" class="col-sm-2 control-label">变更说明</label>
+                                <input type="text" name="mod_msg" id="mod_msg" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消变更</button>
+                <button type="button" class="btn btn-danger modal_mod">变更</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tail_script %}
+<script>
+    $(document).ready(function(){
+        // 请求单条记录的详细信息
+        $(".modal_form_trigger").click(function(){
+            $.ajax({
+                url: "{% url 'locate_allocated_ip' %}",  // 异步请求的地址
+                type: "GET",    // 请求方式
+                data: {rid: $(this).attr('rid')},   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        $("#mod_order_num").val("");
+                        $("#mod_msg").val("");
+                        $("#mod_form").attr("rid", data["id"]);
+                        for(field in data){
+                            $("#"+field).val(data[field]);
+                        }
+                    }else{
+                        console.log(data);
+                        alert('没有找到相关对象');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 变更按钮
+        $(".modal_mod").click(function(){
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' %}",
+                type: "POST",
+                data: $("#mod_form").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        alert('变更成功');
+                    }else{
+                        console.log(data);
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 模糊匹配OLT清单
+        $(".olt-input").keyup(function(){
+            if($(this).val() == ""){
+                $("#olt-list").css("display", "none");
+                return;
+            }
+            $.ajax({
+                url: "{% url 'get_olt_bng' 'olt' %}",
+                type: 'GET',
+                data: $(this).serialize(),
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        var olts = data['olt_list'].split(",");
+                        var t = "<ul class=\"list-group\">";
+                        for(var i=0;i<olts.length;i++){
+                            // console.log(olts[i]);
+                            t += "<li class=\"list-group-item olt-item\">"+olts[i]+"</li>";
+                        }
+                        t += "</ul>";
+                        $("#olt-list").html(t);
+                        $("#access_type").val(data['access_type']);
+                        $("#olt-list").css("display", "block");
+                    }else{
+                        // alert('error');
+                        if("olt_count" in data){
+                            $("#olt-list").css("display", "none");
+                        }else{
+                            var t = "<ul class=\"list-group\"><li class=\"list-group-item olt-item\">"+data["olt_list"]+"</li>";
+                            $("#olt-list").html(t);
+                            $("#olt-list").css("display", "block");
+                        }
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 选择olt
+        $(document).on("click", ".olt-item", function(){
+            var auto_item = $(this).text();
+            $("#olt-list").css("display", "none");
+            $(".olt-input").val(auto_item);
+        });
+    });
+</script>
+{% endblock %}

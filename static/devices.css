@@ -4,18 +4,29 @@ div.paginator {
 div.counter {
     text-align: left;
 }
-input.allocate {
+/* input.allocate {
     margin-bottom: 1em;
 }
 select.allocate {
     margin-bottom: 1em;
-}
+} */
 div.container-fluid {
     padding-left: 4em;
     padding-right: 4em;
 }
 div.popover {
     width: 500px;
+}
+div.olt-list {
+    background-color:white; 
+    border: 1px solid #ccc; 
+    position:absolute; 
+    left:16%; 
+    top:inherit; 
+    height:auto; 
+    width:70%; 
+    display: none; 
+    z-index:1;
 }
 
 /* Sticky footer styles

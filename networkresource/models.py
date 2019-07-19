@@ -242,3 +242,58 @@ class ZxClientInfo(models.Model):
         indexes = [
             models.Index(fields=['ip']),
         ]
+
+
+class IPAllocationBase(models.Model):
+    # 基类
+    order_num = models.CharField(max_length=255, null=True)
+    client_name = models.CharField(max_length=255, null=True)
+    state = models.CharField(max_length=5, null=True)
+    ip = models.CharField(max_length=200, null=True)
+    gateway = models.GenericIPAddressField(protocol='both', null=True)
+    bng = models.CharField(max_length=255, null=True)
+    logic_port = models.CharField(max_length=20, null=True)
+    svlan = models.PositiveIntegerField(default=0, null=True)
+    cevlan = models.PositiveIntegerField(default=0, null=True)
+    description = models.CharField(max_length=255, null=True)
+    ip_func = models.CharField(max_length=4, null=True)
+    olt = models.CharField(max_length=255, null=True)
+    access_type = models.CharField(max_length=10, null=True)
+    service_id = models.PositiveIntegerField(default=0)
+    brand_width = models.PositiveIntegerField(default=0)
+    group_id = models.PositiveIntegerField(default=0)
+    product_id = models.PositiveIntegerField(default=0)
+    network_type = models.CharField(max_length=5, null=True)
+    community = models.CharField(max_length=50, null=True)
+    rt = models.CharField(max_length=50, blank=True, null=True)
+    rd = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
+class IPAllocation(IPAllocationBase):
+    comment = models.CharField(max_length=255, null=True)
+    alc_user = models.CharField(max_length=10, null=True)
+    alc_time = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-alc_time']
+        indexes = [
+            models.Index(fields=['ip']),
+        ]
+
+
+class IPMod(IPAllocationBase):
+    mod_order_num = models.CharField(max_length=255, null=True)
+    mod_msg = models.CharField(max_length=255, null=True)
+    mod_user = models.CharField(max_length=10, null=True)
+    mod_time = models.DateTimeField()
+
+    class Meta:
+        ordering = ['-mod_time']
+        indexes = [
+            models.Index(fields=['ip']),
+            models.Index(fields=['client_name']),
+            models.Index(fields=['product_id']),
+        ]
