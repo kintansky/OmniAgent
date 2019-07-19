@@ -60,7 +60,7 @@
         {% else %}
             <tr>
         {% endif %}
-            <td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.order_num }}">
                 {% if record.state == '预分配' %}
                     <span class="label label-info">{{ record.state }}</span>
                 {% elif record.state == '已启用' %}
@@ -71,25 +71,24 @@
                 {{ record.order_num|truncatechars:15 }}
             </td>
             <td data-toggle="tooltip" data-placement="top" title="网关: {{ record.gateway }}">
-                {{ record.ip }}
                 {% if record.ip_func == '公网' %}
                     <span class="label label-danger">公网</span>
                 {% endif %}
+                {{ record.ip }}
             </td>
-            <td>
-                <span class="label label-info">{{ record.product_id }}</span>
+            <td data-toggle="tooltip" data-placement="top" title="产品编码：{{ record.product_id }}::{{ record.client_name }}">
                 {{ record.client_name|truncatechars:15 }}
             </td>
-            <td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.olt }}">
                 {% if record.access_type == 'GPON' %}
                     <span class="label label-success">{{ record.access_type }}</span>
                 {% elif record.access_type == 'PTN' %}
                     <span class="label label-warning">{{ record.access_type }}</span>
                 {% endif %}
-                {{ record.olt }}
+                {{ record.olt|truncatechars:10 }}
             </td>
-            <td>{{ record.bng|truncatechars:15 }}</td>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.description }}">
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.bng }}">{{ record.bng|truncatechars:15 }}</td>
+            <td data-toggle="tooltip" data-placement="top" title="描述：{{ record.description }}">
                 {{ record.logic_port }}:{{ record.svlan|default:'0' }}.{{ record.cevlan|default:'0' }}
             </td>
             <td>{{ record.brand_width }}</td>

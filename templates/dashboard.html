@@ -38,15 +38,8 @@
                     <div class="btn-group" role="group" aria-label="true">
                         <a class="btn btn-primary" href="{% url 'ip_record' %}" role="button">查看业务地址 &raquo;</a>
                     </div>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            分配 IP
-                            <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a href="{% url 'allocate_ip' 'public' %}">分配公网IP</a></li>
-                            <li><a href="{% url 'allocate_ip' 'private' %}">分配私网IP</a></li>
-                        </ul>
+                    <div class="btn-group" role="group" aria-label="true">
+                        <a class="btn btn-success" href="{% url 'ip_allocated_list' %}" role="button">分配记录 &raquo;</a>
                     </div>
                 </div>
             </div>
