@@ -596,6 +596,7 @@ def ajax_get_olt_bng(request, device_type):
         elif len(olt_list) == 0:
             data['olt_list'] = '无候选结果'
             data['status'] = 'error'
+            data['olt_count'] = 0
         else:
             data['olt_list'] = ','.join(olt_list)
             data['access_type'] = 'GPON'
@@ -607,6 +608,7 @@ def ajax_get_olt_bng(request, device_type):
         bng_list = '/'.join([b.bng for b in bngs])
         data['bng_list'] = bng_list
         data['status'] = 'success'
+        # TODO: 应该在这里选择PTN还是OLT接入
 
     return JsonResponse(data)
 

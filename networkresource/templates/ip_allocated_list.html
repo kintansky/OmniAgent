@@ -277,7 +277,9 @@
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="olt" class="col-sm-2 control-label">OLT/PTN</label>
-                                <input type="text" name="olt" id="olt" class="form-control" style="width:70%">
+                                <input type="text" name="olt" id="olt" class="form-control olt-input" style="width:70%">
+                                <div id="olt-list" class="olt-list">
+                                </div>
                             </div>
                         </div>
                         <div class="col-sm-6">
@@ -431,6 +433,52 @@
                     console.log(xhr);
                 }
             });
+        });
+        // 模糊匹配OLT清单
+        $(".olt-input").keyup(function(){
+            if($(this).val() == ""){
+                $("#olt-list").css("display", "none");
+                return;
+            }
+            $.ajax({
+                url: "{% url 'get_olt_bng' 'olt' %}",
+                type: 'GET',
+                data: $(this).serialize(),
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        var olts = data['olt_list'].split(",");
+                        var t = "<ul class=\"list-group\">";
+                        for(var i=0;i<olts.length;i++){
+                            // console.log(olts[i]);
+                            t += "<li class=\"list-group-item olt-item\">"+olts[i]+"</li>";
+                        }
+                        t += "</ul>";
+                        $("#olt-list").html(t);
+                        $("#access_type").val(data['access_type']);
+                        $("#olt-list").css("display", "block");
+                    }else{
+                        // alert('error');
+                        if("olt_count" in data){
+                            $("#olt-list").css("display", "none");
+                        }else{
+                            var t = "<ul class=\"list-group\"><li class=\"list-group-item olt-item\">"+data["olt_list"]+"</li>";
+                            $("#olt-list").html(t);
+                            $("#olt-list").css("display", "block");
+                        }
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 选择olt
+        $(document).on("click", ".olt-item", function(){
+            var auto_item = $(this).text();
+            $("#olt-list").css("display", "none");
+            $(".olt-input").val(auto_item);
         });
     });
 </script>

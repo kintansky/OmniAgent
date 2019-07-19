@@ -274,9 +274,9 @@ class NewIPAllocationForm(forms.Form):
     client_name = forms.CharField(label='客户名称', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     
     # olt与bng关系处理
-    olt = forms.CharField(label='OLT/PTN', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'olt名字可模糊匹配', 'style': 'width:70%'}))
+    olt = forms.CharField(label='OLT/PTN', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '输入OLT中文名进行模糊匹配', 'style': 'width:70%'}))
     access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'form-control', 'style': 'width:70%'}))
-    bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bng由olt生成，如无法找到，请手工填入', 'style': 'width:70%'}))
+    bng = forms.CharField(label='BNG/SR', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '点击生成BNG，如系统无法匹配，请手工填入，多台设备间使用 / 分割', 'style': 'width:70%'}))
     # 子接口与内外层vlan关系
     # TODO: 确认下私网是否需要填写子接口
     logic_port = forms.CharField(label='子接口', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'lag-100:200.0 或 Eth-Trunk1:200.0', 'style': 'width:70%'}))

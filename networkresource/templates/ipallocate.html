@@ -413,20 +413,26 @@
                 cache: false,
                 success: function(data){
                     if(data['status'] == 'success'){
-                        console.log(data);
+                        // console.log(data);
                         var olts = data['olt_list'].split(",");
                         var t = "<ul class=\"list-group\">";
                         for(var i=0;i<olts.length;i++){
                             // console.log(olts[i]);
-                            t += "<li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+olts[i]+"</li>";
+                            t += "<li class=\"list-group-item olt-item\">"+olts[i]+"</li>";
                         }
                         t += "</ul>";
                         $("#olt-list").html(t);
+                        $("#id_access_type").val(data['access_type']);
                         $("#olt-list").css("display", "block");
                     }else{
                         // alert('error');
-                        var t = "<ul class=\"list-group\"><li class=\"list-group-item olt-item\" οnclick='setSearch_onclick(this)'>"+data["olt_list"]+"</li>";
-                        $("#olt-list").html(t);
+                        if("olt_count" in data){
+                            $("#olt-list").css("display", "none");
+                        }else{
+                            var t = "<ul class=\"list-group\"><li class=\"list-group-item olt-item\">"+data["olt_list"]+"</li>";
+                            $("#olt-list").html(t);
+                            $("#olt-list").css("display", "block");
+                        }
                     }
                 },
                 error: function(xhr){
@@ -437,14 +443,13 @@
         // 选择olt
         $(document).on("click", ".olt-item", function(){
             var auto_item = $(this).text();
+            $("#olt-list").css("display", "none");
             $("#id_olt").val(auto_item);
-            $("#olt-list").css("display", "none");
-            $("#id_access_type").val(data['access_type']);
         });
-        // 设置失去焦点时隐藏，避免遮挡
-        $("#id_olt").blur(function(){
-            $("#olt-list").css("display", "none");
-        });
+        // // 设置失去焦点时隐藏，避免遮挡
+        // $("#id_olt").blur(function(){
+        //     $("#olt-list").css("display", "none");
+        // });
         // BNG 回填
         $("#id_bng").click(function(){
             $.ajax({
