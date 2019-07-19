@@ -13,16 +13,7 @@
 {% block subheader %} 业务地址信息 {% endblock %}
 
 {% block new_button %}
-<div class="btn-group" role="group">
-    <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        新增
-        <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu">
-        <li><a href="{% url 'allocate_ip' 'public' %}">分配公网地址</a></li>
-        <li><a href="{% url 'allocate_ip' 'private' %}">分配私网地址</a></li>
-    </ul>
-</div>
+<a class="btn btn-success" href="{% url 'new_ip_allocate' %}" role="button">新增</a>
 {% endblock %}
 
 {% block search_form %}
