@@ -129,15 +129,15 @@ class OneWayDevice(models.Model):
         ]
 
 
-class OneWayDeviceDelay(models.Model):
-    device_name = models.CharField(max_length=255)
-    port = models.CharField(max_length=40)
-    delay_count = models.PositiveSmallIntegerField()
-    # TODO
+# class OneWayDeviceDelay(models.Model):
+#     device_name = models.CharField(max_length=255)
+#     port = models.CharField(max_length=40)
+#     delay_count = models.PositiveSmallIntegerField()
+#     # TODO
 
-class OneWayDeviceFixRecord(FixRecordBase):
-    device_name = models.CharField(max_length=255)
-    port = models.CharField(max_length=40)
+# class OneWayDeviceFixRecord(FixRecordBase):
+#     device_name = models.CharField(max_length=255)
+#     port = models.CharField(max_length=40)
 
 
 class NatPoolUsage(models.Model):
