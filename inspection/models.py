@@ -42,10 +42,7 @@ class PortErrorDiff(models.Model):
         ]
 
 
-class PortErrorFixRecord(models.Model):
-    # target = models.ForeignKey(PortErrorDiff, on_delete=models.DO_NOTHING)
-    device_name = models.CharField(max_length=255)
-    port = models.CharField(max_length=40)
+class FixRecordBase(models.Model):
     problem_type = models.CharField(max_length=40, null=True)
     problem_detail = models.TextField(null=True)
     begin_time = models.DateTimeField(auto_now_add=True)
@@ -54,6 +51,21 @@ class PortErrorFixRecord(models.Model):
     worker = models.CharField(max_length=100)
     status = models.BooleanField(default=False)    # 标记是否已经完成处理
     claim = models.BooleanField(default=True)    # 用户认领端口，默认True，即建立记录就认领，处理完重新设置为False
+
+    class Meta:
+        abstract = True
+
+
+class PortErrorFixRecord(FixRecordBase):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    # problem_type = models.CharField(max_length=40, null=True)
+    # problem_detail = models.TextField(null=True)
+    # begin_time = models.DateTimeField(auto_now_add=True)
+    # end_time = models.DateTimeField(null=True)
+    # worker = models.CharField(max_length=100)
+    # status = models.BooleanField(default=False)    # 标记是否已经完成处理
+    # claim = models.BooleanField(default=True)    # 用户认领端口，默认True，即建立记录就认领，处理完重新设置为False
 
 '''
 PortErrorDiff 记录时初始状态fix_status=0
@@ -115,7 +127,18 @@ class OneWayDevice(models.Model):
             models.Index(fields=['device_name']),
             models.Index(fields=['port']),
         ]
-    
+
+
+class OneWayDeviceDelay(models.Model):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    delay_count = models.PositiveSmallIntegerField()
+    # TODO
+
+class OneWayDeviceFixRecord(FixRecordBase):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+
 
 class NatPoolUsage(models.Model):
     device1 = models.CharField(max_length=255)
