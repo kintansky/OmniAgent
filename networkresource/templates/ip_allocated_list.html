@@ -422,7 +422,8 @@
                 success: function(data){
                     if(data['status'] == 'success'){
                         $('.modal').modal('hide');  // 修改成功后关闭modal
-                        alert('变更成功');
+                        alert('删除成功');
+                        window.location.reload();
                     }else{
                         console.log(data);
                         alert(data['error_info']);
@@ -443,6 +444,7 @@
                     if(data['status'] == 'success'){
                         $('.modal').modal('hide');  // 修改成功后关闭modal
                         alert('变更成功');
+                        window.location.reload();
                     }else{
                         console.log(data);
                         alert(data['error_info']);
