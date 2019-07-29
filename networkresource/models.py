@@ -100,6 +100,7 @@ class IPAllocationBase(models.Model):
     client_name = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=5, null=True)
     ip = models.CharField(max_length=200, null=True)
+    # ip_mask = models.PositiveSmallIntegerField(null=True)
     gateway = models.GenericIPAddressField(protocol='both', null=True)
     bng = models.CharField(max_length=255, null=True)
     logic_port = models.CharField(max_length=20, null=True)
@@ -126,6 +127,7 @@ class IPAllocation(IPAllocationBase):
     comment = models.CharField(max_length=255, null=True)
     alc_user = models.CharField(max_length=10, null=True)
     alc_time = models.DateTimeField()
+    last_mod_time = models.DateTimeField(null=True)
 
     class Meta:
         ordering = ['-alc_time']
@@ -140,6 +142,7 @@ class IPMod(IPAllocationBase):
     mod_user = models.CharField(max_length=10, null=True)
     mod_time = models.DateTimeField()
     mod_target_id = models.IntegerField()
+    mod_type = models.CharField(max_length=5, null=True)
 
     class Meta:
         ordering = ['-mod_time']

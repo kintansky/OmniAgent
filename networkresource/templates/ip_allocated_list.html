@@ -253,7 +253,7 @@
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="group_id" class="col-sm-2 control-label">集团客户编号</label>
-                                <input type="number" name="group_id" id="group_id" class="form-control" style="width:70%" readonly>
+                                <input type="number" name="group_id" id="group_id" class="form-control" style="width:70%">
                             </div>
                         </div>
                     </div>
@@ -261,7 +261,7 @@
                         <div class="col-sm-6">
                             <div class="form-group">
                                 <label for="product_id" class="col-sm-2 control-label">产品编号</label>
-                                <input type="number" name="product_id" id="product_id" class="form-control" style="width:70%" readonly>
+                                <input type="number" name="product_id" id="product_id" class="form-control" style="width:70%">
                             </div>
                         </div>
                     </div>
@@ -355,7 +355,7 @@
                     <hr>
                     <div class="row">
                         <div class="col-sm-12">
-                            <span class="label label-danger">变更信息</span>
+                            <span class="label label-danger">变更或删除依据</span>
                         </div>
                     </div>
                     <br>
@@ -376,8 +376,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">取消变更</button>
-                <button type="button" class="btn btn-danger modal_mod">变更</button>
+                <button type="button" class="btn btn-danger modal_del">删除</button>
+                <button type="button" class="btn btn-success modal_mod">变更</button>
             </div>
         </div>
     </div>
@@ -413,10 +413,30 @@
                 }
             });
         });
+        // 删除分配记录
+        $(".modal_del").click(function(){
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'del' %}",
+                type: "POST",
+                data: $("#mod_order_num").serialize()+"&"+$("#mod_msg").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        alert('变更成功');
+                    }else{
+                        console.log(data);
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
         // 变更按钮
         $(".modal_mod").click(function(){
             $.ajax({
-                url: "{% url 'mod_allocated_ip' %}",
+                url: "{% url 'mod_allocated_ip' 'mod' %}",
                 type: "POST",
                 data: $("#mod_form").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
                 success: function(data){
