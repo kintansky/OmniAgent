@@ -100,7 +100,7 @@ class IPAllocationBase(models.Model):
     client_name = models.CharField(max_length=255, null=True)
     state = models.CharField(max_length=5, null=True)
     ip = models.CharField(max_length=200, null=True)
-    # ip_mask = models.PositiveSmallIntegerField(null=True)
+    ip_mask = models.PositiveSmallIntegerField(null=True)
     gateway = models.GenericIPAddressField(protocol='both', null=True)
     bng = models.CharField(max_length=255, null=True)
     logic_port = models.CharField(max_length=20, null=True)

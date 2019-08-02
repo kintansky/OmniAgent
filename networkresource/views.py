@@ -177,19 +177,33 @@ def ajax_generate_ip_list(request):
         ip_segment = ip_target_form.cleaned_data['ip_segment']
         state = ip_target_form.cleaned_data['state']
         gateway = ip_target_form.cleaned_data['gateway']
-        if ip_num:
-            ip_sep = first_ip.split('.')
-            last_num = int(ip_sep[3]) + ip_num - 1
-            if last_num > 255:
-                last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), '0'])
-            else:
-                last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
-            data['target'] = first_ip + 'p' + str(ip_num)
-        elif ip_segment:
-            subnet = IP.make_net(*ip_segment.split('/'))
+        if ip_num < 0:
+            subnet = IP.make_net(*first_ip.split('/'))
             first_ip = subnet[0].strNormal()
             last_ip = subnet[-1].strNormal()
             data['target'] = subnet.strNormal()
+        else:
+            temp_ip, mask = first_ip.split('/')
+            ip_sep = temp_ip.split('.')
+            last_num = int(ip_sep[3]) + ip_num
+            if last_num > 255:
+                last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), str(last_num-255-1)])
+            else:
+                last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
+            data['target'] = first_ip + 'p' + str(ip_num)
+        # if ip_num:
+        #     ip_sep = first_ip.split('.')
+        #     last_num = int(ip_sep[3]) + ip_num - 1
+        #     if last_num > 255:
+        #         last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), '0'])
+        #     else:
+        #         last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
+        #     data['target'] = first_ip + 'p' + str(ip_num)
+        # elif ip_segment:
+        #     subnet = IP.make_net(*ip_segment.split('/'))
+        #     first_ip = subnet[0].strNormal()
+        #     last_ip = subnet[-1].strNormal()
+        #     data['target'] = subnet.strNormal()
         target_dict[data['target']] = [ip_func, state, gateway]
         for t in target_dict:
             if '私网' in target_dict[t]:
@@ -269,6 +283,7 @@ def ajax_confirm_allocate(request):
     target_list = request.POST.get('target-list', '{}')
     if target_list != '' and target_list != '{}':
         target_dict = json.loads(target_list)
+        print(target_dict)
         if new_ip_allocation_form.is_valid():
             # print(new_ip_allocation_form.cleaned_data)
             bngs = new_ip_allocation_form.cleaned_data['bng'].split('/')
@@ -276,16 +291,18 @@ def ajax_confirm_allocate(request):
                 ipData = target_dict[target]    # target_dict[data['target']] = [ip_func, state, gateway]
                 if 'p' in target:
                     first_ip, ip_num = target.split('p')
+                    first_ip, mask = first_ip.split('/')
                     ip_sep = first_ip.split('.')
-                    ready_to_allocate_ips = ['.'.join(ip_sep[0:3]+[str(int(ip_sep[3])+i),]) for i in range(int(ip_num))]
-                elif '/' in target:
-                    subnet = IP.make_net(*target.split('/'))
+                    ready_to_allocate_ips = ['.'.join(ip_sep[0:3]+[str(int(ip_sep[3])+i),]) for i in range(int(ip_num)+1)]
+                else:
+                    first_ip, mask = target.split('/')
+                    subnet = IP.make_net(first_ip, mask)
                     ready_to_allocate_ips = [ip.strNormal() for ip in subnet]
-
                 for targetIp in ready_to_allocate_ips:
                     for bng in bngs:
                         ip_allocation = IPAllocation()
                         ip_allocation.ip = targetIp
+                        ip_allocation.ip_mask = int(mask)
                         ip_allocation.ip_func = ipData[0]
                         if ipData[0] == '私网':
                             ip_allocation.community = new_ip_allocation_form.cleaned_data['community']
@@ -387,6 +404,7 @@ def ajax_locate_allocated_ip(request):
                 data['logic_port'] = data['logic_port']+':'+str(data['svlan'])+'.'+'0'
         else:
             data['logic_port'] = data['logic_port']+':'+'0.0'
+        data['ip'] = '{}/{}'.format(data['ip'], data['ip_mask'])
         data['status'] = 'success'
     except ObjectDoesNotExist:
         data['status'] = 'error'
@@ -421,7 +439,7 @@ def ajax_mod_allocated_ip(request, operation_type):
             old_data.pop('comment')
             old_data.pop('alc_user')
             old_data.pop('alc_time')
-            old_data.pop('last_mod_time')
+            old_data.pop('last_mod_time')            
             if request.POST.get('mod_order_num') is None:
                 data['status'] = 'error'
                 data['error_info'] = '请提供有效的变更单号'
@@ -448,7 +466,8 @@ def ajax_mod_allocated_ip(request, operation_type):
             mod_target.order_num =  old_data['mod_order_num']
             mod_target.client_name = new_ip_allocation_form.cleaned_data['client_name']
             mod_target.state = ip_target_form.cleaned_data['state']
-            mod_target.ip = ip_target_form.cleaned_data['first_ip']
+            mod_target.ip = ip_target_form.cleaned_data['first_ip'].split('/')[0]
+            mod_target.ip_mask = ip_target_form.cleaned_data['first_ip'].split('/')[-1]
             mod_target.gateway = ip_target_form.cleaned_data['gateway']
             mod_target.bng = new_ip_allocation_form.cleaned_data['bng']
             mod_target.logic_port = new_ip_allocation_form.cleaned_data['logic_port']

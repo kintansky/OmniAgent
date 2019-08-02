@@ -47,26 +47,36 @@ class IPTargetForm(forms.Form):
     )
     ip_func = forms.ChoiceField(label='IP类型', choices=IPFUNC_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
     state = forms.ChoiceField(label='状态', choices=STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
-    first_ip = forms.GenericIPAddressField(label='起始IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:50%', 'placeholder': '192.168.1.4'}))
-    ip_num = forms.IntegerField(label='IP数量', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:15%'}))
+    # first_ip = forms.GenericIPAddressField(label='起始IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:50%', 'placeholder': '192.168.1.4'}))
+    first_ip = forms.CharField(label='IP', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:50%', 'placeholder': '192.168.1.4/24'}))
+    ip_num = forms.IntegerField(label='往后', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:15%'}))
     ip_segment = forms.CharField(label='IP网段', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0/24'}))
     gateway = forms.GenericIPAddressField(label='网关', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.1'}))
     
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     first_ip = cleaned_data.get('first_ip')
+    #     ip_num = cleaned_data.get('ip_num')
+    #     ip_segment = cleaned_data.get('ip_segment')
+    #     if ip_segment == '':
+    #         if first_ip == '' and ip_num is None:
+    #             raise forms.ValidationError('IP地址段/(起始IP+IP数量)必填其一')
+    #     else:
+    #         if re.match(r'(\d+\.){3}\d+/\d{1,2}', ip_segment):
+    #             if first_ip and ip_num:
+    #                 raise forms.ValidationError('每次分配：IP地址段/(起始IP+IP数量)只填其一')
+    #         else:
+    #             raise forms.ValidationError('IP地址段格式有误，请参考192.168.1.0/24')
     def clean(self):
         cleaned_data = super().clean()
         first_ip = cleaned_data.get('first_ip')
         ip_num = cleaned_data.get('ip_num')
-        ip_segment = cleaned_data.get('ip_segment')
-        if ip_segment == '':
-            if first_ip == '' and ip_num is None:
-                raise forms.ValidationError('IP地址段/(起始IP+IP数量)必填其一')
-        else:
-            if re.match(r'(\d+\.){3}\d+/\d{1,2}', ip_segment):
-                if first_ip and ip_num:
-                    raise forms.ValidationError('每次分配：IP地址段/(起始IP+IP数量)只填其一')
-            else:
-                raise forms.ValidationError('IP地址段格式有误，请参考192.168.1.0/24')
-
+        m = re.match(r'(\d+\.){3}\d+/\d{1,2}', first_ip)
+        if m is None:
+            raise forms.ValidationError('IP地址段格式有误，请参考192.168.1.0/24')
+        if ip_num is None:
+            self.cleaned_data['ip_num'] = 0
+        return self.cleaned_data
 
 class NewIPAllocationForm(forms.Form):
     NET_CHOICES = (

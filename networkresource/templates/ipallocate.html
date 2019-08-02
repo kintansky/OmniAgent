@@ -45,16 +45,16 @@
                                     {{ ip_target_form.ip_num }}
                                     <strong>个</strong>
                                 </div>
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-sm-12">
                                         <span class="label label-danger">或</span>
                                     </div>
                                 </div>
-                                <br>
-                                <div class="form-group">
+                                <br> -->
+                                <!-- <div class="form-group">
                                     <label for="{{ ip_target_form.ip_segment.id_for_label }}">{{ ip_target_form.ip_segment.label }}</label>
                                     {{ ip_target_form.ip_segment }}
-                                </div>
+                                </div> -->
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-12">
@@ -102,7 +102,8 @@
                     <div class="panel-body">
                         <form id="ip-detail-form" action="" method="POST">
                             <!-- 隐藏内容，调试可关闭style -->
-                            <div class="form-group" style="display: none;">
+                            <!-- <div class="form-group" style="display: none;"> -->
+                            <div class="form-group">
                                 <input name="target-list" id='target-list' class="form-control" readonly="readonly">
                                 <label for="{{ new_ip_allocation_form.include_private_ip.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.include_private_ip.label }}</label>
                                 {{ new_ip_allocation_form.include_private_ip }}
