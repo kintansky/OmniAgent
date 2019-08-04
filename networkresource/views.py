@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,7 +10,7 @@ import os
 from django.utils import timezone
 from IPy import IP
 import json
-from django.db.models import Q
+from django.db.models import Q, Count
 
 # Create your views here.
 
@@ -347,6 +347,56 @@ def ajax_confirm_allocate(request):
     return JsonResponse(data)
 
 
+def ip_allocated_client_list(request):
+    context = {}
+    client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+    page_of_objects, page_range = pages(request, client_all_list)
+    context['count'] = client_all_list.count()
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['client_search_form'] = ClientSearchForm()
+    return render(request, 'ip_allocated_client_list.html', context)
+
+def dict2SearchParas(d):
+    s = ''
+    for key in d:
+        if d[key] is None:
+            continue
+        s += '&{}={}'.format(key, d[key])
+    return s
+
+
+def allocated_client_search(request):
+    context = {}
+    client_search_form = ClientSearchForm(request.GET)
+    if client_search_form.is_valid():
+        order_num = client_search_form.cleaned_data['order_num']
+        client_name = client_search_form.cleaned_data['client_name']
+        group_id = client_search_form.cleaned_data['group_id']
+        product_id = client_search_form.cleaned_data['product_id']
+        if order_num != '':
+            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+        elif client_name != '':
+            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), client_name__icontains=client_name).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+        elif group_id is not None:
+            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), group_id=group_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+        elif product_id is not None:
+            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), product_id=product_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+        else:
+            client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+
+    page_of_objects, page_range = pages(request, client_all_list)
+    context['count'] = client_all_list.count()
+    context['search_paras'] = dict2SearchParas(client_search_form.cleaned_data)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['client_search_form'] = client_search_form
+    return render(request, 'ip_allocated_client_list.html', context)
+
+
 def ip_allocated_list(request):
     context = {}
     ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'))
@@ -365,28 +415,35 @@ def ip_allocated_search(request):
     ip_search_form = IPAllocateSearchForm(request.GET)
     if ip_search_form.is_valid():
         ip_address = ip_search_form.cleaned_data['ip_address']
+        order_num = ip_search_form.cleaned_data['order_num']
         client_name = ip_search_form.cleaned_data['client_name']
+        group_id = ip_search_form.cleaned_data['group_id']
         product_id = ip_search_form.cleaned_data['product_id']
         if ip_address != '':
-            ip_all_list = IPAllocation.objects.filter(ip=ip_address)
-        elif client_name != '':
-            ip_all_list = IPAllocation.objects.filter(client_name__icontains=client_name)
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), ip=ip_address)
+        elif order_num != '':
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, client_name__icontains=client_name)
+            if group_id is not None and product_id is not None:
+                ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        elif group_id is not None:
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), group_id=group_id)
         elif product_id is not None:
-            ip_all_list = IPAllocation.objects.filter(product_id=product_id)
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), product_id=product_id)
+        elif client_name != '':
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), client_name__icontains=client_name)
         else:
-            ip_all_list = IPAllocation.objects.all()
+            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'))
     else:
         context['ip_search_form'] = ip_search_form
         return render(request, 'ip_allocated_list.html', context)
 
     page_of_objects, page_range = pages(request, ip_all_list)
+    context['count'] = ip_all_list.count()
+    context['search_paras'] = dict2SearchParas(ip_search_form.cleaned_data)
 
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['search_ip_address'] = ip_address
-    context['search_client_name'] = client_name
-    context['search_product_id'] = product_id
     context['ip_search_form'] = ip_search_form
     return render(request, 'ip_allocated_list.html', context)
 
@@ -533,6 +590,49 @@ def ajax_mod_allocated_ip(request, operation_type):
 
         mod_target.state = '已删除'
         mod_target.save()
+        data['status'] = 'success'
+    elif operation_type == 'del_multi':
+        order_num = request.POST.get('order_num')
+        group_id = request.POST.get('group_id')
+        product_id = request.POST.get('product_id')
+        client_name = request.POST.get('client_name')
+        if request.POST.get('mod_order_num') is None:
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        elif request.POST.get('mod_order_num').strip() == '':
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        else:
+            mod_order_num = request.POST.get('mod_order_num').strip()
+        if request.POST.get('mod_msg') is not None:
+            mod_msg = request.POST.get('mod_msg').strip()
+        else:
+            mod_msg = None
+        mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        for mod_target in mod_target_list:
+            old_data = objectDataSerializer(mod_target, {})
+            old_data['mod_target_id'] = old_data.pop('id')
+            old_data.pop('comment')
+            old_data.pop('alc_user')
+            old_data.pop('alc_time')
+            old_data.pop('last_mod_time')
+            old_data['mod_order_num'] = mod_order_num
+            if mod_msg:
+                old_data['mod_msg'] = mod_msg
+            if old_data['svlan'] is None:
+                old_data['svlan'] = 0
+            if old_data['cevlan'] is None:
+                old_data['cevlan'] = 0
+            old_data['mod_user'] = request.user.first_name
+            old_data['mod_time'] = timezone.datetime.now()
+            old_data['mod_type'] = 'del'
+            mod_record = IPMod(**old_data)
+            mod_record.save()
+
+            mod_target.state = '已删除'
+            mod_target.save()
         data['status'] = 'success'
     else:
         data['status'] = 'error'

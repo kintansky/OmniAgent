@@ -25,14 +25,22 @@ class IPsearchForm(forms.Form):
 
 
 # IP 分配操作相关
-class IPAllocateSearchForm(forms.Form):
-    ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1', 'style':'width:80%'}))
-    client_name = forms.CharField(label='客户', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '**公司', 'style':'width:80%'}))
-    product_id = forms.IntegerField(label='or 产品编号', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:60%'}))
+class ClientSearchForm(forms.Form):
+    order_num = forms.CharField(label='服开单号', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    group_id = forms.IntegerField(label='集团客户编号', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    product_id = forms.IntegerField(label='产品编号', required=False, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    client_name = forms.CharField(label='客户名称', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     def clean_client_name(self):
         return self.cleaned_data['client_name'].strip()
-        
+    
+    def clean_order_num(self):
+        return self.cleaned_data['order_num'].strip()
+
+
+class IPAllocateSearchForm(ClientSearchForm):
+    ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1'}))
+
 
 class IPTargetForm(forms.Form):
     IPFUNC_CHOICES = (

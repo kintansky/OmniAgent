@@ -118,16 +118,9 @@
         {# 上一页 #}
         <li>
             {% if page_of_objects.has_previous %}
-                {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
-                {% if search_ip_address or search_client_name or search_product_id %}
-                    <a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                {% else %}
-                    <a href="?page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                {% endif %}
+                <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
             {% else %}
                 <span aria-hidden="true">&laquo;</span>
             {% endif %}
@@ -140,26 +133,16 @@
                 {% if page_num == '...' %}
                     <li><span>{{ page_num }}</span></li>
                 {% else %}
-                    {% if search_ip_address or search_client_name or search_product_id %}
-                        <li><a href="?ip_address={{ search_ip_address }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_num }}">{{ page_num }}</a></li>
-                    {% else %}
-                        <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
-                    {% endif %}
+                    <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
                 {% endif %}
             {% endif %}
         {% endfor %}
         {# 下一页 #}
         <li>
             {% if page_of_objects.has_next %}
-                {% if search_ip_address or search_client_name or search_product_id %}
-                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&client_name={{ search_client_name }}&product_id={{ search_product_id|default:'' }}&page={{ page_num }}">{{ page_num }}
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                {% else %}
-                    <a href="?page={{ page_of_objects.next_page_number }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                {% endif %}
+                <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
             {% else %}
                 <span aria-hidden="true">&raquo;</span>
             {% endif %}

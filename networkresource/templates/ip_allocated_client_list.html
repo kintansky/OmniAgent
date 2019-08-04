@@ -1,0 +1,201 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} IP地址记录 {% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
+
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li><a href="">Resource</a></li>
+    <li class="active">Clients</li>
+{% endblock %}
+
+{% block subheader %}
+    已开通的客户
+{% endblock %}
+
+{% block new_button %}
+    <a class="btn btn-success" href="{% url 'new_ip_allocate' %}" role="button">新增</a>
+{% endblock %}
+
+{% block search_form %}
+    <form action="{% url 'allocated_client_search' %}" method="GET" class="form-inline">
+        {% for field in client_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
+{% block alert_content %}
+    {% if ip_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ client_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block table_title %}
+        <th>#</th>
+        <th>工单号</th>
+        <th>客户</th>
+        <th>集团编号</th>
+        <th>产品编号</th>
+        <th>在用IP数量</th>
+        <th>批量操作</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for record in records %}
+        <tr>
+            <td>
+                <a href="{% url 'ip_allocates_search' %}?order_num={{ record.order_num }}&group_id={{ record.group_id }}&product_id={{ record.product_id }}&client_name={{ record.client_name }}">
+                    <span class="glyphicon glyphicon-list-alt"></span>
+                </a>
+            </td>
+            <td class="order_num">{{ record.order_num|truncatechars:50 }}</td>
+            <td class="client_name">{{ record.client_name|truncatechars:40 }}</td>
+            <td class="group_id">{{ record.group_id }}</td>
+            <td class="product_id">{{ record.product_id }}</td>
+            <td>{{ record.id__count }}</td>
+            {% if user.is_authenticated %}
+                <td>
+                    <a href="" data-toggle="modal" data-target=".bs-example-modal" class="modal_form_trigger">
+                        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                    </a>
+                </td>
+            {% else %}
+                <td>
+                    <a href="{% url 'login' %}?from={{ request.get_full_path }}">
+                        <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                    </a>
+                </td>
+            {% endif %}
+        </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block paginator %}
+<div class="paginator">
+    <ul class="pagination">
+        {# 上一页 #}
+        <li>
+            {% if page_of_objects.has_previous %}
+                <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&laquo;</span>
+            {% endif %}
+        </li>
+        {# 中间页码 #}
+        {% for page_num in page_range %}
+            {% if page_num == page_of_objects.number %}
+                <li class='active'><span>{{ page_num }}</span></li>
+            {% else %}
+                {% if page_num == '...' %}
+                    <li><span>{{ page_num }}</span></li>
+                {% else %}
+                    <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {# 下一页 #}
+        <li>
+            {% if page_of_objects.has_next %}
+                <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&raquo;</span>
+            {% endif %}
+        </li>
+    </ul>
+</div>
+{% endblock%}
+
+{% block other_content %}
+<div class="modal fade bs-example-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">请提供删除依据</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="mod_form" action="" method="POST">
+                        <div class="form-group">
+                            <label for="mod_order_num" class="control-label">变更单号</label>
+                            <input type="text" name="mod_order_num" id="mod_order_num" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="mod_msg" class="control-label">变更说明</label>
+                            <input type="text" name="mod_msg" id="mod_msg" class="form-control">
+                        </div>
+                        <!-- hidden -->
+                        <div class="form-group">
+                            <label for="order_num" class="control-label">服开单号</label>
+                            <input type="text" name="order_num" id="order_num" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="client_name" class="control-label">客户名</label>
+                            <input type="text" name="client_name" id="client_name" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="group_id" class="control-label">集团编号</label>
+                            <input type="text" name="group_id" id="group_id" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="product_id" class="control-label">产品编号</label>
+                            <input type="text" name="product_id" id="product_id" class="form-control">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger modal_del">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block tail_script %}
+<script>
+    $(document).ready(function(){
+        $(".modal_form_trigger").click(function(){
+            $("#order_num").val($(this).parent().siblings(".order_num").text());
+            $("#client_name").val($(this).parent().siblings(".client_name").text());
+            $("#group_id").val($(this).parent().siblings(".group_id").text());
+            $("#product_id").val($(this).parent().siblings(".product_id").text());
+        });
+        // 批量操作
+        $(".modal_del").click(function(){
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'del_multi' %}",
+                type: "POST",
+                data: $("#mod_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        alert('删除成功');
+                        window.location.reload();
+                    }else{
+                        console.log(data);
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
