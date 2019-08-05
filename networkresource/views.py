@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod
 from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -359,14 +359,6 @@ def ip_allocated_client_list(request):
     context['client_search_form'] = ClientSearchForm()
     return render(request, 'ip_allocated_client_list.html', context)
 
-def dict2SearchParas(d):
-    s = ''
-    for key in d:
-        if d[key] is None:
-            continue
-        s += '&{}={}'.format(key, d[key])
-    return s
-
 
 def allocated_client_search(request):
     context = {}
@@ -588,6 +580,7 @@ def ajax_mod_allocated_ip(request, operation_type):
         mod_record = IPMod(**old_data)
         mod_record.save()
 
+        mod_target.last_mod_time = old_data['mod_time']
         mod_target.state = '已删除'
         mod_target.save()
         data['status'] = 'success'
@@ -610,9 +603,13 @@ def ajax_mod_allocated_ip(request, operation_type):
             mod_msg = request.POST.get('mod_msg').strip()
         else:
             mod_msg = None
-        mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        # mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        raw_query = 'SELECT * FROM omni_agent.networkresource_ipallocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
+        mod_target_list = IPAllocation.objects.raw(raw_query, ('已删除', '%{}%'.format(client_name), group_id, order_num, product_id))
+        # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
         for mod_target in mod_target_list:
-            old_data = objectDataSerializer(mod_target, {})
+            # old_data = objectDataSerializer(mod_target, {})
+            old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
             old_data['mod_target_id'] = old_data.pop('id')
             old_data.pop('comment')
             old_data.pop('alc_user')
@@ -631,8 +628,7 @@ def ajax_mod_allocated_ip(request, operation_type):
             mod_record = IPMod(**old_data)
             mod_record.save()
 
-            mod_target.state = '已删除'
-            mod_target.save()
+        IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=old_data['mod_time'], state = '已删除')
         data['status'] = 'success'
     else:
         data['status'] = 'error'

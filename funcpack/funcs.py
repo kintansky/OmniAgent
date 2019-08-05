@@ -96,6 +96,12 @@ def objectDataSerializer(obj, data):    # 序列化单个模型的字段，输�
         data[key] = val
     return data
 
+def objectDataSerializerRaw(rawobj, fieldList, data):   #fieldList需要通过QuerySet.columns传入
+    for f in fieldList:
+        val = rawobj.serializable_value(f)
+        data[f] = val
+    return data
+
 def getSubNet(ip, mask):
     subnet = IP(IP).make_net(mask)
     return subnet
@@ -114,3 +120,11 @@ def dumpOlt2Json(olts, device_name):
         d['children'].append({'name': olt, 'value':10})
     result = json.dumps(d)
     return result
+
+def dict2SearchParas(d):    # 将字典转换成网页搜索的参数格式，以&开头
+    s = ''
+    for key in d:
+        if d[key] is None:
+            continue
+        s += '&{}={}'.format(key, d[key])
+    return s
