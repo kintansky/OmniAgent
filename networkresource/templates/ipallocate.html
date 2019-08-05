@@ -34,7 +34,7 @@
                                 <hr>
                                 <div class="row">
                                     <div class="col-sm-12">
-                                        <span class="label label-danger">请填写以下连续地址或地址段信息</span>
+                                        <span class="label label-danger" data-toggle="popover" data-trigger="hover" data-html="true" title="帮助" data-content="1、分配整个IP段，数量请填小于0的值<br>2、分配单个IP，数量请填0或不填<br>3、分配连读多个IP，数量请填写相应的数量">请填写以下连续地址或地址段信息(点击查看填写帮助)</span>
                                     </div>
                                 </div>
                                 <br>
@@ -168,7 +168,7 @@
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.olt.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.olt.label }}</label>
+                                        <label for="{{ new_ip_allocation_form.olt.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" title="填写帮助" data-content="如果无法匹配到OLT，请手工填入">{{ new_ip_allocation_form.olt.label }}?</label>
                                         {{ new_ip_allocation_form.olt }}
                                         <div id="olt-list" class="olt-list">
                                         </div>
@@ -177,7 +177,7 @@
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.bng.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.bng.label }}</label>
+                                        <label for="{{ new_ip_allocation_form.bng.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" title="填写帮助" data-content="正常情况下应会自动生成两台BNG1/BNG2这样的格式，如果未正常生成，请手工补全">{{ new_ip_allocation_form.bng.label }}?</label>
                                         {{ new_ip_allocation_form.bng }}
                                         <p class="text-danger error-data" id="id_error_bng">{{ new_ip_allocation_form.errors.as_text }}</p>
                                     </div>
@@ -186,14 +186,14 @@
                             <div class="row">
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.logic_port.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.logic_port.label }}</label>
+                                        <label for="{{ new_ip_allocation_form.logic_port.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" data-html="true" title="填写帮助" data-content="子接口规范应为 端口:外层vlan.内层vlan<br>如无内外层vlan请使用**:0.0的格式">{{ new_ip_allocation_form.logic_port.label }}?</label>
                                         {{ new_ip_allocation_form.logic_port }}
                                         <p class="text-danger error-data" id="id_error_logic_port">{{ new_ip_allocation_form.logic_port.errors.as_text }}</p>
                                     </div>
                                 </div>
                                 <div class="col-sm-6">
                                     <div class="form-group">
-                                        <label for="{{ new_ip_allocation_form.description.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.description.label }}</label>
+                                        <label for="{{ new_ip_allocation_form.description.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" title="填写帮助" data-content="描述内容应未 abcdefg(**M)或abcdefg(**G),包含带宽字段">{{ new_ip_allocation_form.description.label }}?</label>
                                         {{ new_ip_allocation_form.description }}
                                         <p class="text-danger error-data" id="id_error_description">{{ new_ip_allocation_form.description.errors.as_text }}</p>
                                     </div>
