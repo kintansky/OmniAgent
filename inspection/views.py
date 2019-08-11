@@ -126,35 +126,37 @@ __PORTERROR_QUERY = "\
     AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
 "
 '''
-
+CRC_FILTER = 60
+IPV4HEADERROR_FILTER = 10000
 __PORTERROR_QUERY = "\
-    SELECT error_detail.*, error_cnt_tb.cnt FROM ( \
-        SELECT new_tb.*, fix_tb.worker, fix_tb.claim FROM (\
-            SELECT error_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
-                SELECT np.*, ni.port_description, ni.port_status \
-                    FROM omni_agent.inspection_porterrordiff as np \
-                    LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
-                    ON np.device_name = ni.device_name AND np.port = ni.port \
-                    HAVING np.record_time BETWEEN %s AND %s AND (np.stateCRC >= 60 OR np.stateIpv4HeadError >= 1000) \
-                ) AS error_info \
-            LEFT JOIN (\
-                SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
-                    FROM omni_agent.inspection_portperf \
-                    WHERE record_time BETWEEN %s AND %s\
-                ) AS npp \
-            ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
-            AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
-        ) AS new_tb LEFT JOIN (SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1) AS fix_tb \
-        ON new_tb.device_name = fix_tb.device_name AND new_tb.port = fix_tb.port \
-    ) AS error_detail \
-    LEFT JOIN ( \
-        SELECT cnt_tb.*, COUNT(*) AS cnt FROM ( \
-            SELECT device_name, `port` FROM omni_agent.inspection_porterrordiff \
-            WHERE (stateCRC >= 60 or stateIpv4HeadError >= 1000) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE() \
-        ) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.`port` \
-    ) AS error_cnt_tb \
-    ON error_detail.device_name = error_cnt_tb.device_name AND error_detail.`port` = error_cnt_tb.`port` \
-"
+    SELECT \
+        ped.*,\
+        des.port_description, des.port_status,\
+        pef.problem_type, pef.problem_detail, pef.begin_time, pef.end_time, pef.worker, pef.status, pef.claim,\
+        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.tx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,\
+        error_cnt_tb.cnt\
+    FROM (\
+        SELECT * FROM omni_agent.inspection_porterrordiff \
+        WHERE record_time BETWEEN %s AND %s AND (stateCRC >= {} OR stateIpv4HeadError >= {})\
+    ) AS ped \
+    LEFT JOIN omni_agent.networkresource_ipmanresource AS des\
+        ON ped.device_name = des.device_name AND ped.port = des.port\
+    LEFT JOIN (\
+        SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1\
+    ) AS pef \
+        ON ped.device_name = pef.device_name AND ped.port = pef.port\
+    LEFT JOIN (\
+        SELECT * FROM omni_agent.inspection_portperf \
+        WHERE record_time BETWEEN %s AND %s\
+    ) AS pp\
+        ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%Y-%m-%d') = DATE_FORMAT(pp.record_time, '%Y-%m-%d')\
+    LEFT JOIN (\
+        SELECT cnt_tb.*, COUNT(*) AS cnt FROM (\
+            SELECT device_name, port FROM omni_agent.inspection_porterrordiff \
+            WHERE (stateCRC >= {} or stateIpv4HeadError >= {}) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE()) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.port\
+    ) AS error_cnt_tb\
+    ON ped.device_name = error_cnt_tb.device_name AND ped.port = error_cnt_tb.port \
+".format(CRC_FILTER, IPV4HEADERROR_FILTER, CRC_FILTER, IPV4HEADERROR_FILTER)
 # 注意修改__queryline的排序字段
 
 
@@ -238,7 +240,7 @@ def search_port_error(request):
         pwr_problem = porterror_search_form.cleaned_data['pwr_problem']
         otherCmd = ''
         if pwr_problem:
-            otherCmd += 'HAVING new_tb.tx_state = 0 OR new_tb.rx_state = 0 '
+            otherCmd += 'HAVING tx_state = 0 OR rx_state = 0 '
         porterror_query = __queryline(order_field, otherCmd=otherCmd)
         porterror_all_list = PortErrorDiff.objects.raw(
             porterror_query, (time_begin, time_end, time_begin, time_end)
@@ -289,10 +291,18 @@ def export_porterror(request):
     return response
 
 
-def ajax_port_operation_list(request):
+def ajax_port_operation_list(request, path_type):
+    #TODO: 适应task里面的新状态
     data = {}
     rid = request.GET.get('rid')
-    target = PortErrorDiff.objects.get(id=int(rid))
+    if path_type == 'task_list':
+        target = PortErrorFixRecord.objects.get(id=int(rid))
+    elif path_type == 'error_list':
+        target = PortErrorDiff.objects.get(id=int(rid))
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '非法请求路径'
+        return JsonResponse[data]
     # 过往处理记录（最近10条）
     operation_old_records = PortErrorFixRecord.objects.filter(device_name=target.device_name, port=target.port, status=True).order_by('-begin_time')[0:10]
     data = portErrorEverOperationHtmlCallBack(operation_old_records, data)
@@ -319,8 +329,9 @@ def portErrorEverOperationHtmlCallBack(records, data):
     for r in records:
         begin = r.begin_time.strftime('%Y-%m-%d')
         end = r.end_time.strftime('%Y-%m-%d')
-        h += '<li class="list-group-item list-group-item-success">' + \
-                begin + ' 发现 ' + '<strong>' + problem_dict[r.problem_type] + '</strong>' + ' ' + end + ' 完成处理 处理人: ' + r.worker + \
+        h += '<li class="list-group-item list-group-item-info">' + \
+                begin + ' 至 ' + end + ' 处理了 ' + '<strong>' + problem_dict[r.problem_type] + ': </strong>' + r.problem_detail+\
+                '<span class="badge">' + r.worker + '</span>' \
             '</li>'
     data['operation-record'] = h
     return data
@@ -426,11 +437,16 @@ def ajax_port_operate(request, operation_type):
             fix_record.claim = True
             fix_record.save()
             data['status'] = 'success'
-    elif operation_type == 'finish':
+    elif 'finish' in operation_type:
         of = PortErrorOperationForm(request.POST)
         rid = request.POST.get('rid')
-        target = PortErrorDiff.objects.get(id=int(rid))
-        if target.fix_status is None:  # 避免一些没刷新的问题
+        if operation_type == 'finish_tasks':
+            target = PortErrorFixRecord.objects.get(id=int(rid))
+            fix_status = target.status
+        else:
+            target = PortErrorDiff.objects.get(id=int(rid))
+            fix_status = target.fix_status
+        if not fix_status:  # 避免一些没刷新的问题
             fix_record = PortErrorFixRecord.objects.get(device_name=target.device_name, port=target.port, status=False, claim=True)
             if of.is_valid():
                 if request.user.first_name == fix_record.worker:
@@ -441,21 +457,22 @@ def ajax_port_operate(request, operation_type):
                     fix_record.claim = False
                     fix_record.save()
                     data['status'] = 'success'
-                    target.fix_status = True
-                    # 避免空字符回填的问题
-                    if target.nowCRC is None:
-                        target.nowCRC = 0
-                    if target.nowIpv4HeaderError is None:
-                        target.nowIpv4HeaderError = 0
-                    if target.everCRC is None:
-                        target.everCRC = 0
-                    if target.everIpv4HeaderError is None:
-                        target.everIpv4HeaderError = 0
-                    if target.stateCRC is None:
-                        target.stateCRC = 0
-                    if target.stateIpv4HeadError is None:
-                        target.stateIpv4HeadError = 0
-                    target.save()
+                    PortErrorDiff.objects.filter(device_name=target.device_name, port=target.port, fix_status=False, record_time__lte=timezone.datetime.now()).update(fix_status=True)
+                    # target.fix_status = True
+                    # # 避免空字符回填的问题
+                    # if target.nowCRC is None:
+                    #     target.nowCRC = 0
+                    # if target.nowIpv4HeaderError is None:
+                    #     target.nowIpv4HeaderError = 0
+                    # if target.everCRC is None:
+                    #     target.everCRC = 0
+                    # if target.everIpv4HeaderError is None:
+                    #     target.everIpv4HeaderError = 0
+                    # if target.stateCRC is None:
+                    #     target.stateCRC = 0
+                    # if target.stateIpv4HeadError is None:
+                    #     target.stateIpv4HeadError = 0
+                    # target.save()
                 else:
                     data['status'] = 'error'
                     data['error_info'] = '你非认领用户，认领用户为{}'.format(fix_record.worker)
@@ -470,19 +487,21 @@ def ajax_port_operate(request, operation_type):
 
 
 __QUERY_MY_FIX_TASKS = "\
-SELECT fix_info.*, npp.tx_now_power, npp.tx_high_warm, npp.tx_low_warm, npp.tx_state, npp.rx_now_power, npp.rx_high_warm, npp.rx_low_warm, npp.rx_state, npp.utility_in, npp.utility_out FROM (\
-	SELECT * FROM(\
-	 	SELECT ped.*, pef.worker, pef.claim, pef.status, pef.begin_time FROM \
-		omni_agent.inspection_porterrorfixrecord as pef \
-		left JOIN omni_agent.inspection_porterrordiff AS ped \
-		ON pef.device_name = ped.device_name AND pef.port = ped.port \
-        HAVING pef.worker = %s AND (ped.stateCRC >= 60 OR ped.stateIpv4HeadError >= 1000) \
-		ORDER BY ped.record_time DESC \
-	) AS recent_tb GROUP BY recent_tb.device_name, recent_tb.port \
-) AS fix_info \
-LEFT JOIN omni_agent.inspection_portperf AS npp \
-ON fix_info.device_name = npp.device_name AND fix_info.port = npp.port AND DATE_FORMAT(fix_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
-ORDER BY fix_info.begin_time DESC, fix_info.fix_status \
+    SELECT \
+        pef.id, pef.device_name, pef.port, pef.worker, pef.claim, pef.status, pef.begin_time,\
+        ped.stateCRC, ped.stateIpv4HeadError, ped.record_time, ped.fix_status,\
+        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out \
+    FROM (\
+        SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE worker = %s \
+    ) AS pef \
+    left JOIN (\
+        SELECT * FROM omni_agent.inspection_porterrordiff \
+        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE()\
+    ) AS ped\
+    ON pef.device_name = ped.device_name AND pef.port = ped.port \
+    LEFT JOIN omni_agent.inspection_portperf AS pp\
+    ON pef.device_name = pp.device_name AND pef.port = pp.port AND DATE_FORMAT(ped.record_time, '%Y-%m-%d') = DATE_FORMAT(pp.record_time, '%Y-%m-%d')\
+    ORDER BY begin_time DESC, fix_status\
 "
 
 

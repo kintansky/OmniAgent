@@ -82,7 +82,6 @@
 {% block table_title %}
     <th>设备名</th>
     <th>端口</th>
-    <th>7天累积</th>
     <th>
         CRC增速(h) 
         <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=crc&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-crc"></span></a>
@@ -91,11 +90,9 @@
         头错误增速(h) 
         <a href="{{ request.path }}?time_begin={{ time_begin }}&time_end={{ time_end }}&order_field=head&pwr_problem={{ pwr_problem }}"><span class="glyphicon glyphicon-sort-by-attributes-alt sort-by-head"></span></a>
     </th>
-    <th>端口状态</th>
     <th>BNG发光</th>
     <th>BNG收光</th>
-    <th>利用率In</th>
-    <th>利用率Out</th>
+    <th>带宽利用率(IN|OUT)</th>
     <th>记录时间</th>
     <th>影响</th>
     <th>处理</th>
@@ -105,19 +102,26 @@
     {% for record in records %}
         <tr>
             <td>{{ record.device_name }}</td>
+
             <td data-toggle="tooltip" data-placement="top" title="{{ record.port_description }}">
                 {{ record.port }}
+                {% if record.port_status == 'up' %}
+                    <span class="label label-success">{{ record.port_status }}</span>
+                {% else %}
+                    <span class="label label-danger">{{ record.port_status }}</span>
+                {% endif %}
+                {% if record.port_description|slice:":2" == 'uT' %}
+                    <span class="label label-danger">RT</span>
+                {% endif %}
             </td>
-            <td>{{ record.cnt|default:"0" }}次</td>
             <td>{{ record.stateCRC|floatformat|default:'0' }}</td>
             <td>{{ record.stateIpv4HeadError|floatformat|default:'0' }}</td>
-            <td>{{ record.port_status }}</td>
             {% if record.tx_state == 1 %}
                 <td data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
                     {{ record.tx_now_power }}
                 </td>
             {% else %}
-                <td class="danger" data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
+                <td class="warning" data-toggle="tooltip" data-placement="top" title="范围[{{ record.tx_low_warm|default:'0' }}, {{ record.tx_high_warm|default:'0' }}]">
                     {{ record.tx_now_power }}
                     <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
@@ -127,14 +131,20 @@
                     {{ record.rx_now_power }}
                 </td>
             {% else %}
-                <td class="danger" data-toggle="tooltip" data-placement="top" title="范围[{{ record.rx_low_warm|default:'0' }}, {{ record.rx_high_warm|default:'0' }}]">
+                <td class="warning" data-toggle="tooltip" data-placement="top" title="范围[{{ record.rx_low_warm|default:'0' }}, {{ record.rx_high_warm|default:'0' }}]">
                     {{ record.rx_now_power }}
                     <span class="glyphicon glyphicon-exclamation-sign"></span>
                 </td>
             {% endif %}
-            <td>{{ record.utility_in|floatformat|default:'0' }}</td>
-            <td>{{ record.utility_out|floatformat|default:'0' }}</td>
-            <td>{{ record.record_time|date:"Y-m-d" }}</td>
+            <td>
+                <span class="label label-success">{{ record.utility_in|floatformat|default:'0' }}%</span>
+                <span class="glyphicon glyphicon-sort"></span>
+                <span class="label label-success">{{ record.utility_out|floatformat|default:'0' }}%</span>
+            </td>
+            <td data-toggle="tooltip" data-placement="top" title="7天内上榜{{ record.cnt|default:'0' }}天">
+                {{ record.record_time|date:"Y-m-d" }}
+                <span class="label label-danger">上榜{{ record.cnt|default:"0" }}天</span>
+            </td>
             <td>
                 <a href="" data-toggle="modal" data-target="#effectModal" class="modal_effect_trigger" dn="{{ record.device_name }}" pt="{{ record.port }}">
                     <strong>检查</strong>
@@ -142,12 +152,12 @@
             </td>
             {% if user.is_authenticated %}
                 {% if record.fix_status == 1 %}
-                <td class="success">已处理
+                <td><span class="label label-success">已处理</span>
                 {% elif record.claim == 1 %}
-                <td class="info">处理中
+                <td><span class="label label-info">处理中</span>
                 {% else %}
-                <td class="danger">
-                    <a href="" class="operation-claim" rid="{{ record.id }}"><strong>请认领</strong></a>
+                <td>
+                    <a href="" class="operation-claim" rid="{{ record.id }}"><span class="label label-danger">请认领</span></a>
                 {% endif %}
                 |
                 <a href="" data-toggle="modal" data-target="#operationModal" class="modal_operation_trigger" rid="{{ record.id }}">
@@ -317,7 +327,7 @@
             // 请求当前处理状态
             $(".modal_operation_trigger").click(function(){
                 $.ajax({
-                    url: "{% url 'ajax_port_error_operation_list' %}",
+                    url: "{% url 'ajax_port_error_operation_list' 'error_list' %}",
                     type: 'GET',
                     data: {rid: $(this).attr('rid')},
                     cache: false,
@@ -334,7 +344,7 @@
                             }
                         }else{
                             console.log(data);
-                            alert('error');
+                            alert(data["error_info"]);
                         }
                     },
                     error: function(xhr){
@@ -352,7 +362,8 @@
                     cache: false,
                     success: function(data){
                         if(data['status'] == 'success'){
-                            console.log(data);                            
+                            window.location.reload();
+                            console.log(data);
                         }else{
                             console.log(data);
                             alert('error');
@@ -376,6 +387,7 @@
                             // console.log(data);
                             $('.modal').modal('hide');  // 修改成功后关闭modal
                             alert('处理完成');
+                            window.location.reload();
                         }else{
                             console.log(data);
                             alert(data['error_info']);
