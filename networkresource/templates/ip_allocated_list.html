@@ -1,7 +1,7 @@
 {% extends 'list_base.html' %}
 
 {# 下面仅对base.html进行扩展#}
-{% block title %} IP地址记录 {% endblock %}
+{% block title %} IP地址分配 {% endblock %}
 {% block navbar_resource_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
@@ -42,13 +42,13 @@
 {% endblock %}
 
 {% block table_title %}
+        <th><input id="checkAll" type="checkbox" /></th>
         <th>工单号</th>
         <th>IP</th>
         <th>客户</th>
         <th>接入设备</th>
         <th>上联设备</th>
         <th>子接口</th>
-        <th>下行带宽(M)</th>
         <th>分配人</th>
         <th>操作</th>
 {% endblock %}
@@ -60,6 +60,7 @@
         {% else %}
             <tr>
         {% endif %}
+            <td><input class="check_item" id="{{ record.id }}" name="checkItem" type="checkbox" /></td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.order_num }}">
                 {% if record.state == '预分配' %}
                     <span class="label label-info">{{ record.state }}</span>
@@ -90,8 +91,8 @@
             <td data-toggle="tooltip" data-placement="top" title="{{ record.bng }}">{{ record.bng|truncatechars:15 }}</td>
             <td data-toggle="tooltip" data-placement="top" title="描述：{{ record.description }}">
                 {{ record.logic_port }}:{{ record.svlan|default:'0' }}.{{ record.cevlan|default:'0' }}
+                <span class="label label-danger">{{ record.brand_width }}M</span>
             </td>
-            <td>{{ record.brand_width }}</td>
             <td>{{ record.alc_user }}</td>
             {% if user.is_authenticated %}
                 <td>
@@ -370,6 +371,18 @@
 {% block tail_script %}
 <script>
     $(document).ready(function(){
+        // 全选框
+        $("#checkAll").click(function(){
+            if($(this).is(":checked") == false){
+                $(".check_item").prop('checked', false);
+            }else{
+                $(".check_item").each(function(){
+                    if($(this).is(":checked") == false){
+                        $(this).prop('checked', true);
+                    }
+                });
+            }
+        });
         // 请求单条记录的详细信息
         $(".modal_form_trigger").click(function(){
             $.ajax({
