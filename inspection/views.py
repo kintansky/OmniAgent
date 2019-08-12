@@ -533,7 +533,7 @@ __QUERY_ONEWAY_LIST = "\
     )AS dev \
     LEFT JOIN omni_agent.inspection_onewaydevicetag AS tag \
     ON dev.device_name = tag.device_name AND dev.port = tag.port \
-    ORDER BY not_show DESC \
+    ORDER BY not_show ASC \
 "
 def oneway_list(request):
     time_begin, time_end = getDateRange(-1)
@@ -622,7 +622,7 @@ def cancle_tag_oneway(request):
     data['status'] = 'success'
     return JsonResponse(data)
 
-    
+
 def export_oneway(request):
     time_begin = request.GET.get('time_begin', '')
     time_end = request.GET.get('time_end', '')
