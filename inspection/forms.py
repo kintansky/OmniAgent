@@ -44,6 +44,21 @@ class OneWaySearchForm(TimeRangeForm):
     pass
 
 
+class OneWayTagForm(forms.Form):
+    CHOICES_TAG = (
+        ('工程', '工程在建'),
+        ('不影响', '不影响业务'),
+        ('其他', '其他'),
+    )
+    CHOICES_DAYS = (
+        (7, '7天'),
+        (15, '15天'),
+        (30, '30天'),
+        (100, '100天'),
+    )
+    delay_tag = forms.ChoiceField(label='延后原因', choices=CHOICES_TAG, required=True, widget=forms.Select(attrs={'class': 'form-control'}))
+    delay_days = forms.ChoiceField(label='延后时长', choices=CHOICES_DAYS, required=True, widget=forms.Select(attrs={'class': 'form-control'}))
+
 class GroupClientSearchForm(forms.Form):
     client_name = forms.CharField(label='客户名', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '****'}))
     product_id = forms.IntegerField(label='产品编码', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '20401****'}))

@@ -20,6 +20,8 @@ urlpatterns = [
     path('oneway/', views.oneway_list, name='oneway_list'),
     path('oneway/search/', views.search_oneway, name='search_oneway'),
     path('oneway/download/', views.export_oneway, name='export_oneway'),
+    path('oneway/tag/', views.tag_oneway_device, name='tag_oneway'),
+    path('oneway/tag/cancle/', views.cancle_tag_oneway, name='cancle_tag_oneway'),
 
     path('group_client_list/', views.group_client_list, name='group_client_list'),
     path('group_client_list/search/', views.search_group_client, name='search_group_client'),

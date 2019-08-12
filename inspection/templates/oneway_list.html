@@ -41,19 +41,35 @@
     <th>逻辑状态</th>
     <th>描述</th>
     <th>记录时间</th>
-    <!-- <th>处理</th> -->
+    <th>处理</th>
 {% endblock %}
 
 {% block table_body %}
     {% for record in records %}
         <tr>
-            <td>{{ record.device_name }}</td>
+            <td>
+                {{ record.device_name }}
+                {% if record.not_show %}
+                <span class="label label-danger">已推迟至{{ record.end_time|date:"Y-m-d" }}</span>
+                {% endif %}
+            </td>
             <td>{{ record.port }}</td>
             <td>{{ record.port_phy_status }}</td>
             <td>{{ record.port_status }}</td>
             <td>{{ record.port_des }}</td>
-            <td>{{ record.record_time|date:"Y-m-d H:i:s" }}</td>
-            <!-- <td></td> -->
+            <td>{{ record.record_time|date:"Y-m-d" }}</td>
+            <td>
+            {% if not record.not_show%}
+                <a href="" data-toggle="modal" data-target=".bs-example-modal" class="tag_form_trigger" rid="{{ record.id }}">
+                    <span class="label label-danger">延后通知</span>
+                </a>
+            {% else %}
+                <a href="" class="cancle-tag" rid="{{ record.id }}">
+                    <span class="label label-primary">取消延后</span>
+                </a>
+            {% endif %}
+            </td>
+            
         </tr>
     {% endfor %}
 {% endblock %}
@@ -114,6 +130,32 @@
 </div>
 {% endblock%}
 
+{% block other_content %}
+<div class="modal fade bs-example-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">延后通知</h4>
+            </div>
+            <div class="modal-body">
+                <form id="tag_form" action="" method="POST">
+                    {% for field in oneway_tag_form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger tag-btn">确认</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block tail_script %}
     <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
     <script src="{% static 'datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}" charset="UTF-8"></script>
@@ -129,6 +171,52 @@
             forceParse: 0,
             showMeridian: 0
             // pickerPosition: "bottom-left"
+        });
+        // 回填rid
+        $(".tag_form_trigger").click(function(){
+            $("#tag_form").attr("rid", $(this).attr("rid"));
+        });
+        // 打标签
+        $(".tag-btn").click(function(){
+            $.ajax({
+                url: "{% url 'tag_oneway' %}",
+                type: 'POST',
+                data: 'rid='+$("#tag_form").attr('rid')+'&'+$("#tag_form").serialize()+'&'+'csrfmiddlewaretoken='+"{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        window.location.reload();
+                        console.log(data);
+                    }else{
+                        console.log(data);
+                        alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // cancle tag
+        $(".cancle-tag").click(function(){
+            $.ajax({
+                url: "{% url 'cancle_tag_oneway' %}",
+                type: 'POST',
+                data: 'rid='+$(this).attr('rid')+'&'+'csrfmiddlewaretoken='+"{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        window.location.reload();
+                        console.log(data);
+                    }else{
+                        console.log(data);
+                        alert('error');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
         });
     </script> 
 {% endblock %}

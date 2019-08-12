@@ -129,11 +129,13 @@ class OneWayDevice(models.Model):
         ]
 
 
-# class OneWayDeviceDelay(models.Model):
-#     device_name = models.CharField(max_length=255)
-#     port = models.CharField(max_length=40)
-#     delay_count = models.PositiveSmallIntegerField()
-#     # TODO
+class OneWayDeviceTag(models.Model):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    delay_count = models.PositiveSmallIntegerField(null=True)
+    tag = models.CharField(max_length=10)
+    tag_user = models.CharField(max_length=100)
+    tag_time = models.DateTimeField()
 
 # class OneWayDeviceFixRecord(FixRecordBase):
 #     device_name = models.CharField(max_length=255)

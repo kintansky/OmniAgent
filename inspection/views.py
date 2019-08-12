@@ -1,14 +1,15 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, PortErrorFixRecord, NatPoolUsage
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, OneWayDeviceTag, PortErrorFixRecord, NatPoolUsage
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
-from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm, PortErrorFixRecordSearchForm
+from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, OneWayTagForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm, PortErrorFixRecordSearchForm
 from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
 import json
 from django.db.models import F, Q
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 
 
 
@@ -521,11 +522,26 @@ def my_port_error_tasks(request):
 
 
 # 单通设备检查模块
+__QUERY_ONEWAY_LIST = "\
+    SELECT \
+        dev.*,\
+        tag.delay_count, tag.tag, tag.tag_user, tag.tag_time, \
+        DATE_ADD(tag_time, INTERVAL delay_count DAY) AS end_time, \
+        (tag_time < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show \
+    FROM ( \
+        SELECT * FROM omni_agent.inspection_onewaydevice WHERE record_time BETWEEN %s AND %s \
+    )AS dev \
+    LEFT JOIN omni_agent.inspection_onewaydevicetag AS tag \
+    ON dev.device_name = tag.device_name AND dev.port = tag.port \
+    ORDER BY not_show DESC \
+"
 def oneway_list(request):
     time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)
-    oneway_all_list = OneWayDevice.objects.filter(
-        record_time__range=time_range)
+    # oneway_all_list = OneWayDevice.objects.filter(
+    #     record_time__range=time_range)
+    oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST, time_range)
+    # print(oneway_all_list[0].device_name, oneway_all_list[0].not_show)
     page_of_objects, page_range = pages(request, oneway_all_list)
     context = {}
     context['records'] = page_of_objects.object_list
@@ -536,6 +552,7 @@ def oneway_list(request):
     context['time_end'] = timezone.datetime.strftime(
         time_end, '%Y-%m-%d+%H:%M:%S')
     context['oneway_search_form'] = OneWaySearchForm()
+    context['oneway_tag_form'] = OneWayTagForm()
     return render(request, 'oneway_list.html', context)
 
 
@@ -545,10 +562,12 @@ def search_oneway(request):
     if oneway_search_form.is_valid():
         time_begin = oneway_search_form.cleaned_data['time_begin']
         time_end = oneway_search_form.cleaned_data['time_end']
-        oneway_all_list = OneWayDevice.objects.filter(
-            record_time__range=(time_begin, time_end))
+        # oneway_all_list = OneWayDevice.objects.filter(
+        #     record_time__range=(time_begin, time_end))
+        oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST, (time_begin, time_end))
     else:
         context['oneway_search_form'] = oneway_search_form
+        context['oneway_tag_form'] = OneWayTagForm()
         return render(request, 'oneway_list.html', context)
 
     page_of_objects, page_range = pages(request, oneway_all_list)
@@ -561,9 +580,49 @@ def search_oneway(request):
     context['time_end'] = timezone.datetime.strftime(
         time_end, '%Y-%m-%d+%H:%M:%S')
     context['oneway_search_form'] = oneway_search_form
+    context['oneway_tag_form'] = OneWayTagForm()
     return render(request, 'oneway_list.html', context)
 
 
+def tag_oneway_device(request):
+    data = {}
+    rid = request.POST.get('rid')
+    delay_tag = request.POST.get('delay_tag')
+    delay_days = request.POST.get('delay_days')
+    target = OneWayDevice.objects.get(id=int(rid))
+    try:
+        oneway_tag = OneWayDeviceTag.objects.get(device_name=target.device_name, port=target.port)
+        oneway_tag.delay_count = int(delay_days)
+        oneway_tag.tag = delay_tag
+        oneway_tag.tag_user = request.user.first_name
+        oneway_tag.tag_time = timezone.datetime.now()
+        oneway_tag.save()
+    except ObjectDoesNotExist:
+        oneway_tag = OneWayDeviceTag()
+        oneway_tag.device_name = target.device_name
+        oneway_tag.port = target.port
+        oneway_tag.delay_count = int(delay_days)
+        oneway_tag.tag = delay_tag
+        oneway_tag.tag_user = request.user.first_name
+        oneway_tag.tag_time = timezone.datetime.now()
+        oneway_tag.save()
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+
+def cancle_tag_oneway(request):
+    data = {}
+    rid = request.POST.get('rid')
+    target = OneWayDevice.objects.get(id=int(rid))
+    try:
+        oneway_tag = OneWayDeviceTag.objects.get(device_name=target.device_name, port=target.port)
+        oneway_tag.delete()
+    except ObjectDoesNotExist:
+        pass
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+    
 def export_oneway(request):
     time_begin = request.GET.get('time_begin', '')
     time_end = request.GET.get('time_end', '')
