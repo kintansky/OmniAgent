@@ -527,30 +527,27 @@ __QUERY_ONEWAY_LIST = "\
         dev.*,\
         tag.delay_count, tag.tag, tag.tag_user, tag.tag_time, \
         DATE_ADD(tag_time, INTERVAL delay_count DAY) AS end_time, \
-        (tag_time < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show \
+        (DATE_SUB(tag_time, INTERVAL 1 day) < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show \
     FROM ( \
         SELECT * FROM omni_agent.inspection_onewaydevice WHERE record_time BETWEEN %s AND %s \
     )AS dev \
     LEFT JOIN omni_agent.inspection_onewaydevicetag AS tag \
     ON dev.device_name = tag.device_name AND dev.port = tag.port \
-    ORDER BY not_show ASC \
 "
+__ONEWAY_ORDER_FIELD = 'ORDER BY not_show ASC, record_time DESC'
+
 def oneway_list(request):
     time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)
-    # oneway_all_list = OneWayDevice.objects.filter(
-    #     record_time__range=time_range)
-    oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST, time_range)
-    # print(oneway_all_list[0].device_name, oneway_all_list[0].not_show)
+    oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST+__ONEWAY_ORDER_FIELD, time_range)
     page_of_objects, page_range = pages(request, oneway_all_list)
     context = {}
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(
-        time_begin, '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(
-        time_end, '%Y-%m-%d+%H:%M:%S')
+    # context['time_begin'] = timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S')
+    # context['time_end'] = timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S')
+    context['search_paras'] = 'time_begin={}&time_end={}&device_name={}'.format(timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S'), timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S'), '')
     context['oneway_search_form'] = OneWaySearchForm()
     context['oneway_tag_form'] = OneWayTagForm()
     return render(request, 'oneway_list.html', context)
@@ -562,9 +559,11 @@ def search_oneway(request):
     if oneway_search_form.is_valid():
         time_begin = oneway_search_form.cleaned_data['time_begin']
         time_end = oneway_search_form.cleaned_data['time_end']
-        # oneway_all_list = OneWayDevice.objects.filter(
-        #     record_time__range=(time_begin, time_end))
-        oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST, (time_begin, time_end))
+        device_name = oneway_search_form.cleaned_data['device_name']
+        device_filter = ''
+        if device_name != '' or device_name is not None:
+            device_filter = "HAVING device_name like '%{}%' ".format(device_name)
+        oneway_all_list = OneWayDevice.objects.raw(__QUERY_ONEWAY_LIST+device_filter+__ONEWAY_ORDER_FIELD, (time_begin, time_end))
     else:
         context['oneway_search_form'] = oneway_search_form
         context['oneway_tag_form'] = OneWayTagForm()
@@ -575,10 +574,7 @@ def search_oneway(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['time_begin'] = timezone.datetime.strftime(
-        time_begin, '%Y-%m-%d+%H:%M:%S')
-    context['time_end'] = timezone.datetime.strftime(
-        time_end, '%Y-%m-%d+%H:%M:%S')
+    context['search_paras'] = 'time_begin={}&time_end={}&device_name={}'.format(timezone.datetime.strftime(time_begin, '%Y-%m-%d+%H:%M:%S'), timezone.datetime.strftime(time_end, '%Y-%m-%d+%H:%M:%S'), device_name)
     context['oneway_search_form'] = oneway_search_form
     context['oneway_tag_form'] = OneWayTagForm()
     return render(request, 'oneway_list.html', context)
@@ -626,6 +622,7 @@ def cancle_tag_oneway(request):
 def export_oneway(request):
     time_begin = request.GET.get('time_begin', '')
     time_end = request.GET.get('time_end', '')
+    device_name = request.GET.get('device_name', '')
     if time_begin == '' or time_end == '':
         today_time = timezone.datetime.now()
         time_end = timezone.datetime(
@@ -635,8 +632,10 @@ def export_oneway(request):
         time_begin = timezone.datetime.strptime(
             time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
-    oneway_all_list = OneWayDevice.objects.filter(
-        record_time__range=(time_begin, time_end))
+    if device_name != '':
+        oneway_all_list = OneWayDevice.objects.filter(device_name__icontains=device_name, record_time__range=(time_begin, time_end))
+    else:
+        oneway_all_list = OneWayDevice.objects.filter(record_time__range=(time_begin, time_end))
 
     output = exportXls(OneWayDevice._meta.fields,
                        oneway_all_list, ('record_time',))

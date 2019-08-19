@@ -41,8 +41,10 @@ class PortErrorOperationForm(forms.Form):
 
 
 class OneWaySearchForm(TimeRangeForm):
-    pass
+    device_name = forms.CharField(label='设备', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'DS'}))
 
+    def clean_device_name(self):
+        return self.cleaned_data['device_name'].strip()
 
 class OneWayTagForm(forms.Form):
     CHOICES_TAG = (
