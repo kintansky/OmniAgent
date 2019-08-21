@@ -134,7 +134,7 @@ __PORTERROR_QUERY = "\
         ped.*,\
         des.port_description, des.port_status,\
         pef.problem_type, pef.problem_detail, pef.begin_time, pef.end_time, pef.worker, pef.status, pef.claim,\
-        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.tx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,\
+        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,\
         error_cnt_tb.cnt\
     FROM (\
         SELECT * FROM omni_agent.inspection_porterrordiff \
