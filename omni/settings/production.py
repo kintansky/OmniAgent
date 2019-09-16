@@ -35,7 +35,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'omni_agent',
         'USER': 'root',
-        'PASSWORD': 'hlw2018!@#',
+        'PASSWORD': 'hlw2019!@#$',
         'HOST': '127.0.0.1',
         'PORT': '9003',
         'OPTIONS': {
@@ -47,7 +47,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'cmdb',
         'USER': 'root',
-        'PASSWORD': 'hlw2018!@#',
+        'PASSWORD': 'hlw2019!@#$',
         'HOST': '127.0.0.1',
         'PORT': '9003',
         'OPTIONS': {
