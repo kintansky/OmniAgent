@@ -28,6 +28,16 @@ div.olt-list {
     display: none; 
     z-index:1;
 }
+div.bng-list {
+    background-color:white; 
+    border: 1px solid #ccc; 
+    position:absolute; 
+    top:100%; 
+    height:auto; 
+    width:90%; 
+    display: none; 
+    z-index:1;
+}
 
 /* Sticky footer styles
 -------------------------------------------------- */

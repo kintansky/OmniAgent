@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'watchdog.apps.WatchdogConfig',
     'networkresource.apps.NetworkresourceConfig',
     'inspection.apps.InspectionConfig',
+    'troubleshooting.apps.TroubleshootingConfig',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +50,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'watchdog/templates'),
             os.path.join(BASE_DIR, 'networkresource/templates'),
             os.path.join(BASE_DIR, 'inspection/templates'),
+            os.path.join(BASE_DIR, 'troubleshooting/templates'),
         ],
         'APP_DIRS': True,
         'OPTIONS': {

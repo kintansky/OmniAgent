@@ -27,4 +27,5 @@ urlpatterns = [
     path('device/', include('watchdog.urls')),
     path('inspect/', include('inspection.urls')),
     path('resource/', include('networkresource.urls')),
+    path('troubleshooting/', include('troubleshooting.urls')),
 ]
