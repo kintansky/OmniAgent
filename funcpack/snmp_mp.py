@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 from os import path
 import time
-from device import SnmpWorker
+from .device import SnmpWorker
 from pysnmp.hlapi import CommunityData
 
 
