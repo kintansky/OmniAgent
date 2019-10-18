@@ -1,7 +1,7 @@
-from multiprocessing import Pool
+# from multiprocessing import Pool
 from os import path
 import time
-from .device import SnmpWorker
+from .snmpModel import SnmpWorker
 from pysnmp.hlapi import CommunityData
 
 
@@ -14,11 +14,11 @@ def getSnmpResult(hostIp, authData, mibNodeSet, mibSource):
     return result
 
 def parseSnmpResult(deviceData, authData, mibNodeSet, mibSource):
-    print(deviceData[0])
     hostIp = deviceData[1]
+    print(deviceData[0], hostIp)
     result1 = getSnmpResult(hostIp, authData, mibNodeSet, mibSource)
     t1 = time.time()
-    time.sleep(10)
+    time.sleep(10)  # 计算间隔
     result2 = getSnmpResult(hostIp, authData, mibNodeSet, mibSource)
     # print(result2)
     t2 = time.time()
@@ -47,7 +47,8 @@ def filterData(requestResult):
 
 def main(deviceList, processNum=1):
     authData = CommunityData('getgmcc!)', mpModel=1)
-    mibSource = path.join(BASE_DIR, 'src/pysnmp_fmt/')
+    mibSource = path.join(BASE_DIR, 'pysnmp_fmt\\')
+    print(mibSource)
     mibNodeSet = (
         ('IF-MIB', 'ifName', 'default'),
         ('IF-MIB', 'ifHighSpeed', 'default'),   # 单位1000000bit/s即Mb
@@ -55,11 +56,17 @@ def main(deviceList, processNum=1):
         ('IF-MIB', 'ifHCInOctets', 'default'),  # 字节
         ('IF-MIB', 'ifHCOutOctets', 'default'), # 字节
     )
-    p = Pool(processNum)
+    # 多线程失败
+    # p = Pool(processNum)
+    # resultData = {}
+    # for d in deviceList:
+    #     result = p.apply_async(parseSnmpResult, args=(d, authData, mibNodeSet, mibSource))
+    #     # print(result.get())
+    #     # resultData[d[0]] = result.get()
+    # p.close()
+    # p.join()
+    # return resultData
     resultData = {}
     for d in deviceList:
-        result = p.apply_async(parseSnmpResult, args=(d, authData, mibNodeSet, mibSource))
-        resultData[d[0]] = result.get()
-    p.close()
-    p.join()
+        resultData[d] = parseSnmpResult(d, authData, mibNodeSet, mibSource)
     return resultData

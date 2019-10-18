@@ -22,10 +22,10 @@ class SnmpWorker:
         varBinds = []
         for mibNode in mibNodeSet:
             mibSource = mibNode[2]
-            if mibSource.lower() == 'default':
-                varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2])))
-            else:
-                varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2]).addMibSource(mibSource)))
+            # if mibSource.lower() == 'default':
+            #     varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2])))
+            # else:
+            varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2]).addMibSource(mibSource)))
         return varBinds
 
     def requestSnmp(self):
