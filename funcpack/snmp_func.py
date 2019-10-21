@@ -1,7 +1,7 @@
-# from multiprocessing import Pool
+from multiprocessing import Pool
 from os import path
 import time
-from .snmpModel import SnmpWorker
+from .model_class import SnmpWorker
 from pysnmp.hlapi import CommunityData
 
 
@@ -27,7 +27,7 @@ def parseSnmpResult(deviceData, authData, mibNodeSet, mibSource):
         if result2[interface][0] != 0:
             result.append([
                 interface,
-                result2[interface][0]/1000, # 带宽单位Gbps
+                result2[interface][0]/1000, # 带宽,单位Gbps
                 (result2[interface][2] - result1[interface][2])/result2[interface][0]/(t2-t1)*100,  # In 百分比
                 (result2[interface][3] - result1[interface][3])/result2[interface][0]/(t2-t1)*100,  # OUT 百分比
                 result2[interface][1],  # 端口描述
@@ -45,28 +45,28 @@ def filterData(requestResult):
     return result
 
 
-def main(deviceList, processNum=1):
+def mainLinkUtilization(deviceList, processNum=1):
     authData = CommunityData('getgmcc!)', mpModel=1)
     mibSource = path.join(BASE_DIR, 'pysnmp_fmt\\')
-    print(mibSource)
     mibNodeSet = (
-        ('IF-MIB', 'ifName', 'default'),
-        ('IF-MIB', 'ifHighSpeed', 'default'),   # 单位1000000bit/s即Mb
-        ('IF-MIB', 'ifDescr', 'default'),
-        ('IF-MIB', 'ifHCInOctets', 'default'),  # 字节
-        ('IF-MIB', 'ifHCOutOctets', 'default'), # 字节
+        ('IF-MIB', 'ifName', mibSource),
+        ('IF-MIB', 'ifHighSpeed', mibSource),   # 单位1000000bit/s即Mb
+        ('IF-MIB', 'ifDescr', mibSource),
+        ('IF-MIB', 'ifHCInOctets', mibSource),  # 字节
+        ('IF-MIB', 'ifHCOutOctets', mibSource), # 字节
     )
-    # 多线程失败
-    # p = Pool(processNum)
-    # resultData = {}
-    # for d in deviceList:
-    #     result = p.apply_async(parseSnmpResult, args=(d, authData, mibNodeSet, mibSource))
-    #     # print(result.get())
-    #     # resultData[d[0]] = result.get()
-    # p.close()
-    # p.join()
-    # return resultData
+    # 多线程
+    p = Pool(processNum)
     resultData = {}
     for d in deviceList:
-        resultData[d] = parseSnmpResult(d, authData, mibNodeSet, mibSource)
+        result = p.apply_async(parseSnmpResult, args=(d, authData, mibNodeSet, mibSource))
+        # print(result.get())
+        resultData[d[0]] = result.get()
+    p.close()
+    p.join()
     return resultData
+    # 单线程
+    # resultData = {}
+    # for d in deviceList:
+    #     resultData[d[0]] = parseSnmpResult(d, authData, mibNodeSet, mibSource)
+    # return resultData

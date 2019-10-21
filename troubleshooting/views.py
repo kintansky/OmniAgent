@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from watchdog.models import Device
-# from funcpack import snmp_mp
+from funcpack import snmp_func
+from funcpack.funcs import quickSortObj
 import json
 
 # Create your views here.
@@ -31,8 +32,17 @@ def get_link_utilization(request):
         return JsonResponse(data)
     targets = Device.objects.filter(device_name__in=bngs.split(','))
     deviceList = [(t.device_name, t.device_ip) for t in targets]
-    # resultData = snmp_mp.main(deviceList)
-    # data['result'] = json.dumps(resultData)
-    # data['status'] = 'success'
+    resultData = snmp_func.mainLinkUtilization(deviceList, processNum=4)
+    # 排序
+    for dev in resultData:
+        quickSortObj(resultData[dev], 0, len(resultData[dev])-1, 3) # sortIndex: 2->InUtilization, 3->OutUtilization
+    # print(resultData)
+    # ## debug
+    # resultData = {}
+    # resultData['GDFOS-IPMAN-BNG01-BJ-HW'] = [[100,]*5]*50
+    # resultData['GDFOS-IPMAN-BNG01-DS-HW'] = [[200,]*5]*50
+    # ## debug
+    data['result'] = json.dumps(resultData) # 返回json数组
+    data['status'] = 'success'
 
     return JsonResponse(data)

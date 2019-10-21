@@ -128,3 +128,28 @@ def dict2SearchParas(d):    # 将字典转换成网页搜索的参数格式，�
             continue
         s += '&{}={}'.format(key, d[key])
     return s
+
+'''
+快排
+'''
+def quickSortObj(arr, lowIndex, highIndex, sortIndex):  # sortIndex 为需要排序的index
+    # 快排, 倒序
+    if lowIndex < highIndex:
+        pi = partition(arr, lowIndex, highIndex, sortIndex)
+        quickSortObj(arr, lowIndex, pi-1, sortIndex)
+        quickSortObj(arr, pi+1, highIndex, sortIndex)
+
+
+def partition(arr, lowIndex, highIndex, sortIndex):
+    i = lowIndex - 1
+    pivot = arr[highIndex][sortIndex]
+    for j in range(lowIndex, highIndex):
+        if arr[j][sortIndex] >= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[highIndex] = arr[highIndex], arr[i+1]
+    return i+1
+
+'''
+快排 end
+'''

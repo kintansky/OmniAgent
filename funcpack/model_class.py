@@ -3,6 +3,13 @@ from pysnmp.hlapi import *
 
 
 '''
+LOG
+'''
+
+
+
+
+'''
 SNMP
 '''
 class SnmpWorker:
@@ -18,14 +25,14 @@ class SnmpWorker:
             lexicographicMode=False,    # True则会轮询至最后的Node
         )
 
-    def __constructVarBinds(self, mibNodeSet, mibSource):  # 构造mibset， 用于多个mib同时取出
+    def __constructVarBinds(self, mibNodeSet, mibSource):  # 构造mibset，用于多个mib同时取出
         varBinds = []
         for mibNode in mibNodeSet:
             mibSource = mibNode[2]
-            # if mibSource.lower() == 'default':
-            #     varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2])))
-            # else:
-            varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2]).addMibSource(mibSource)))
+            if mibSource == '':
+                varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2])))
+            else:
+                varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2]).addMibSource(mibSource)))
         return varBinds
 
     def requestSnmp(self):
@@ -37,7 +44,7 @@ class SnmpWorker:
                     print(errorIndication)
                     break
                 elif errorStatus:
-                    print('%s at %s' % (errorStatus.prettyPrint(), errorIndex and varBinds[int(errorIndex)-1][0] or '?'))
+                    print('%s at %s' % (errorStatus.prettyPrint(), errorIndex and values[int(errorIndex)-1][0] or '?'))
                     break
                 else:
                     data = tuple()
