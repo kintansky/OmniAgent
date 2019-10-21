@@ -47,7 +47,7 @@ def filterData(requestResult):
 
 def mainLinkUtilization(deviceList, processNum=1):
     authData = CommunityData('getgmcc!)', mpModel=1)
-    mibSource = path.join(BASE_DIR, 'pysnmp_fmt\\')
+    mibSource = path.join(BASE_DIR, 'pysnmp_fmt/')
     print(mibSource)
     mibNodeSet = (
         ('IF-MIB', 'ifName', mibSource),
