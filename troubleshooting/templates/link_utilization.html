@@ -160,18 +160,18 @@
                         var objDict = JSON.parse(data["result"]);   // json数组，{"device": [interface, bandwidth, InUtilization, OutUtilization, description]}
                         console.log(objDict);
                         var dataStr = "";
-                        for(var key in objDict){
-                            $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
-                            var dataList = objDict[key];
-                            for(var i=0;i<dataList.length;i++){
-                                dataStr += "<tr id="+key+"><td>"+key+"</td>";
-                                for(var j=0;j<dataList[i].length;j++){
-                                    dataStr += "<td>"+dataList[i][j]+"</td>"
-                                }
-                                dataStr += "</tr>";
-                            }
-                        }
-                        $('#result-table-id').append(dataStr); // TODO:
+                        // for(var key in objDict){
+                        //     $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
+                        //     var dataList = objDict[key];
+                        //     for(var i=0;i<dataList.length;i++){
+                        //         dataStr += "<tr id="+key+"><td>"+key+"</td>";
+                        //         for(var j=0;j<dataList[i].length;j++){
+                        //             dataStr += "<td>"+dataList[i][j]+"</td>"
+                        //         }
+                        //         dataStr += "</tr>";
+                        //     }
+                        // }
+                        // $('#result-table-id').append(dataStr); // TODO:
                     },
                     error: function(xhr){
                         console.log(xhr);
