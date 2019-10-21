@@ -29,7 +29,6 @@ class SnmpWorker:
         varBinds = []
         for mibNode in mibNodeSet:
             mibSource = mibNode[2]
-            print(mibSource)
             if mibSource == '':
                 varBinds.append(ObjectType(ObjectIdentity(*mibNode[0:2])))
             else:
