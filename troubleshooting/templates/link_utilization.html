@@ -23,12 +23,13 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-addon" id="sizing-addon3">@</span>
-                                        <input type="text" class="form-control" name="bng" id="id_bng" placeholder="搜索设备：BJ" aria-describedby="sizing-addon3">
+                                        <div class="input-group-addon">Device</div>
+                                        <input type="text" class="form-control" name="bng" id="id_bng" placeholder="搜索设备：BJ">
                                         <div id="bng-list" class="bng-list"></div>
+                                        <div class="input-group-addon" data-toggle="tooltip" data-placement="top" title="设置的两次取数间隔约为10s">?</div>
                                     </div>
                                 </div>
-                                <div class="col-md-2 col-md-offset-6">
+                                <div class="col-md-2">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-success" id="send-request">发送</button>
                                         <button type="button" class="btn btn-danger" id="clear-all-target-btn">清空</button>
@@ -48,15 +49,17 @@
                         </table>
                     </div>
                     <div class="panel panel-default">
-                        <div class="panel-body" id="result-panel-id" data-spy="scroll" data-target="#result-list-nav" data-offset="0" style="height:200px; overflow:auto; position:relative;">
+                        <div class="panel-body" id="result-panel-id" data-spy="scroll" data-target="#result-list-nav" data-offset="20" style="height:1000px; overflow:auto; position:relative;">
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3" id="result-list-nav">
-                    <ul class="nav nav-pills nav-stacked" id="result-list" style="position:fixed">
-                        
-                    </ul>
-                </div>
+                <nav class="col-md-3" id="result-list-nav">
+                    <div class="container-fluid">
+                        <ul class="nav nav-pills nav-stacked" id="result-list" style="position:fixed">
+                            <!-- <li role="presentation"><a href="#id_bng">TOP</a></li> -->
+                        </ul>
+                    </div>
+                </nav>
             </div>
             <br>
         {% else %}
@@ -72,9 +75,25 @@
 
 {% endblock %}
 
+{% block other_content %}
+    <!-- loading提示 -->
+    <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body ">
+                    <p class="text-center">正在处理，请稍候...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
 {% block tail_script %}
 <script>
     $(document).ready(function(){
+        $('[data-spy="scroll"]').each(function () {
+            var $spy = $(this).scrollspy('refresh')
+        });
         // 模糊匹配BNG
         $("#id_bng").keyup(function(){
             if($(this).val() == ""){
@@ -117,7 +136,7 @@
             var auto_item = $(this).text();
             $("#id_bng").val('');
             $("#bng-list").css("display", "none");
-            $('#target-id-table').prepend("<tr><td class=\"target-bng\">"+auto_item+"</td><td><button id=\""+auto_item+"\" type=\"button\" class=\"btn btn-danger btn-xs remove-bng-btn\">取消</button></td></tr>");
+            $('#target-id-table').prepend("<tr><td class=\"target-bng\">"+auto_item+"</td><td><button type=\"button\" class=\"btn btn-danger btn-xs remove-bng-btn\">取消</button></td></tr>");
         });
         // 删除目标IP
         $(document).on("click", ".remove-bng-btn", function(){   // 动态绑定需要使用.on
@@ -130,6 +149,7 @@
         });
         // 发送SNMP请求
         $('#send-request').click(function(){
+            $('#loading').modal('show');
             var bng_obj = $("td").siblings(".target-bng");
             var temp = new Array();
             for(var i=0;i<bng_obj.length;i++){
@@ -171,7 +191,8 @@
                             }
                             dataStr += '</tbody></table></div>';
                         }
-                        $('#result-panel-id').append(dataStr); // TODO:
+                        $('#result-panel-id').append(dataStr);
+                        $('#loading').modal('hide');
                     },
                     error: function(xhr){
                         console.log(xhr);

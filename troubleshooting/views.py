@@ -37,11 +37,11 @@ def get_link_utilization(request):
     for dev in resultData:
         quickSortObj(resultData[dev], 0, len(resultData[dev])-1, 3) # sortIndex: 2->InUtilization, 3->OutUtilization
     # print(resultData)
-    # ## debug
+    ## debug
     # resultData = {}
     # resultData['GDFOS-IPMAN-BNG01-BJ-HW'] = [['OTV109_SD_BJ_BiJiangShiChang_2_H', 10, 2.34, 34, 'dT:1329-SD_BeiJiaoZhenZhengFuJieRuJiFang_OLT002_HW_MA5800:10G::10GE0/10/0']]*50
     # resultData['GDFOS-IPMAN-BNG01-DS-HW'] = [[200,]*5]*50
-    # ## debug
+    ## debug
     data['result'] = json.dumps(resultData) # 返回json数组
     data['status'] = 'success'
 
