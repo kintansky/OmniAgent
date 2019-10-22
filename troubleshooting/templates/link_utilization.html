@@ -73,9 +73,6 @@
         {% endif %}
     </div>
 
-{% endblock %}
-
-{% block other_content %}
     <!-- loading提示 -->
     <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
         <div class="modal-dialog" role="document">
@@ -87,6 +84,7 @@
         </div>
     </div>
 {% endblock %}
+
 
 {% block tail_script %}
 <script>
@@ -164,35 +162,40 @@
                     data: {"bngs": temp.join(",")},
                     cache: false,
                     success: function(data){
+
                         // console.log(data["result"]);
                         $('#result-panel-id').html(''); // 清空旧结果
                         $('#result-list').html(''); // 清空旧结果
-
-                        var objDict = JSON.parse(data["result"]);   // json数组，{"device": [interface, bandwidth, InUtilization, OutUtilization, description]}
-                        // console.log(objDict);
-                        var dataStr = "";
-                        for(var key in objDict){
-                            $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
-                            var dataList = objDict[key];
-                            dataStr += '<div class="panel panel-primary" id='+key+'>\
-                                            <div class="panel-heading">'+key+'</div>\
-                                            <table class="table table-striped table-hover">\
-                                                <thead>\
-                                                    <tr>\
-                                                        <th>设备名称</th>\
-                                                        <th>端口</th>\
-                                                        <th>利用率(In|OUT)</th>\
-                                                        <th>描述</th>\
-                                                    </tr>\
-                                                </thead>\
-                                                <tbody>';
-                            for(var i=0;i<dataList.length;i++){
-                                dataStr += '<tr><td>'+key+'</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][0]+'">'+dataList[i][0].toString().substr(0,20)+' <span class="label label-danger">'+dataList[i][1]+'G</span></td><td>'+dataList[i][2]+'%<span class="glyphicon glyphicon-sort"></span>'+dataList[i][3]+'%</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][4]+'">'+dataList[i][4].toString().substr(0,40)+'</td></tr>';
+                        if(data['status'] == 'success'){
+                            var objDict = JSON.parse(data["result"]);   // json数组，{"device": [interface, bandwidth, InUtilization, OutUtilization, description]}
+                            // console.log(objDict);
+                            var dataStr = "";
+                            for(var key in objDict){
+                                $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
+                                var dataList = objDict[key];
+                                dataStr += '<div class="panel panel-primary" id='+key+'>\
+                                                <div class="panel-heading">'+key+'</div>\
+                                                <table class="table table-striped table-hover">\
+                                                    <thead>\
+                                                        <tr>\
+                                                            <th>设备名称</th>\
+                                                            <th>端口</th>\
+                                                            <th>利用率(In|OUT)</th>\
+                                                            <th>描述</th>\
+                                                        </tr>\
+                                                    </thead>\
+                                                    <tbody>';
+                                for(var i=0;i<dataList.length;i++){
+                                    dataStr += '<tr><td>'+key+'</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][0]+'">'+dataList[i][0].toString().substr(0,20)+' <span class="label label-danger">'+dataList[i][1]+'G</span></td><td>'+dataList[i][2]+'%<span class="glyphicon glyphicon-sort"></span>'+dataList[i][3]+'%</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][4]+'">'+dataList[i][4].toString().substr(0,40)+'</td></tr>';
+                                }
+                                dataStr += '</tbody></table></div>';
                             }
-                            dataStr += '</tbody></table></div>';
+                            $('#result-panel-id').append(dataStr);
+                            $('#loading').modal('hide');
+                        }else{
+                            $('#loading').modal('hide');
+                            alert("有错误");
                         }
-                        $('#result-panel-id').append(dataStr);
-                        $('#loading').modal('hide');
                     },
                     error: function(xhr){
                         console.log(xhr);
