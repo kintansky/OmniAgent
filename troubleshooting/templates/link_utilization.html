@@ -47,26 +47,14 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="panel panel-success" data-spy="scroll" data-target="#result-list-nav" data-offset="0">
-                        <div class="panel-heading">结果</div>
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>设备名称</th>
-                                    <th>端口</th>
-                                    <th>带宽</th>
-                                    <th>利用率%-In</th>
-                                    <th>利用率%-Out</th>
-                                    <th>描述</th>
-                                </tr>
-                            </thead>
-                            <tbody id="result-table-id">
-                            </tbody>
-                        </table>
+                    <div class="panel panel-default">
+                        <div class="panel-body" id="result-panel-id" data-spy="scroll" data-target="#result-list-nav" data-offset="0">
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3" id="result-list-nav">
-                    <ul class="nav nav-default nav-stacked" style="position:fixed" id="result-list">
+                    <ul class="nav nav-pills nav-stacked" id="result-list" style="position:fixed">
+                        
                     </ul>
                 </div>
             </div>
@@ -157,21 +145,33 @@
                     cache: false,
                     success: function(data){
                         // console.log(data["result"]);
+                        $('#result-panel-id').html(''); // 清空旧结果
+                        $('#result-list').html(''); // 清空旧结果
+
                         var objDict = JSON.parse(data["result"]);   // json数组，{"device": [interface, bandwidth, InUtilization, OutUtilization, description]}
                         console.log(objDict);
                         var dataStr = "";
                         for(var key in objDict){
                             $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
                             var dataList = objDict[key];
+                            dataStr += '<div class="panel panel-primary" id='+key+'>\
+                                            <div class="panel-heading">'+key+'</div>\
+                                            <table class="table table-striped table-hover">\
+                                                <thead>\
+                                                    <tr>\
+                                                        <th>设备名称</th>\
+                                                        <th>端口</th>\
+                                                        <th>利用率(In|OUT)</th>\
+                                                        <th>描述</th>\
+                                                    </tr>\
+                                                </thead>\
+                                                <tbody>';
                             for(var i=0;i<dataList.length;i++){
-                                dataStr += "<tr id="+key+"><td>"+key+"</td>";
-                                for(var j=0;j<dataList[i].length;j++){
-                                    dataStr += "<td>"+dataList[i][j]+"</td>"
-                                }
-                                dataStr += "</tr>";
+                                dataStr += '<tr><td>'+key+'</td><td>'+dataList[i][0]+' <span class="label label-danger">'+dataList[i][1]+'G</span></td><td>'+dataList[i][2]+'%<span class="glyphicon glyphicon-sort"></span>'+dataList[i][3]+'%</td><td>'+dataList[i][4]+'</td></tr>';
                             }
+                            dataStr += '</tbody></table></div>';
                         }
-                        $('#result-table-id').append(dataStr); // TODO:
+                        $('#result-panel-id').append(dataStr); // TODO:
                     },
                     error: function(xhr){
                         console.log(xhr);

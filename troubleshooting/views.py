@@ -36,7 +36,7 @@ def get_link_utilization(request):
     # 排序
     for dev in resultData:
         quickSortObj(resultData[dev], 0, len(resultData[dev])-1, 3) # sortIndex: 2->InUtilization, 3->OutUtilization
-    # print(resultData)
+    print(resultData)
     # ## debug
     # resultData = {}
     # resultData['GDFOS-IPMAN-BNG01-BJ-HW'] = [[100,]*5]*50

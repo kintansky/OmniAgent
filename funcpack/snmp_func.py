@@ -28,8 +28,8 @@ def parseSnmpResult(deviceData, authData, mibNodeSet, mibSource):
             result.append([
                 interface,
                 result2[interface][0]/1000, # 带宽,单位Gbps
-                (result2[interface][2] - result1[interface][2])/result2[interface][0]/(t2-t1)*100,  # In 百分比
-                (result2[interface][3] - result1[interface][3])/result2[interface][0]/(t2-t1)*100,  # OUT 百分比
+                round((result2[interface][2] - result1[interface][2])/result2[interface][0]/(t2-t1)*100, 2),  # In 百分比
+                round((result2[interface][3] - result1[interface][3])/result2[interface][0]/(t2-t1)*100, 2),  # OUT 百分比
                 result2[interface][1],  # 端口描述
             ])
     return result
