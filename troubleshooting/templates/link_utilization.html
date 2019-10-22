@@ -149,7 +149,7 @@
                         $('#result-list').html(''); // 清空旧结果
 
                         var objDict = JSON.parse(data["result"]);   // json数组，{"device": [interface, bandwidth, InUtilization, OutUtilization, description]}
-                        console.log(objDict);
+                        // console.log(objDict);
                         var dataStr = "";
                         for(var key in objDict){
                             $("#result-list").append('<li role="presentation"><a href="#'+key+'"><span class="glyphicon glyphicon-console" aria-hidden="true"></span> '+key+'</a></li>');
@@ -167,7 +167,7 @@
                                                 </thead>\
                                                 <tbody>';
                             for(var i=0;i<dataList.length;i++){
-                                dataStr += '<tr><td>'+key+'</td><td>'+dataList[i][0]+' <span class="label label-danger">'+dataList[i][1]+'G</span></td><td>'+dataList[i][2]+'%<span class="glyphicon glyphicon-sort"></span>'+dataList[i][3]+'%</td><td>'+dataList[i][4]+'</td></tr>';
+                                dataStr += '<tr><td>'+key+'</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][0]+'">'+dataList[i][0].toString().substr(0,20)+' <span class="label label-danger">'+dataList[i][1]+'G</span></td><td>'+dataList[i][2]+'%<span class="glyphicon glyphicon-sort"></span>'+dataList[i][3]+'%</td><td data-toggle="tooltip" data-placement="top" title="'+dataList[i][4]+'">'+dataList[i][4].toString().substr(0,40)+'</td></tr>';
                             }
                             dataStr += '</tbody></table></div>';
                         }

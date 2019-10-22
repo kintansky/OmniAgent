@@ -32,15 +32,15 @@ def get_link_utilization(request):
         return JsonResponse(data)
     targets = Device.objects.filter(device_name__in=bngs.split(','))
     deviceList = [(t.device_name, t.device_ip) for t in targets]
-    resultData = snmp_func.mainLinkUtilization(deviceList, processNum=4)
-    # 排序
-    for dev in resultData:
-        quickSortObj(resultData[dev], 0, len(resultData[dev])-1, 3) # sortIndex: 2->InUtilization, 3->OutUtilization
-    print(resultData)
+    # resultData = snmp_func.mainLinkUtilization(deviceList, processNum=4)
+    # # 排序
+    # for dev in resultData:
+    #     quickSortObj(resultData[dev], 0, len(resultData[dev])-1, 3) # sortIndex: 2->InUtilization, 3->OutUtilization
+    # print(resultData)
     # ## debug
-    # resultData = {}
-    # resultData['GDFOS-IPMAN-BNG01-BJ-HW'] = [[100,]*5]*50
-    # resultData['GDFOS-IPMAN-BNG01-DS-HW'] = [[200,]*5]*50
+    resultData = {}
+    resultData['GDFOS-IPMAN-BNG01-BJ-HW'] = [['OTV109_SD_BJ_BiJiangShiChang_2_H', 10, 2.34, 34, 'dT:1329-SD_BeiJiaoZhenZhengFuJieRuJiFang_OLT002_HW_MA5800:10G::10GE0/10/0']]*50
+    resultData['GDFOS-IPMAN-BNG01-DS-HW'] = [[200,]*5]*50
     # ## debug
     data['result'] = json.dumps(resultData) # 返回json数组
     data['status'] = 'success'
