@@ -153,3 +153,15 @@ class NatPoolUsage(models.Model):
 
     class Meta:
         ordering = ['-record_time']
+
+
+class LinkPingTest(models.Model):
+    source_device = models.CharField(max_length=255)
+    target_device = models.CharField(max_length=255)
+    target_ip = models.GenericIPAddressField()
+    loss = models.IntegerField()
+    cost = models.IntegerField()
+    record_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'MQ_REC_link_ping_test'

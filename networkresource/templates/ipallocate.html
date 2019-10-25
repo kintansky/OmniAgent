@@ -278,21 +278,23 @@
                 </div>
             </div>
         {% endif %}
+        
 
-    </div>
-{% endblock %}
-
-{% block other_content %}
-    <!-- loading提示 -->
-    <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-body ">
-                    <p class="text-center">正在处理，请稍候...</p>
+            <!-- loading提示 -->
+        <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-body ">
+                        <p class="text-center">正在处理，请稍候...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block other_content %}
+
 {% endblock %}
 
 {% block tail_script %}
@@ -355,8 +357,8 @@
                 data: $('#ip-detail-form').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
+                    $('#loading').modal('hide');
                     if(data['status'] == 'success'){
-                        $('#loading').modal('hide');
                         // console.log(data);
                         $("p.error-data").text(""); // 清空错误信息
                         document.getElementById('ip-detail-form').reset();  // 清空form
@@ -364,7 +366,6 @@
                         alert("分配成功");
                     }else{
                         // console.log(data);
-                        $('#loading').modal('hide');
                         $("p.error-data").text("");
                         if("error_order_num" in data){
                             $("#id_error_order_num").text(data["error_order_num"]);

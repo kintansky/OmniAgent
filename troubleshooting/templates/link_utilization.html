@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}带宽利用率查询{% endblock %}
+{% block title %}实时带宽查询{% endblock %}
 {% block navbar_troubleshooting_active %}active{% endblock %}
 
 {% load static %}
@@ -13,9 +13,9 @@
         <ol class="breadcrumb">
             <li><a href="{% url 'dashboard' %}">Home</a></li>
             <li>Trouble Shooting</li>
-            <li class="active">带宽利用率查询</li>
+            <li class="active">实时带宽查询</li>
         </ol>
-        <h2 class="sub-header">故障处理</h2>
+        <h2 class="sub-header">实时带宽查询</h2>
         {% if user.is_authenticated %}
             <div class="row">
                 <div class="col-md-9">
