@@ -113,14 +113,14 @@ def export_moudle(request):
 __PORTERROR_QUERY = "\
     SELECT error_info.*, npp.* FROM (\
         SELECT np.*, ni.port_description, ni.port_status \
-            FROM omni_agent.inspection_porterrordiff as np \
-            LEFT JOIN omni_agent.networkresource_ipmanresource AS ni \
+            FROM omni_agent.OM_REP_port_error_diff as np \
+            LEFT JOIN omni_agent.MR_REC_ipman_resource AS ni \
             ON np.device_name = ni.device_name AND np.port = ni.port \
             WHERE np.record_time between %s AND %s\
         ) AS error_info \
     LEFT JOIN (\
         SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
-            FROM omni_agent.inspection_portperf \
+            FROM omni_agent.OM_REC_port_perf \
             WHERE record_time BETWEEN %s AND %s\
         ) AS npp \
     ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
@@ -137,23 +137,23 @@ __PORTERROR_QUERY = "\
         pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,\
         error_cnt_tb.cnt\
     FROM (\
-        SELECT * FROM omni_agent.inspection_porterrordiff \
+        SELECT * FROM omni_agent.OM_REP_port_error_diff \
         WHERE record_time BETWEEN %s AND %s AND (stateCRC >= {} OR stateIpv4HeadError >= {})\
     ) AS ped \
-    LEFT JOIN omni_agent.networkresource_ipmanresource AS des\
+    LEFT JOIN omni_agent.MR_REC_ipman_resource AS des\
         ON ped.device_name = des.device_name AND ped.port = des.port\
     LEFT JOIN (\
-        SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE claim = 1\
+        SELECT * FROM omni_agent.OM_REC_port_error_fix_record WHERE claim = 1\
     ) AS pef \
         ON ped.device_name = pef.device_name AND ped.port = pef.port\
     LEFT JOIN (\
-        SELECT * FROM omni_agent.inspection_portperf \
+        SELECT * FROM omni_agent.OM_REC_port_perf \
         WHERE record_time BETWEEN %s AND %s\
     ) AS pp\
         ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%Y-%m-%d') = DATE_FORMAT(pp.record_time, '%Y-%m-%d')\
     LEFT JOIN (\
         SELECT cnt_tb.*, COUNT(*) AS cnt FROM (\
-            SELECT device_name, port FROM omni_agent.inspection_porterrordiff \
+            SELECT device_name, port FROM omni_agent.OM_REP_port_error_diff \
             WHERE (stateCRC >= {} or stateIpv4HeadError >= {}) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE()) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.port\
     ) AS error_cnt_tb\
     ON ped.device_name = error_cnt_tb.device_name AND ped.port = error_cnt_tb.port \
@@ -163,9 +163,9 @@ __PORTERROR_QUERY = "\
 
 def __queryline(order_field, otherCmd=''):
     if order_field == 'crc' or order_field == '':
-        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateCRC'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateCRC, -stateIpv4HeadError'
     elif order_field == 'head':
-        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateIpv4HeadError'
+        porterror_query = __PORTERROR_QUERY + otherCmd + 'ORDER BY -stateIpv4HeadError, -stateCRC'
     return porterror_query
 
 
@@ -529,9 +529,9 @@ __QUERY_ONEWAY_LIST = "\
         DATE_ADD(tag_time, INTERVAL delay_count DAY) AS end_time, \
         (DATE_SUB(tag_time, INTERVAL 1 day) < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show \
     FROM ( \
-        SELECT * FROM omni_agent.inspection_onewaydevice WHERE record_time BETWEEN %s AND %s \
+        SELECT * FROM omni_agent.OM_REP_oneway_device WHERE record_time BETWEEN %s AND %s \
     )AS dev \
-    LEFT JOIN omni_agent.inspection_onewaydevicetag AS tag \
+    LEFT JOIN omni_agent.OM_REC_oneway_device_tag AS tag \
     ON dev.device_name = tag.device_name AND dev.port = tag.port \
 "
 __ONEWAY_ORDER_FIELD = 'ORDER BY not_show ASC, record_time DESC'
@@ -649,11 +649,11 @@ __GROUP_CLIENT_QUERY = "\
         SELECT \
             zx_tb.id, zx_tb.client_name, zx_tb.product_id, zx_tb.ip, zx_tb.guard_level, \
             ip_tb.device_name, ip_tb.logic_port, ip_tb.logic_port_num, ip_tb.ip_description \
-        FROM omni_agent.networkresource_zxclientinfo as zx_tb \
-        LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
+        FROM omni_agent.MR_REC_group_client_info as zx_tb \
+        LEFT JOIN omni_agent.MR_REC_ip_record AS ip_tb \
         ON zx_tb.ip = ip_tb.device_ip HAVING zx_tb.ip != '' \
     ) AS client_info \
-    LEFT JOIN omni_agent.networkresource_ipmanresource AS re_tb \
+    LEFT JOIN omni_agent.MR_REC_ipman_resource AS re_tb \
     ON client_info.device_name = re_tb.device_name AND client_info.logic_port_num = re_tb.logic_port \
 "
 

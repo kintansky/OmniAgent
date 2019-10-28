@@ -18,6 +18,19 @@ class OpticalMoudleDiff(models.Model):
     record_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'OM_REP_optical_moudle_diff'
+        ordering = ['-record_time']
+        
+
+class PortErrorFullRecord(models.Model):
+    device = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    crc = models.IntegerField()
+    ipv4_head = models.IntegerField()
+    record_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'OM_REC_port_error_record'
         ordering = ['-record_time']
 
 
@@ -34,6 +47,7 @@ class PortErrorDiff(models.Model):
     fix_status = models.BooleanField(default=False, null=True)  # 修复标记位，1代表该条记录已修复
 
     class Meta:
+        db_table = 'OM_REP_port_error_diff'
         # app_label = 'networkresource'
         ordering = ['-id']
         indexes = [
@@ -66,6 +80,9 @@ class PortErrorFixRecord(FixRecordBase):
     # worker = models.CharField(max_length=100)
     # status = models.BooleanField(default=False)    # 标记是否已经完成处理
     # claim = models.BooleanField(default=True)    # 用户认领端口，默认True，即建立记录就认领，处理完重新设置为False
+
+    class Meta:
+        db_table = 'OM_REC_port_error_fix_record'
 
 '''
 PortErrorDiff 记录时初始状态fix_status=0
@@ -105,6 +122,7 @@ class PortPerf(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
+        db_table = 'OM_REC_port_perf'
         # app_label = 'networkresource'
         ordering = ['-record_time']
         indexes = [
@@ -122,6 +140,7 @@ class OneWayDevice(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
+        db_table = 'OM_REP_oneway_device'
         ordering = ['-record_time']
         indexes = [
             models.Index(fields=['device_name']),
@@ -136,6 +155,10 @@ class OneWayDeviceTag(models.Model):
     tag = models.CharField(max_length=10)
     tag_user = models.CharField(max_length=100)
     tag_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'OM_REC_oneway_device_tag'
+
 
 # class OneWayDeviceFixRecord(FixRecordBase):
 #     device_name = models.CharField(max_length=255)
@@ -152,6 +175,7 @@ class NatPoolUsage(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
+        db_table = 'OM_REC_nat_pool_usage'
         ordering = ['-record_time']
 
 
@@ -164,4 +188,4 @@ class LinkPingTest(models.Model):
     record_time = models.DateTimeField()
 
     class Meta:
-        db_table = 'MQ_REC_link_ping_test'
+        db_table = 'OM_REP_ping_test'

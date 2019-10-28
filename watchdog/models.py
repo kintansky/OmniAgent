@@ -9,6 +9,9 @@ class DeviceManufactor(models.Model):
     def __str__(self):
         return self.manufactor_name
 
+    class Meta:
+        db_table = 'MR_REC_device_manufactor'
+
 
 class Device(models.Model):
     device_name = models.CharField(max_length=255, primary_key=True)
@@ -21,6 +24,7 @@ class Device(models.Model):
     login_password = models.CharField(max_length=30)
 
     class Meta:
+        db_table = 'MR_REC_watchdog_device'
         ordering = ['device_ip']
 
 
@@ -44,4 +48,5 @@ class CommandLine(models.Model):
     cmd_description = models.TextField(blank=True)
 
     class Meta:
+        db_table = 'MR_REC_cmd_line'
         ordering = ['id']

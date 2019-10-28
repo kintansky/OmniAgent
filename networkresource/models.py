@@ -4,6 +4,19 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 
+class OpticalMoudle(models.Model):
+    device = models.CharField(max_length=255)
+    port = models.CharField(max_length=30)
+    moudle = models.CharField(max_length=60)
+    record_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'MR_REC_optical_moudle_record'
+        indexes = [
+            models.Index(fields=['device']),
+            models.Index(fields=['port']),
+        ]
+
 class IpmanResource(models.Model):
     device_name = models.CharField(max_length=255)
     slot = models.SmallIntegerField()
@@ -19,6 +32,7 @@ class IpmanResource(models.Model):
     port_description = models.TextField()
 
     class Meta:
+        db_table = 'MR_REC_ipman_resource'
         unique_together = (('device_name', 'port'),)
         indexes = [
             models.Index(fields=['slot']),
@@ -47,6 +61,7 @@ class IpRecord(models.Model):
     ip_func = models.CharField(max_length=40, null=True)
 
     class Meta:
+        db_table = 'MR_REC_ip_record'
         ordering = ['id', ]
         indexes = [
             models.Index(fields=['device_ip']),
@@ -57,6 +72,9 @@ class IpRecord(models.Model):
 class PublicIpGateway(models.Model):
     gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
     mask = models.SmallIntegerField()
+
+    class Meta:
+        db_table = 'MR_REC_public_ip_gateway'
 
 
 class PublicIpSegment(models.Model):
@@ -70,6 +88,7 @@ class PublicIpSegment(models.Model):
     segment_type = models.IntegerField(default=1, choices=TYPE_CHOICES)
 
     class Meta:
+        db_table = 'MR_REC_public_ip_segment'
         unique_together = (('ip_segment', 'mask'),)
         ordering = ['id', ]
 
@@ -88,6 +107,7 @@ class ZxClientInfo(models.Model):
     guard_level = models.CharField(max_length=20, null=True)
 
     class Meta:
+        db_table = 'MR_REC_group_client_info'
         ordering = ['id']
         indexes = [
             models.Index(fields=['ip']),
@@ -130,6 +150,7 @@ class IPAllocation(IPAllocationBase):
     last_mod_time = models.DateTimeField(null=True)
 
     class Meta:
+        db_table = 'MR_REC_ip_allocation'
         ordering = ['-alc_time']
         indexes = [
             models.Index(fields=['ip']),
@@ -145,9 +166,41 @@ class IPMod(IPAllocationBase):
     mod_type = models.CharField(max_length=5, null=True)
 
     class Meta:
+        db_table = 'MR_REC_ip_mod_record'
         ordering = ['-mod_time']
         indexes = [
             models.Index(fields=['ip']),
             models.Index(fields=['client_name']),
             models.Index(fields=['product_id']),
         ]
+
+class OltBngRef(models.Model):
+    bng = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    logic_port = models.CharField(max_length=40)
+    description = models.CharField(max_length=255)
+    olt_num = models.CharField(max_length=10)
+    district = models.CharField(max_length=10)
+    olt = models.CharField(max_length=255)
+    olt_state = models.CharField(max_length=20, null=True)
+    olt_type = models.CharField(max_length=10, null=True)
+    olt_ip = models.GenericIPAddressField()
+
+    class Meta:
+        db_table = 'MR_REP_olt_bng_references'
+
+
+class OltInfoWG(models.Model):
+    olt_num = models.CharField(max_length=10, primary_key=True)
+    district = models.CharField(max_length=10)
+    olt_zh = models.CharField(max_length=100)
+    state = models.CharField(max_length=20, null=True)
+    olt_type = models.CharField(max_length=10, null=True)
+    ip = models.GenericIPAddressField()
+
+    class Meta:
+        db_table = 'MR_REC_olt_info_wg'
+        indexes = [
+            models.Index(fields=['ip']),
+        ]
+

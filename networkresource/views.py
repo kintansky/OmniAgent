@@ -22,7 +22,7 @@ def ajax_search_slot_ports(request):
         device_name=device_name, slot=slot)
     rawQueryCmd = 'SELECT ni.id, ni.port, ni.brand_width, ni.port_status, \
                 ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
-                FROM omni_agent.networkresource_ipmanresource AS ni LEFT JOIN omni_agent.inspection_porterrordiff as np \
+                FROM omni_agent.MR_REC_ipman_resource AS ni LEFT JOIN omni_agent.OM_REP_port_error_diff as np \
                 ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s \
                 WHERE ni.device_name = %s AND ni.slot = %s'
     today_time = timezone.datetime.now()
@@ -251,7 +251,7 @@ def ajax_get_olt_bng(request, device_type):
     data = {}
     if device_type == 'olt':
         olt = request.GET.get('olt', '').strip()
-        rawQueryCmd = 'select id, olt from omni_agent.olt_bng_info where olt LIKE "%{}%" GROUP BY olt'.format(olt)
+        rawQueryCmd = 'select id, olt from omni_agent.MR_REP_olt_bng_references where olt LIKE "%{}%" GROUP BY olt'.format(olt)
         olts = IpmanResource.objects.raw(rawQueryCmd)
         olt_list = [d.olt for d in olts]
         if len(olt_list) > 10:
@@ -267,7 +267,7 @@ def ajax_get_olt_bng(request, device_type):
             data['status'] = 'success'
     elif device_type == 'bng':
         olt = request.GET.get('olt', '').strip()
-        rawQueryCmd = 'select id, bng from omni_agent.olt_bng_info where olt = %s GROUP BY bng'
+        rawQueryCmd = 'select id, bng from omni_agent.MR_REP_olt_bng_references where olt = %s GROUP BY bng'
         bngs = IpmanResource.objects.raw(rawQueryCmd, (olt,))
         bng_list = '/'.join([b.bng for b in bngs])
         data['bng_list'] = bng_list
@@ -604,7 +604,7 @@ def ajax_mod_allocated_ip(request, operation_type):
         else:
             mod_msg = None
         # mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
-        raw_query = 'SELECT * FROM omni_agent.networkresource_ipallocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
+        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
         mod_target_list = IPAllocation.objects.raw(raw_query, ('已删除', '%{}%'.format(client_name), group_id, order_num, product_id))
         # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
         for mod_target in mod_target_list:
