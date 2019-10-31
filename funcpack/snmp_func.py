@@ -52,7 +52,7 @@ def mainLinkUtilization(deviceList, processNum=1):
     mibNodeSet = (
         ('IF-MIB', 'ifName', mibSource),
         ('IF-MIB', 'ifHighSpeed', mibSource),   # 单位1000000bit/s即Mb
-        ('IF-MIB', 'ifDescr', mibSource),
+        ('IF-MIB', 'ifAlias', mibSource),
         ('IF-MIB', 'ifHCInOctets', mibSource),  # 字节
         ('IF-MIB', 'ifHCOutOctets', mibSource), # 字节
     )
