@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, OneWayDeviceTag, PortErrorFixRecord, NatPoolUsage
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, OneWayDeviceTag, PortErrorFixRecord, NatPoolUsage, LinkPingTest
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
 from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, OneWayTagForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm, PortErrorFixRecordSearchForm
-from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls
+from funcpack.funcs import pages, getDateRange, exportXls, rawQueryExportXls, objectDataSerializerRaw
 from django.http import FileResponse, JsonResponse
 # from django.core import serializers
 import json
@@ -759,3 +759,123 @@ def export_natpool(request):
     response = FileResponse(
         open(output, 'rb'), as_attachment=True, filename="natpool_usage.xls")
     return response
+
+
+__PING_QUERY = "\
+    SELECT \
+    id, source_device, target_device, target_ip, \
+    CAST(round(AVG(loss), 0) AS INT) AS avg_loss, CAST(round(AVG(cost), 0) AS INT) AS avg_cost, \
+    CAST(SUM(high_loss) AS INT) AS high_loss_cnt, CAST(SUM(high_cost) AS INT) AS high_cost_cnt FROM (\
+    SELECT *,\
+    if(loss>0, 1, 0) AS high_loss,\
+    case \
+        when target_device LIKE '%%IPMAN-RT%%' AND cost > 10 then 1\
+        when target_device LIKE '%%IPMAN-SW%%' AND cost > 10 then 1\
+        when source_device LIKE '%%IPMAN-BNG%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 10 then 1\
+        when target_device LIKE 'GDGZ-%%' AND cost > 20 then 1\
+        when (target_device LIKE '%%-OTV%%' OR target_device LIKE '%%CDN%%') AND cost > 20 then 1\
+        when source_device LIKE '%%IPMAN-SR%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 20 then 1\
+    ELSE 0\
+    END AS high_cost\
+    FROM OM_REP_ping_test WHERE loss != -1 AND record_time BETWEEN %s AND %s\
+    ) AS oneday\
+    GROUP BY source_device, target_device, target_ip \
+"
+
+def __queryline_ping(order_field, filterCmd=''):
+    if order_field == 'loss':
+        cmd = __PING_QUERY + filterCmd + ' ORDER BY avg_loss DESC, high_loss_cnt DESC, avg_cost DESC, high_cost_cnt DESC'
+    if order_field == 'cost':
+        cmd = __PING_QUERY + filterCmd + ' ORDER BY avg_cost DESC, high_cost_cnt DESC, avg_loss DESC, high_loss_cnt DESC'
+    return cmd
+# 过滤条件
+__PING_FILTER_HIGH_COST_CNT = 5
+__PING_FILTER_HIGH_LOSS_CNT = 5
+
+
+__PING_COST_GROUP = "\
+    SELECT \
+    avg_tb.id,\
+    case \
+        when avg_tb.cost_avg < 5 then 0\
+        when avg_tb.cost_avg BETWEEN 5 and 10 then 5\
+    ELSE 10\
+    END AS step,\
+    COUNT(*) AS cnt\
+    FROM (\
+        SELECT id, source_device, target_device, AVG(loss) AS loss_avg, AVG(cost) AS cost_avg\
+        FROM OM_REP_ping_test\
+        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE() AND loss NOT IN (100, -1)\
+        GROUP BY source_device, target_device\
+    ) AS avg_tb\
+    GROUP BY step\
+    ORDER BY step ASC\
+"
+
+__PING_COST_HOUR_GROUP = "\
+    SELECT \
+    id,\
+    case \
+        when target_device LIKE '%%-BB%%' then 'BNG_BB'\
+        when target_device LIKE '%%CMNET-BR%%' then 'BNG_BR'\
+        when target_device LIKE '%%-OTV%%' OR target_device LIKE '%%CDN%%' then 'BNG_CDN'\
+        when target_device LIKE '%%IPMAN-RT%%' then 'BNG_CR'\
+        when target_device LIKE '%%IPMAN-SW%%' then 'BNG_SW'\
+    ELSE 'BNG_OLT'\
+    END AS direction,\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '00', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '00', 1, 0)), 2) AS DOUBLE) AS 'h0',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '01', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '01', 1, 0)), 2) AS DOUBLE) AS 'h1',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '02', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '02', 1, 0)), 2) AS DOUBLE) AS 'h2',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '03', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '03', 1, 0)), 2) AS DOUBLE) AS 'h3',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '04', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '04', 1, 0)), 2) AS DOUBLE) AS 'h4',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '05', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '05', 1, 0)), 2) AS DOUBLE) AS 'h5',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '06', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '06', 1, 0)), 2) AS DOUBLE) AS 'h6',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '07', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '07', 1, 0)), 2) AS DOUBLE) AS 'h7',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '08', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '08', 1, 0)), 2) AS DOUBLE) AS 'h8',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '09', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '09', 1, 0)), 2) AS DOUBLE) AS 'h9',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '10', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '10', 1, 0)), 2) AS DOUBLE) AS 'h10',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '11', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '11', 1, 0)), 2) AS DOUBLE) AS 'h11',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '12', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '12', 1, 0)), 2) AS DOUBLE) AS 'h12',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '13', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '13', 1, 0)), 2) AS DOUBLE) AS 'h13',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '14', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '14', 1, 0)), 2) AS DOUBLE) AS 'h14',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '15', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '15', 1, 0)), 2) AS DOUBLE) AS 'h15',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '16', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '16', 1, 0)), 2) AS DOUBLE) AS 'h16',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '17', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '17', 1, 0)), 2) AS DOUBLE) AS 'h17',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '18', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '18', 1, 0)), 2) AS DOUBLE) AS 'h18',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '19', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '19', 1, 0)), 2) AS DOUBLE) AS 'h19',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '20', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '20', 1, 0)), 2) AS DOUBLE) AS 'h20',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '21', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '21', 1, 0)), 2) AS DOUBLE) AS 'h21',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '22', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '22', 1, 0)), 2) AS DOUBLE) AS 'h22',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '23', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '23', 1, 0)), 2) AS DOUBLE) AS 'h23'\
+    FROM OM_REP_ping_test\
+    WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE() AND loss not in (100, -1)\
+    GROUP BY direction\
+"
+
+def ping_result_list(request):
+    context = {}
+    time_begin, time_end = getDateRange(-1)
+    time_range = (time_begin, time_end)
+    cost_group_list = LinkPingTest.objects.raw(__PING_COST_GROUP)
+    cost_hour_group_list = LinkPingTest.objects.raw(__PING_COST_HOUR_GROUP)
+    l = {}
+    for cost_hour in cost_hour_group_list:
+        temp = []
+        for f in cost_hour_group_list.columns[2::]:
+            val = cost_hour.serializable_value(f)
+            temp.append(str(val))
+        l[cost_hour.direction] = ','.join(temp)
+    # print(l)
+    ping_result_high_loss_list = LinkPingTest.objects.raw(
+        __queryline_ping('loss', 'HAVING high_loss_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
+        ('2019-10-28', '2019-10-29')
+    )
+    ping_result_high_cost_list = LinkPingTest.objects.raw(
+        __queryline_ping('cost', 'HAVING high_cost_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
+        ('2019-10-28', '2019-10-29')
+    )
+    context['cost_group_list'] = cost_group_list
+    context['cost_hour_group_list'] = l
+    context['high_loss_list'] = ping_result_high_loss_list
+    context['high_cost_list'] = ping_result_high_cost_list
+    return render(request, 'ping_result.html', context)

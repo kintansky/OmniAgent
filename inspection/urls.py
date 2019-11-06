@@ -29,4 +29,6 @@ urlpatterns = [
     path('natpool/', views.natpool_list, name='natpool_list'),
     path('natpool/search/', views.search_natpool, name='search_natpool'),
     path('natpool/download/', views.export_natpool, name='export_natpool'),
+
+    path('ping/result', views.ping_result_list, name='ping_result_list'),
 ]
