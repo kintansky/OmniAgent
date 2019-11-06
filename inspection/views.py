@@ -764,8 +764,8 @@ def export_natpool(request):
 __PING_QUERY = "\
     SELECT \
     id, source_device, target_device, target_ip, \
-    CAST(round(AVG(loss), 0) AS INT) AS avg_loss, CAST(round(AVG(cost), 0) AS INT) AS avg_cost, \
-    CAST(SUM(high_loss) AS INT) AS high_loss_cnt, CAST(SUM(high_cost) AS INT) AS high_cost_cnt FROM (\
+    CAST(round(AVG(loss), 0) AS SIGNED) AS avg_loss, CAST(round(AVG(cost), 0) AS SIGNED) AS avg_cost, \
+    CAST(SUM(high_loss) AS SIGNED) AS high_loss_cnt, CAST(SUM(high_cost) AS SIGNED) AS high_cost_cnt FROM (\
     SELECT *,\
     if(loss>0, 1, 0) AS high_loss,\
     case \
@@ -805,7 +805,7 @@ __PING_COST_GROUP = "\
     FROM (\
         SELECT id, source_device, target_device, AVG(loss) AS loss_avg, AVG(cost) AS cost_avg\
         FROM OM_REP_ping_test\
-        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE() AND loss NOT IN (100, -1)\
+        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE() AND loss NOT IN (100, -1)\
         GROUP BY source_device, target_device\
     ) AS avg_tb\
     GROUP BY step\
@@ -823,32 +823,32 @@ __PING_COST_HOUR_GROUP = "\
         when target_device LIKE '%%IPMAN-SW%%' then 'BNG_SW'\
     ELSE 'BNG_OLT'\
     END AS direction,\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '00', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '00', 1, 0)), 2) AS DOUBLE) AS 'h0',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '01', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '01', 1, 0)), 2) AS DOUBLE) AS 'h1',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '02', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '02', 1, 0)), 2) AS DOUBLE) AS 'h2',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '03', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '03', 1, 0)), 2) AS DOUBLE) AS 'h3',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '04', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '04', 1, 0)), 2) AS DOUBLE) AS 'h4',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '05', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '05', 1, 0)), 2) AS DOUBLE) AS 'h5',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '06', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '06', 1, 0)), 2) AS DOUBLE) AS 'h6',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '07', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '07', 1, 0)), 2) AS DOUBLE) AS 'h7',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '08', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '08', 1, 0)), 2) AS DOUBLE) AS 'h8',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '09', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '09', 1, 0)), 2) AS DOUBLE) AS 'h9',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '10', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '10', 1, 0)), 2) AS DOUBLE) AS 'h10',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '11', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '11', 1, 0)), 2) AS DOUBLE) AS 'h11',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '12', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '12', 1, 0)), 2) AS DOUBLE) AS 'h12',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '13', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '13', 1, 0)), 2) AS DOUBLE) AS 'h13',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '14', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '14', 1, 0)), 2) AS DOUBLE) AS 'h14',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '15', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '15', 1, 0)), 2) AS DOUBLE) AS 'h15',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '16', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '16', 1, 0)), 2) AS DOUBLE) AS 'h16',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '17', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '17', 1, 0)), 2) AS DOUBLE) AS 'h17',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '18', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '18', 1, 0)), 2) AS DOUBLE) AS 'h18',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '19', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '19', 1, 0)), 2) AS DOUBLE) AS 'h19',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '20', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '20', 1, 0)), 2) AS DOUBLE) AS 'h20',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '21', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '21', 1, 0)), 2) AS DOUBLE) AS 'h21',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '22', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '22', 1, 0)), 2) AS DOUBLE) AS 'h22',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '23', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '23', 1, 0)), 2) AS DOUBLE) AS 'h23'\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '00', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '00', 1, 0)), 2) AS UNSIGNED) AS 'h0',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '01', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '01', 1, 0)), 2) AS UNSIGNED) AS 'h1',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '02', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '02', 1, 0)), 2) AS UNSIGNED) AS 'h2',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '03', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '03', 1, 0)), 2) AS UNSIGNED) AS 'h3',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '04', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '04', 1, 0)), 2) AS UNSIGNED) AS 'h4',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '05', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '05', 1, 0)), 2) AS UNSIGNED) AS 'h5',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '06', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '06', 1, 0)), 2) AS UNSIGNED) AS 'h6',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '07', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '07', 1, 0)), 2) AS UNSIGNED) AS 'h7',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '08', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '08', 1, 0)), 2) AS UNSIGNED) AS 'h8',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '09', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '09', 1, 0)), 2) AS UNSIGNED) AS 'h9',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '10', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '10', 1, 0)), 2) AS UNSIGNED) AS 'h10',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '11', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '11', 1, 0)), 2) AS UNSIGNED) AS 'h11',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '12', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '12', 1, 0)), 2) AS UNSIGNED) AS 'h12',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '13', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '13', 1, 0)), 2) AS UNSIGNED) AS 'h13',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '14', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '14', 1, 0)), 2) AS UNSIGNED) AS 'h14',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '15', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '15', 1, 0)), 2) AS UNSIGNED) AS 'h15',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '16', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '16', 1, 0)), 2) AS UNSIGNED) AS 'h16',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '17', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '17', 1, 0)), 2) AS UNSIGNED) AS 'h17',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '18', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '18', 1, 0)), 2) AS UNSIGNED) AS 'h18',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '19', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '19', 1, 0)), 2) AS UNSIGNED) AS 'h19',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '20', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '20', 1, 0)), 2) AS UNSIGNED) AS 'h20',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '21', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '21', 1, 0)), 2) AS UNSIGNED) AS 'h21',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '22', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '22', 1, 0)), 2) AS UNSIGNED) AS 'h22',\
+    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '23', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '23', 1, 0)), 2) AS UNSIGNED) AS 'h23'\
     FROM OM_REP_ping_test\
-    WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE() AND loss not in (100, -1)\
+    WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE() AND loss not in (100, -1)\
     GROUP BY direction\
 "
 
