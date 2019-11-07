@@ -792,7 +792,7 @@ def __queryline_ping(order_field, filterCmd=''):
 __PING_FILTER_HIGH_COST_CNT = 5
 __PING_FILTER_HIGH_LOSS_CNT = 5
 
-
+'''
 __PING_COST_GROUP = "\
     SELECT \
     avg_tb.id,\
@@ -851,6 +851,8 @@ __PING_COST_HOUR_GROUP = "\
     WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE() AND loss not in (100, -1)\
     GROUP BY direction\
 "
+减轻查询压力，改用数据库事件自动更新
+'''
 
 def ping_result_list(request):
     context = {}
