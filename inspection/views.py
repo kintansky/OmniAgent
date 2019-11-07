@@ -856,7 +856,8 @@ __PING_COST_HOUR_GROUP = "\
 
 def ping_result_list(request):
     context = {}
-    time_begin, time_end = getDateRange(-1)
+    time_begin, _ = getDateRange(-2)
+    time_end, _ = getDateRange(-1)
     time_range = (time_begin, time_end)
     cost_group_list = LinkPingCostStepAggregate.objects.all().order_by('id')
     cost_hour_group_list = LinkPingHourAggregate.objects.all().order_by('id')
