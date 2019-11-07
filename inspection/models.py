@@ -189,6 +189,10 @@ class LinkPingTest(models.Model):
 
     class Meta:
         db_table = 'OM_REP_ping_test'
+        indexes = [
+            models.Index(fields=['source_device']),
+            models.Index(fields=['target_device']),
+        ]
 
 
 class LinkPingHourAggregate(models.Model):
