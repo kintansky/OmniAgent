@@ -32,6 +32,7 @@
                                     <div id="id_loss_line" style="width:100%;height:300px;"></div>
                                 </div>
                             </div>
+                            <hr>
                             <div class="panel panel-default" id="id_loss">
                                 <div class="panel-heading">
                                     <h3 class="panel-title">丢包质差链路</h3>
@@ -180,9 +181,9 @@
                         name:'链路测试时延分布',
                         type:'pie',
                         data:[
-                            {value:'{{ cost_group_list.0.cnt }}', name:'<5ms'},
-                            {value:'{{ cost_group_list.1.cnt }}', name:'5-10ms'},
-                            {value:'{{ cost_group_list.2.cnt }}', name:'>=10ms'},
+                            {value:'{{ cost_group_list.0.link_cnt }}', name:'<5ms'},
+                            {value:'{{ cost_group_list.1.link_cnt }}', name:'5-10ms'},
+                            {value:'{{ cost_group_list.2.link_cnt }}', name:'>=10ms'},
                         ].sort(function (a, b) { return a.value - b.value; }),
                     }
                 ]

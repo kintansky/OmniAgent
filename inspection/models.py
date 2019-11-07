@@ -189,3 +189,42 @@ class LinkPingTest(models.Model):
 
     class Meta:
         db_table = 'OM_REP_ping_test'
+
+
+class LinkPingHourAggregate(models.Model):
+    direction = models.CharField(max_length=20)
+    h0 = models.FloatField()
+    h1 = models.FloatField()
+    h2 = models.FloatField()
+    h3 = models.FloatField()
+    h4 = models.FloatField()
+    h5 = models.FloatField()
+    h6 = models.FloatField()
+    h7 = models.FloatField()
+    h8 = models.FloatField()
+    h9 = models.FloatField()
+    h10 = models.FloatField()
+    h11 = models.FloatField()
+    h12 = models.FloatField()
+    h13 = models.FloatField()
+    h14 = models.FloatField()
+    h15 = models.FloatField()
+    h16 = models.FloatField()
+    h17 = models.FloatField()
+    h18 = models.FloatField()
+    h19 = models.FloatField()
+    h20 = models.FloatField()
+    h21 = models.FloatField()
+    h22 = models.FloatField()
+    h23 = models.FloatField()
+
+    class Meta:
+        db_table = 'OM_REP_ping_hour_aggregate'
+
+
+class LinkPingCostStepAggregate(models.Model):
+    step = models.PositiveSmallIntegerField()
+    link_cnt = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = 'OM_REP_ping_cost_step_aggregate'

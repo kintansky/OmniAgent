@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, OneWayDeviceTag, PortErrorFixRecord, NatPoolUsage, LinkPingTest
+from .models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, OneWayDeviceTag, PortErrorFixRecord, NatPoolUsage, LinkPingTest, LinkPingHourAggregate, LinkPingCostStepAggregate
 from networkresource.models import ZxClientInfo
 from django.utils import timezone
 from .forms import MoudleSearchForm, PortErrorSearchForm, OneWaySearchForm, OneWayTagForm, PortErrorOperationForm, NatPoolSearchForm, GroupClientSearchForm, PortErrorFixRecordSearchForm
@@ -856,13 +856,13 @@ def ping_result_list(request):
     context = {}
     time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)
-    cost_group_list = LinkPingTest.objects.raw(__PING_COST_GROUP)
-    cost_hour_group_list = LinkPingTest.objects.raw(__PING_COST_HOUR_GROUP)
+    cost_group_list = LinkPingCostStepAggregate.objects.all().order_by('id')
+    cost_hour_group_list = LinkPingHourAggregate.objects.all().order_by('id')
     l = {}
     for cost_hour in cost_hour_group_list:
         temp = []
-        for f in cost_hour_group_list.columns[2::]:
-            val = cost_hour.serializable_value(f)
+        for f in cost_hour._meta.fields[2::]:
+            val = cost_hour.serializable_value(f.attname)
             temp.append(str(val))
         l[cost_hour.direction] = ','.join(temp)
     # print(l)
