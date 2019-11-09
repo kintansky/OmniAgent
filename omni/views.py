@@ -4,7 +4,7 @@ from django.urls import reverse
 from .forms import LoginForm, RegisterForm
 from django.contrib.auth.models import User
 from watchdog.models import Device
-from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, NatPoolUsage
+from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, NatPoolUsage, LinkPingHourAggregate
 from networkresource.models import IpRecord
 import datetime
 from django.utils import timezone
@@ -117,6 +117,16 @@ def dashboard(request):
     # nat地址池
     heavy_load_pair_devices = NatPoolUsage.objects.filter(record_time__range=getDateRange(-2)).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())[0:5]
     context['heavy_load_pair_devices'] = heavy_load_pair_devices
+    # ping
+    cost_hour_group_list = LinkPingHourAggregate.objects.all().order_by('id')
+    l = {}
+    for cost_hour in cost_hour_group_list:
+        temp = []
+        for f in cost_hour._meta.fields[2::]:
+            val = cost_hour.serializable_value(f.attname)
+            temp.append(str(val))
+        l[cost_hour.direction] = ','.join(temp)
+    context['cost_hour_group_list'] = l
     # 其他
     today_time = datetime.datetime.now()
     context['time_begin'] = '%d-%d-%d+00:00:00' % (

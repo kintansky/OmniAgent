@@ -96,6 +96,11 @@
                 {% endif %}
                 <p><a class="btn btn-primary" href="{% url 'oneway_list' %}?time_begin={{ time_begin }}&time_end={{ time_end }}" role="button">详情 &raquo;</a></p>
             </div>
+            <div class="col-md-4">
+                <h3>&raquo; 链路质量测试</h3>
+                <div id="id_cost_line" style="width:100%;height:300px;"></div>
+                <p><a class="btn btn-primary" href="{% url 'ping_result_list' %}" role="button">详情 &raquo;</a></p>
+            </div>
         </div>
 
         <!-- 性能管理 -->
@@ -200,6 +205,7 @@
     });
 
     $(document).ready(function(){
+        // device Pie
         var devicePie = echarts.init(document.getElementById('ipmain'), 'infographic');
         devicePie.showLoading();
 
@@ -233,9 +239,8 @@
         window.addEventListener("resize", function () {
             devicePie.resize();
         });
-    });
 
-    $(document).ready(function(){
+        // IP Pie
         var ipPie = echarts.init(document.getElementById('devicemain'), 'infographic');
         ipPie.showLoading();
 
@@ -270,6 +275,83 @@
         window.addEventListener("resize", function () {
             ipPie.resize();
         });
+
+        // ping line
+        var costLine = echarts.init(document.getElementById('id_cost_line'), 'infographic');
+        costLine.showLoading();
+        var h = new Array();
+        for(var i=0; i<24; i++){
+            h.push(i);
+        }
+        var option = {
+            // title: {
+            //     text: '时延趋势ms(月平均)'
+            // },
+            tooltip: {
+                trigger: 'axis',
+            },
+            legend: {
+                data:['BNG-BB', 'BNG-BR', 'BNG-CDN', 'BNG-CR', 'BNG-SW', 'BNG-OLT'],
+                x : 'right',
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: h,
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+                {
+                    name: 'BNG-BB',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_BB }}'.split(',')
+                },
+                {
+                    name: 'BNG-BR',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_BR }}'.split(',')
+                },
+                {
+                    name: 'BNG-CDN',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_CDN }}'.split(',')
+                },
+                {
+                    name: 'BNG-CR',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_CR }}'.split(',')
+                },
+                {
+                    name: 'BNG-SW',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_SW }}'.split(',')
+                },
+                {
+                    name: 'BNG-OLT',
+                    type: 'line',
+                    data: '{{ cost_hour_group_list.BNG_OLT }}'.split(',')
+                }
+            ]
+        };
+        costLine.hideLoading();
+        costLine.setOption(option);
+        window.addEventListener("resize", function () {
+            costLine.resize();
+        });
     });
+
 </script>
 {% endblock %}

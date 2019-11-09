@@ -871,14 +871,33 @@ def ping_result_list(request):
     # print(l)
     ping_result_high_loss_list = LinkPingTest.objects.raw(
         __queryline_ping('loss', 'HAVING high_loss_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
-        time_range
+        ('2019-10-27', '2019-10-28')
     )
     ping_result_high_cost_list = LinkPingTest.objects.raw(
         __queryline_ping('cost', 'HAVING high_cost_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
-        time_range
+        ('2019-10-27', '2019-10-28')
     )
     context['cost_group_list'] = cost_group_list
     context['cost_hour_group_list'] = l
     context['high_loss_list'] = ping_result_high_loss_list
     context['high_cost_list'] = ping_result_high_cost_list
     return render(request, 'ping_result.html', context)
+
+
+def ping_result_detail(request):
+    context = {}
+    source_device = request.GET.get('source_device', '')
+    target_device = request.GET.get('target_device', '')
+    target_ip = request.GET.get('target_ip', '')
+    time_begin, _ = getDateRange(-2)
+    time_end, _ = getDateRange(-1)
+    ping_detail_list = LinkPingTest.objects.filter(
+        source_device=source_device, target_device=target_device, target_ip=target_ip,
+        record_time__range=('2019-10-27', '2019-10-28')
+    ).order_by('-record_time')
+    page_of_objects, page_range = pages(request, ping_detail_list)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['search_paras'] = '&source_device={}&target_device={}&target_ip={}'.format(source_device, target_device, target_ip)
+    return render(request, 'ping_result_detail.html', context)

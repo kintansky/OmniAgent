@@ -1,0 +1,124 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} 链路质量测试 {% endblock %}
+{% block navbar_inspect_active %}active{% endblock %}
+
+{% load static %}
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li>Inspect</li>
+    <li class="active">链路质量测试</li>
+{% endblock %}
+
+{% block subheader %}
+    链路质量测试结果
+{% endblock %}
+
+{% block new_button %}
+{% endblock %}
+
+{% block search_form %}
+
+{% endblock %}
+
+{% block alert_content %}
+    <div class="alert alert-info" role="alert">
+        <p>
+            <span class="glyphicon glyphicon-info-sign"></span>
+            时延：直连链路（BNG/BRAS/SR-CR、BNG-OLT、SR-SW）时延>10ms的为质差，两跳链路（BNG/BRAS/SR-BR/BB/CDN、SR-OLT）时延>20ms的为质差
+        </p>
+        <p>
+            <span class="glyphicon glyphicon-info-sign"></span>
+            丢包：丢包>0%的为质差
+        </p>
+    </div>
+    {% if ip_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block table_title %}
+    <th>源端</th>
+    <th>目的端</th>
+    <th>测试情况</th>
+    <th>时间</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for record in records %}
+    <tr>
+        <td data-toggle="tooltip" data-placement="top" title="{{ record.source_device }}">
+            {{ record.source_device|truncatechars:40 }}
+        </td>
+        <td data-toggle="tooltip" data-placement="top" title="目的地址:{{ record.target_device }}的{{ record.target_ip }}">
+            <span class="label label-success">{{ record.target_ip }}</span>
+            {{ record.target_device|truncatechars:30 }}
+        </td>
+        <td>
+            {% if record.loss > 0 %}
+                <span class="label label-danger">丢包 {{ record.loss|floatformat:'0'|default:0 }}%</span>
+            {% else %}
+                <span class="label label-default">丢包 {{ record.loss|floatformat:'0'|default:0 }}%</span>
+            {% endif %}
+            {% if record.cost != -1 %}
+                <span class="label label-primary">时延 {{ record.cost|floatformat:'0'|default:0 }}ms</span>
+            {% endif %}
+        </td>
+        <td>{{ record.record_time|date:"Y-m-d H" }}时</td>
+    </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block paginator %}
+<div class="paginator">
+    <ul class="pagination">
+        {# 上一页 #}
+        <li>
+            {% if page_of_objects.has_previous %}
+                <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&laquo;</span>
+            {% endif %}
+        </li>
+        {# 中间页码 #}
+        {% for page_num in page_range %}
+            {% if page_num == page_of_objects.number %}
+                <li class='active'><span>{{ page_num }}</span></li>
+            {% else %}
+                {% if page_num == '...' %}
+                    <li><span>{{ page_num }}</span></li>
+                {% else %}
+                    <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {# 下一页 #}
+        <li>
+            {% if page_of_objects.has_next %}
+                <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&raquo;</span>
+            {% endif %}
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block tail_script %}
+    <script src="{% static 'datetimepicker/js/bootstrap-datetimepicker.js' %}"></script>
+    <script src="{% static 'datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js' %}" charset="UTF-8"></script>
+    <!-- echarts -->
+    <!-- <script src="{% static 'echarts.min.js' %}"></script> -->
+    <!-- 引入 vintage 主题 -->
+    <!-- <script src="{% static 'infographic.js' %}"></script> -->
+
+{% endblock %}

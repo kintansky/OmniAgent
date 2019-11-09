@@ -30,5 +30,6 @@ urlpatterns = [
     path('natpool/search/', views.search_natpool, name='search_natpool'),
     path('natpool/download/', views.export_natpool, name='export_natpool'),
 
-    path('ping/result', views.ping_result_list, name='ping_result_list'),
+    path('ping/result/', views.ping_result_list, name='ping_result_list'),
+    path('ping/detail/', views.ping_result_detail, name='ping_result_detail'),
 ]
