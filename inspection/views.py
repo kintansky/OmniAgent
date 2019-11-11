@@ -871,11 +871,11 @@ def ping_result_list(request):
     # print(l)
     ping_result_high_loss_list = LinkPingTest.objects.raw(
         __queryline_ping('loss', 'HAVING high_loss_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
-        ('2019-10-27', '2019-10-28')
+        time_range
     )
     ping_result_high_cost_list = LinkPingTest.objects.raw(
         __queryline_ping('cost', 'HAVING high_cost_cnt > {}'.format(__PING_FILTER_HIGH_LOSS_CNT)),
-        ('2019-10-27', '2019-10-28')
+        time_range
     )
     context['cost_group_list'] = cost_group_list
     context['cost_hour_group_list'] = l
@@ -893,7 +893,7 @@ def ping_result_detail(request):
     time_end, _ = getDateRange(-1)
     ping_detail_list = LinkPingTest.objects.filter(
         source_device=source_device, target_device=target_device, target_ip=target_ip,
-        record_time__range=('2019-10-27', '2019-10-28')
+        record_time__range=(time_begin, time_end)
     ).order_by('-record_time')
     page_of_objects, page_range = pages(request, ping_detail_list)
     context['records'] = page_of_objects.object_list
