@@ -733,10 +733,10 @@ def search_natpool(request):
 
 
 __NATPOOL_QUERY = "\
-    SELECT `inspection_natpoolusage`.`id`, `inspection_natpoolusage`.`device1`, `inspection_natpoolusage`.`device1_nat_usage`, `inspection_natpoolusage`.`device2`, `inspection_natpoolusage`.`device2_nat_usage`, `inspection_natpoolusage`.`record_time`, (`inspection_natpoolusage`.`device1_nat_usage` + `inspection_natpoolusage`.`device2_nat_usage`) AS `nat_total` \
-    FROM `inspection_natpoolusage` \
-    WHERE (`inspection_natpoolusage`.`device1` LIKE '%{}%' OR `inspection_natpoolusage`.`device2` LIKE '%{}%') AND `inspection_natpoolusage`.`record_time` BETWEEN '{}' and '{}' \
-    ORDER BY (`inspection_natpoolusage`.`device1_nat_usage` + `inspection_natpoolusage`.`device2_nat_usage`) DESC \
+    SELECT id, device1, device1_nat_usage, device2, device2_nat_usage, record_time, (device1_nat_usage + device2_nat_usage) AS nat_total \
+    FROM OM_REC_nat_pool_usage \
+    WHERE (device1 LIKE '%{}%' OR device2 LIKE '%{}%') AND record_time BETWEEN '{}' and '{}' \
+    ORDER BY (device1_nat_usage + device2_nat_usage) DESC \
 "
 
 def export_natpool(request):
