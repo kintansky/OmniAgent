@@ -899,5 +899,5 @@ def ping_result_detail(request):
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
-    context['search_paras'] = '&source_device={}&target_device={}&target_ip={}'.format(source_device, target_device, target_ip)
+    context['search_paras'] = '&source_device={}&target_device={}'.format(source_device, target_device)
     return render(request, 'ping_result_detail.html', context)

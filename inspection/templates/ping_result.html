@@ -53,15 +53,14 @@
                                                     <td data-toggle="tooltip" data-placement="top" title="{{ record.source_device }}">
                                                         {{ record.source_device|truncatechars:40 }}
                                                     </td>
-                                                    <td data-toggle="tooltip" data-placement="top" title="目的地址:{{ record.target_device }}的{{ record.target_ip }}">
-                                                        <span class="label label-success">{{ record.target_ip }}</span>
+                                                    <td data-toggle="tooltip" data-placement="top" title="{{ record.target_device }}">
                                                         {{ record.target_device|truncatechars:30 }}
                                                     </td>
                                                     <td>
                                                         <span class="label label-danger">丢包 {{ record.avg_loss|floatformat:'0'|default:0 }}%</span>
                                                     </td>
                                                     <td data-toggle="tooltip" data-placement="top" title="一天24次测试中有{{ record.high_loss_cnt|floatformat:'0'|default:0 }}次质差,点击了解详情">
-                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}">
+                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}" target="_blank">
                                                             <span class="label label-danger">
                                                                 <span class="glyphicon glyphicon-hand-up"></span>
                                                                 {{ record.high_loss_cnt|floatformat:'0'|default:0 }}
@@ -94,8 +93,7 @@
                                                     <td data-toggle="tooltip" data-placement="top" title="{{ record.source_device }}">
                                                         {{ record.source_device|truncatechars:40 }}
                                                     </td>
-                                                    <td data-toggle="tooltip" data-placement="top" title="目的地址:{{ record.target_device }}的{{ record.target_ip }}">
-                                                        <span class="label label-success">{{ record.target_ip }}</span>
+                                                    <td data-toggle="tooltip" data-placement="top" title="{{ record.target_device }}">
                                                         {{ record.target_device|truncatechars:30 }}
                                                     </td>
                                                     <td>
@@ -105,7 +103,7 @@
                                                         {% endif %}
                                                     </td>
                                                     <td data-toggle="tooltip" data-placement="top" title="一天24次测试中有{{ record.high_cost_cnt|floatformat:'0'|default:0 }}次质差,点击了解详情">
-                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}">
+                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}" target="_blank">
                                                             <span class="label label-danger">
                                                                     <span class="glyphicon glyphicon-hand-up"></span>
                                                                     {{ record.high_cost_cnt|floatformat:'0'|default:0 }}
