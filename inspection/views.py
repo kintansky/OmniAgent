@@ -763,7 +763,7 @@ def export_natpool(request):
 
 __PING_QUERY = "\
     SELECT \
-    id, source_device, target_device, target_ip, \
+    id, source_device, target_device, \
     CAST(round(AVG(loss), 0) AS SIGNED) AS avg_loss, CAST(round(AVG(cost), 0) AS SIGNED) AS avg_cost, \
     CAST(SUM(high_loss) AS SIGNED) AS high_loss_cnt, CAST(SUM(high_cost) AS SIGNED) AS high_cost_cnt FROM (\
     SELECT *,\
@@ -779,7 +779,7 @@ __PING_QUERY = "\
     END AS high_cost\
     FROM OM_REP_ping_test WHERE loss != -1 AND record_time BETWEEN %s AND %s\
     ) AS oneday\
-    GROUP BY source_device, target_device, target_ip \
+    GROUP BY source_device, target_device \
 "
 
 def __queryline_ping(order_field, filterCmd=''):
@@ -892,7 +892,7 @@ def ping_result_detail(request):
     time_begin, _ = getDateRange(-2)
     time_end, _ = getDateRange(-1)
     ping_detail_list = LinkPingTest.objects.filter(
-        source_device=source_device, target_device=target_device, target_ip=target_ip,
+        source_device=source_device, target_device=target_device, 
         record_time__range=(time_begin, time_end)
     ).order_by('-record_time')
     page_of_objects, page_range = pages(request, ping_detail_list)

@@ -61,7 +61,7 @@
                                                         <span class="label label-danger">丢包 {{ record.avg_loss|floatformat:'0'|default:0 }}%</span>
                                                     </td>
                                                     <td data-toggle="tooltip" data-placement="top" title="一天24次测试中有{{ record.high_loss_cnt|floatformat:'0'|default:0 }}次质差,点击了解详情">
-                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}&target_ip={{ record.target_ip }}">
+                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}">
                                                             <span class="label label-danger">
                                                                 <span class="glyphicon glyphicon-hand-up"></span>
                                                                 {{ record.high_loss_cnt|floatformat:'0'|default:0 }}
@@ -105,7 +105,7 @@
                                                         {% endif %}
                                                     </td>
                                                     <td data-toggle="tooltip" data-placement="top" title="一天24次测试中有{{ record.high_cost_cnt|floatformat:'0'|default:0 }}次质差,点击了解详情">
-                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}&target_ip={{ record.target_ip }}">
+                                                        <a href="{% url 'ping_result_detail' %}?source_device={{ record.source_device }}&target_device={{ record.target_device }}">
                                                             <span class="label label-danger">
                                                                     <span class="glyphicon glyphicon-hand-up"></span>
                                                                     {{ record.high_cost_cnt|floatformat:'0'|default:0 }}
