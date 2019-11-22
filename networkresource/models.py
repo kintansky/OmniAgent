@@ -69,12 +69,15 @@ class IpRecord(models.Model):
         ]
 
 
-class PublicIpGateway(models.Model):
-    gateway = models.GenericIPAddressField(protocol='both', primary_key=True)
-    mask = models.SmallIntegerField()
+# class PublicIpGateway(models.Model):
+#     gateway = models.GenericIPAddressField(protocol='both')
+#     olt_cnt = models.PositiveIntegerField(default=0)
+#     olts = models.CharField(max_length=255, null=True)
+#     # mask = models.SmallIntegerField()
 
-    class Meta:
-        db_table = 'MR_REC_public_ip_gateway'
+#     class Meta:
+#         # db_table = 'MR_REC_public_ip_gateway'
+#         db_table = 'MR_STS_public_gateway'
 
 
 class PublicIpSegment(models.Model):
@@ -203,4 +206,40 @@ class OltInfoWG(models.Model):
         indexes = [
             models.Index(fields=['ip']),
         ]
+
+
+class GroupClientIPSegment(models.Model):
+    ip = models.GenericIPAddressField(protocol='both', unique=True)
+    ip_state = models.BooleanField(default=False)
+    segment = models.GenericIPAddressField(protocol='both')
+    mask = models.PositiveSmallIntegerField()
+    segment_state = models.BooleanField(default=False)
+    subnet_gateway = models.GenericIPAddressField(protocol='both', null=True)
+    subnet_mask = models.PositiveSmallIntegerField(null=True)
+    ip_func = models.CharField(max_length=2, null=True)
+
+    class Meta:
+        db_table = 'MR_REC_group_client_ip_segment'
+        indexes = [
+            models.Index(fields=['segment']),
+            models.Index(fields=['subnet_gateway']),
+        ]
+        
+
+class GroupClientPublicGateway(models.Model):
+    gateway = models.GenericIPAddressField(protocol='both')
+    olt_cnt = models.PositiveIntegerField(default=0)
+    olts = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        db_table = 'MR_STS_group_client_public_gateway'
+
+
+class SwVlan(models.Model):
+    device_name = models.CharField(max_length=255)
+    port = models.CharField(max_length=30)
+    vlan = models.PositiveIntegerField()
+
+    class Meta:
+        db_table = 'MR_REC_sw_vlan'
 
