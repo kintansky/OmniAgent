@@ -66,6 +66,7 @@ class IpRecord(models.Model):
         indexes = [
             models.Index(fields=['device_ip']),
             models.Index(fields=['logic_port_num']),
+            models.Index(fields=['device_name']),
         ]
 
 
@@ -191,6 +192,10 @@ class OltBngRef(models.Model):
 
     class Meta:
         db_table = 'MR_REP_olt_bng_references'
+        indexes = [
+            models.Index(fields=['bng']),
+            models.Index(fields=['logic_port']),
+        ]
 
 
 class OltInfoWG(models.Model):
