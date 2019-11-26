@@ -195,6 +195,7 @@ class OltBngRef(models.Model):
         indexes = [
             models.Index(fields=['bng']),
             models.Index(fields=['logic_port']),
+            models.Index(fields=['olt_num']),
         ]
 
 
