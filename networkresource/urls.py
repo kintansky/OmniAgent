@@ -19,4 +19,8 @@ urlpatterns = [
     path('ip/mod_allocated_ip/<str:operation_type>', views.ajax_mod_allocated_ip, name='mod_allocated_ip'),
 
     path('ajax_search_slot_ports/', views.ajax_search_slot_ports, name='ajax_search_slot_ports'),
+
+    path('ip/ip_allocated_segment/', views.get_device_allocated_segment, name='get_device_allocated_segment'),
+    path('ip/ip_allocated_segment/search/', views.search_device_allocated_segment, name='search_device_allocated_segment'),
+    path('ip/ip_allocated_segment/not_used/', views.get_not_used_ip, name='get_not_used_ip'),
 ]

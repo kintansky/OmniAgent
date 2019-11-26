@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, IPAllocation, IPMod
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm
+from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -634,3 +634,76 @@ def ajax_mod_allocated_ip(request, operation_type):
         data['status'] = 'error'
         data['error_info'] = '非法操作'
     return JsonResponse(data)
+
+all_device_ip_segment_query_line = '\
+    SELECT id, olt, count(DISTINCT subnet_gateway) AS gw_cnt, \
+    GROUP_CONCAT(DISTINCT  CONCAT(subnet_gateway, "/", subnet_mask)) AS gws,\
+    cast(SUM(used_cnt) AS SIGNED) AS used, cast(SUM(all_cnt) AS SIGNED) AS total \
+    FROM (\
+    SELECT seg_util.*, gw_olt.olt FROM (\
+    SELECT id, subnet_gateway, subnet_mask, SUM(ip_state) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment \
+    WHERE segment_state IS TRUE AND subnet_gateway != "" AND subnet_gateway IS NOT NULL \
+    GROUP BY subnet_gateway \
+    ) AS seg_util \
+    LEFT JOIN MR_STS_olt_gateway_references AS gw_olt \
+    ON seg_util.subnet_gateway = gw_olt.gateway \
+    HAVING olt IS NOT NULL \
+    ) AS olt_util \
+    GROUP BY olt \
+'
+
+
+def get_device_allocated_segment(request):
+    context = {}
+    device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
+    page_of_objects, page_range = pages(request, device_ip_segment_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['device_allocated_segment_search_form'] = DeviceIpSegmentForm()
+    return render(request, 'ip_allocated_segment.html', context)
+
+
+def search_device_allocated_segment(request):
+    context = {}
+    segment_search_form = DeviceIpSegmentForm(request.GET)
+    if segment_search_form.is_valid():
+        device_name = segment_search_form.cleaned_data['device_name']
+        otherCmd = 'having olt like "%%{}%%"'.format(device_name)
+    else:
+        otherCmd = ''
+    device_ip_segment_all_list = GroupClientIPSegment.objects.raw(
+        all_device_ip_segment_query_line + otherCmd
+    )
+    page_of_objects, page_range = pages(request, device_ip_segment_all_list)
+
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['device_allocated_segment_search_form'] = segment_search_form
+    context['search_paras'] = dict2SearchParas(segment_search_form.cleaned_data)
+    return render(request, 'ip_allocated_segment.html', context)
+    
+segment_not_used_query_line = '\
+    SELECT * FROM mr_rec_group_client_ip_segment \
+    WHERE segment_state IS TRUE AND ip_state IS FALSE \
+    AND subnet_gateway IN ({}) \
+    ORDER BY id \
+' 
+
+def get_not_used_ip(request):
+    context = {}
+    subnet_gateway = request.GET.get('subnet_gateway')
+    gateway_list = [s.split('/')[0] for s in subnet_gateway.split(',')]
+    print(gateway_list)
+    not_used_ip_list = GroupClientIPSegment.objects.raw(
+        segment_not_used_query_line.format(','.join(['%s']*len(gateway_list))),
+        tuple(gateway_list)
+    )
+    page_of_objects, page_range = pages(request, not_used_ip_list)
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['search_paras'] = '&subnet_gateway=' + subnet_gateway
+    return render(request, 'get_not_used_ip.html', context)

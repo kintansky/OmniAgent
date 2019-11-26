@@ -184,3 +184,6 @@ class NewIPAllocationForm(forms.Form):
                 raise forms.ValidationError('分配目标地址包含私网地址，请填写rd')
             else:
                 return rd
+
+class DeviceIpSegmentForm(forms.Form):
+    device_name = forms.CharField(label='Device', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:200px'}))

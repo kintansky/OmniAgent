@@ -1,0 +1,72 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} 设备可用地址段情况 {% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
+
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li><a href="">Resource</a></li>
+    <li class="active">Clients</li>
+{% endblock %}
+
+{% block subheader %}
+    可用地址清单
+{% endblock %}
+
+{% block table_title %}
+        <th>地址</th>
+        <th>所属子网网关</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for record in records %}
+        <tr>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.ip }}">
+                <span class="label label-success">{{ record.ip }}</span>
+            </td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.subnet_gateway }}/{{ record.subnet_mask }}">
+                {{ record.subnet_gateway }}/{{ record.subnet_mask }}
+            </td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block paginator %}
+<div class="paginator">
+    <ul class="pagination">
+        {# 上一页 #}
+        <li>
+            {% if page_of_objects.has_previous %}
+                <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&laquo;</span>
+            {% endif %}
+        </li>
+        {# 中间页码 #}
+        {% for page_num in page_range %}
+            {% if page_num == page_of_objects.number %}
+                <li class='active'><span>{{ page_num }}</span></li>
+            {% else %}
+                {% if page_num == '...' %}
+                    <li><span>{{ page_num }}</span></li>
+                {% else %}
+                    <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {# 下一页 #}
+        <li>
+            {% if page_of_objects.has_next %}
+                <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            {% else %}
+                <span aria-hidden="true">&raquo;</span>
+            {% endif %}
+        </li>
+    </ul>
+</div>
+{% endblock%}
