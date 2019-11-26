@@ -686,7 +686,7 @@ def search_device_allocated_segment(request):
     return render(request, 'ip_allocated_segment.html', context)
     
 segment_not_used_query_line = '\
-    SELECT * FROM mr_rec_group_client_ip_segment \
+    SELECT * FROM MR_REC_group_client_ip_segment \
     WHERE segment_state IS TRUE AND ip_state IS FALSE \
     AND subnet_gateway IN ({}) \
     ORDER BY id \
