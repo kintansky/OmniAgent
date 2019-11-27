@@ -89,8 +89,8 @@ def device_detail(request, device_name):
                 FROM (\
                     SELECT ni.id, ni.slot, ni.port, ni.brand_width, \
                         ni.port_status, ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
-                    FROM omni_agent.networkresource_ipmanresource AS ni \
-                    LEFT JOIN omni_agent.inspection_porterrordiff as np \
+                    FROM MR_REC_ipman_resource AS ni \
+                    LEFT JOIN OM_REP_port_error_diff as np \
                     ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s AND %s \
                     WHERE ni.device_name = %s) AS nt \
                 GROUP BY nt.slot ORDER BY nt.slot"
@@ -108,7 +108,7 @@ def device_detail(request, device_name):
     context['port_up_count'] = port_up_count
     context['port_down_count'] = port_down_count
     # 网络下联拓扑
-    rawQueryCmd = 'SELECT id, port_description FROM omni_agent.networkresource_ipmanresource WHERE device_name = %s AND port_description REGEXP "dT:.*?"'
+    rawQueryCmd = 'SELECT id, port_description FROM MR_REC_ipman_resource WHERE device_name = %s AND port_description REGEXP "dT:.*?"'
     oltList = IpmanResource.objects.raw(rawQueryCmd, (device_name,))
     olts = set()
     for olt in oltList:

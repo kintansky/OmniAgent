@@ -1,0 +1,85 @@
+{% load static %}
+{# 先加载静态文件 #}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}{% endblock %}</title>
+    <!--Bootstrap core css-->
+    <link href="{% static 'bootstrap@3.3.7/css/bootstrap.min.css' %}" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <link href="{% static 'assets/css/ie10-viewport-bug-workaround.css' %}" rel="stylesheet"> -->
+    <!-- Custom styles for this template -->
+    <link href="{% static 'assets/css/dashboard.css' %}" rel="stylesheet">
+    {% block header_extends %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <br>
+        <h2 class="sub-header">{% block subheader %}{% endblock %}</h2>
+        <br>
+        <div class="row">
+            <div class="col-md-1">
+                {% block new_button %}{% endblock %}
+            </div>
+            <div class="col-md-10">
+                {% block search_form %}{% endblock %}
+            </div>
+            <div class="col-ms-1">
+                {% block export %}{% endblock %}
+            </div>
+        </div>
+        {% block alert_content %}{% endblock %}
+        <br>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        {% block table_title %}{% endblock %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% block table_body %}{% endblock %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col-lg-2 counter">
+                <p class="counter">
+                    <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                    Found <strong>{{ page_of_objects.paginator.count }}</strong> records
+                </p>
+            </div>
+            <div class="col-lg-10">
+                {% block paginator %}{% endblock%}
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="text-muted text-right">如有问题或使用建议，请联系QQ 357350686</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{% static 'jquery@1.12.4.min.js' %}"></script>
+    <script src="{% static 'bootstrap@3.3.7/js/bootstrap.min.js' %}"></script>
+    <script>
+    $(function(){
+        $('[data-toggle="popover"]').popover({
+            html: true
+        });
+    })
+    </script>
+    {% block tail_script %}{% endblock %}
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <script src="{% static 'assets/css/ie10-viewport-bug-workaround.css' %}}"></script> -->
+</body>
+</html>

@@ -1,21 +1,15 @@
-{% extends 'list_base.html' %}
+{% extends 'list_base_out.html' %}
 
 {# 下面仅对base.html进行扩展#}
 {% block title %} 设备可用地址段情况 {% endblock %}
 {% block navbar_resource_active %}active{% endblock %}
-
-{# 下面对list_base.html进行扩展#}
-{% block breadcrumb %}
-    <li><a href="">Resource</a></li>
-    <li class="active">Clients</li>
-{% endblock %}
 
 {% block subheader %}
     设备可用地址段情况
 {% endblock %}
 
 {% block search_form %}
-    <form action="{% url 'search_device_allocated_segment' 'in' %}" method="GET" class="form-inline">
+    <form action="{% url 'search_device_allocated_segment' 'out' %}" method="GET" class="form-inline">
         {% for field in device_allocated_segment_search_form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -48,7 +42,7 @@
     {% for record in records %}
         <tr>
             <td>
-                <a href="{% url 'get_not_used_ip' 'in' %}?subnet_gateway={{ record.gws }}" target="_blank">
+                <a href="{% url 'get_not_used_ip' 'out' %}?subnet_gateway={{ record.gws }}" target="_blank">
                     <span class="glyphicon glyphicon-list-alt"></span>
                 </a>
             </td>

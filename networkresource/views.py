@@ -660,9 +660,8 @@ all_device_ip_segment_query_line = '\
 '
 
 
-def get_device_allocated_segment(request):
+def get_device_allocated_segment(request, user_type):
     context = {}
-    print(all_device_ip_segment_query_line)
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
 
@@ -670,10 +669,13 @@ def get_device_allocated_segment(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['device_allocated_segment_search_form'] = DeviceIpSegmentForm()
-    return render(request, 'ip_allocated_segment.html', context)
+    htmlPath = 'ip_allocated_segment.html'
+    if user_type == 'out':
+        htmlPath = 'ip_allocated_segment_out.html'
+    return render(request, htmlPath, context)
 
 
-def search_device_allocated_segment(request):
+def search_device_allocated_segment(request, user_type):
     context = {}
     segment_search_form = DeviceIpSegmentForm(request.GET)
     if segment_search_form.is_valid():
@@ -691,7 +693,10 @@ def search_device_allocated_segment(request):
     context['page_range'] = page_range
     context['device_allocated_segment_search_form'] = segment_search_form
     context['search_paras'] = dict2SearchParas(segment_search_form.cleaned_data)
-    return render(request, 'ip_allocated_segment.html', context)
+    htmlPath = 'ip_allocated_segment.html'
+    if user_type == 'out':
+        htmlPath = 'ip_allocated_segment_out.html'
+    return render(request, htmlPath, context)
     
 # subnet_gateway过滤了共享网关
 segment_not_used_query_line = '\
@@ -708,11 +713,11 @@ segment_not_used_query_line = '\
     ORDER BY id \
 ' 
 
-def get_not_used_ip(request):
+def get_not_used_ip(request, user_type):
     context = {}
     subnet_gateway = request.GET.get('subnet_gateway')
     gateway_list = [s.split('/')[0] for s in subnet_gateway.split(',')]
-    print(gateway_list)
+    # print(gateway_list)
     not_used_ip_list = GroupClientIPSegment.objects.raw(
         segment_not_used_query_line.format(','.join(['%s']*len(gateway_list))),
         tuple(gateway_list)
@@ -722,4 +727,7 @@ def get_not_used_ip(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['search_paras'] = '&subnet_gateway=' + subnet_gateway
-    return render(request, 'get_not_used_ip.html', context)
+    htmlPath = 'get_not_used_ip.html'
+    if user_type == 'out':
+        htmlPath = 'get_not_used_ip_out.html'
+    return render(request, htmlPath, context)
