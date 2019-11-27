@@ -61,6 +61,8 @@
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" aria-valuenow="{{ record.used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="width: {% widthratio record.used record.total 100 %}%;">
                         <span class="sr-only">{% widthratio record.used record.total 100 %} Used</span>
+                        {% widthratio record.used 1 -1 as used %}
+                        {{ record.total|add:used }} Free
                     </div>
                 </div>
             </td>

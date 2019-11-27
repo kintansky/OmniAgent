@@ -643,6 +643,13 @@ all_device_ip_segment_query_line = '\
     SELECT seg_util.*, gw_olt.olt FROM (\
     SELECT id, subnet_gateway, subnet_mask, SUM(ip_state) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment \
     WHERE segment_state IS TRUE AND subnet_gateway != "" AND subnet_gateway IS NOT NULL \
+    AND subnet_gateway NOT IN ( \
+    SELECT gateway FROM ( \
+    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
+    FROM MR_STS_ip_olt_detail \
+    WHERE ip_mask != 32 \
+    GROUP BY gateway \
+    HAVING cnt > 1 ) AS a) \
     GROUP BY subnet_gateway \
     ) AS seg_util \
     LEFT JOIN MR_STS_olt_gateway_references AS gw_olt \
@@ -655,6 +662,7 @@ all_device_ip_segment_query_line = '\
 
 def get_device_allocated_segment(request):
     context = {}
+    print(all_device_ip_segment_query_line)
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
 
@@ -685,10 +693,18 @@ def search_device_allocated_segment(request):
     context['search_paras'] = dict2SearchParas(segment_search_form.cleaned_data)
     return render(request, 'ip_allocated_segment.html', context)
     
+# subnet_gateway过滤了共享网关
 segment_not_used_query_line = '\
     SELECT * FROM MR_REC_group_client_ip_segment \
     WHERE segment_state IS TRUE AND ip_state IS FALSE \
-    AND subnet_gateway IN ({}) \
+    AND subnet_gateway IN ({}) AND subnet_gateway NOT IN ( \
+    SELECT gateway FROM ( \
+    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
+    FROM MR_STS_ip_olt_detail \
+    WHERE ip_mask != 32 \
+    GROUP BY gateway \
+    HAVING cnt > 1 ) AS a \
+    )\
     ORDER BY id \
 ' 
 
