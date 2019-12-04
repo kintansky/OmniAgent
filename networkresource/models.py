@@ -216,7 +216,8 @@ class OltInfoWG(models.Model):
 
 class GroupClientIPSegment(models.Model):
     ip = models.GenericIPAddressField(protocol='both', unique=True)
-    ip_state = models.BooleanField(default=False)
+    # ip_state = models.BooleanField(default=False)
+    ip_state = models.SmallIntegerField(default=0)  # -1预占 0未使用 1已用
     segment = models.GenericIPAddressField(protocol='both')
     mask = models.PositiveSmallIntegerField()
     segment_state = models.BooleanField(default=False)
@@ -230,8 +231,23 @@ class GroupClientIPSegment(models.Model):
             models.Index(fields=['segment']),
             models.Index(fields=['subnet_gateway']),
         ]
-        
 
+class GroupClientIpReserve(models.Model):
+    subnet_gateway = models.GenericIPAddressField(protocol='both')
+    subnet_mask = models.PositiveSmallIntegerField()
+    reserved_cnt = models.PositiveIntegerField()
+    reserved_person = models.CharField(max_length=20)
+    client_name = models.CharField(max_length=225)
+    contact = models.EmailField()
+    reserved_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'MR_REC_group_client_ip_reserve'
+        indexes = [
+            models.Index(fields=['subnet_gateway']),
+        ]
+
+        
 class GroupClientPublicGateway(models.Model):
     gateway = models.GenericIPAddressField(protocol='both')
     olt_cnt = models.PositiveIntegerField(default=0)

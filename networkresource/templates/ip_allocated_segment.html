@@ -1,110 +1,257 @@
-{% extends 'list_base.html' %}
-
-{# 下面仅对base.html进行扩展#}
+{% extends 'base.html' %}
 {% block title %} 设备可用地址段情况 {% endblock %}
-{% block navbar_resource_active %}active{% endblock %}
 
-{# 下面对list_base.html进行扩展#}
-{% block breadcrumb %}
-    <li><a href="">Resource</a></li>
-    <li class="active">Clients</li>
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
 {% endblock %}
+
+{% block navbar_resource_active %}active{% endblock %}
 
 {% block subheader %}
     设备可用地址段情况
 {% endblock %}
 
-{% block search_form %}
-    <form action="{% url 'search_device_allocated_segment' 'in' %}" method="GET" class="form-inline">
-        {% for field in device_allocated_segment_search_form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
-            </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">搜索</button>
-    </form>
-{% endblock %}
-
-{% block alert_content %}
-    {% if device_allocated_segment_search_form.errors %}
-        <br>
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <strong>Input Error: </strong>{{ device_allocated_segment_search_form.errors.as_text }}
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1 class="text-center">IP资源查询 </h1>
+    </div>
+    <div class="row">
+        <div class="col-md-10">
+            <form action="{% url 'search_device_allocated_segment'  %}" method="GET" class="form-inline">
+                {% for field in device_allocated_segment_search_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">搜索</button>
+            </form>
         </div>
-    {% endif %}
-{% endblock %}
-
-{% block table_title %}
-        <th>详情</th>
-        <th>OLT</th>
-        <th>地址段</th>
-        <th>利用率</th>
-{% endblock %}
-
-{% block table_body %}
-    {% for record in records %}
-        <tr>
-            <td>
-                <a href="{% url 'get_not_used_ip' 'in' %}?subnet_gateway={{ record.gws }}" target="_blank">
-                    <span class="glyphicon glyphicon-list-alt"></span>
-                </a>
-            </td>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.olt }}">{{ record.olt|truncatechars:50 }}</td>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.gws }}">
-                <span class="label label-danger">{{ record.gw_cnt }}个段</span>
-                {{ record.gws|truncatechars:40 }}
-            </td>
-            <td data-toggle="tooltip" data-placement="top" title="已用{{ record.used }}/总数{{ record.total }}">
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" aria-valuenow="{{ record.used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="width: {% widthratio record.used record.total 100 %}%;">
-                        <span class="sr-only">{% widthratio record.used record.total 100 %} Used</span>
-                        {% widthratio record.used 1 -1 as used %}
-                        {{ record.total|add:used }} Free
+    </div>
+    <hr>
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        {% for record in records %}
+            <div class="panel panel-success">
+                <div class="panel-heading" role="tab">
+                    <div class="row">
+                        <div class="col-md-4" data-toggle="tooltip" data-placement="top" title="{{ record.olt }}">
+                            <h3 class="panel-title">
+                                <strong>{{ record.olt|truncatechars:30 }}</strong>
+                            </h3>
+                        </div>
+                        <div class="col-md-4 title_gws" data-toggle="tooltip" data-placement="top" title="{{ record.gws }}">
+                            <span class="label label-primary">{{ record.gw_cnt }}个段</span>
+                            <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
+                                {{ record.gws|truncatechars:40 }}
+                            </a>
+                        </div>
+                        <div class="col-md-3" data-toggle="tooltip" data-placement="top" title="在用{{ record.used }}个(不含预占) / 共{{ record.total }}个">
+                            <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" aria-valuenow="{{ record.used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="width: {% widthratio record.used record.total 100 %}%;">
+                                <span class="sr-only">{% widthratio record.used record.total 100 %} Used</span>
+                                {% widthratio record.used 1 -1 as used %}
+                                {{ record.total|add:used }} Free
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </td>
-        </tr>
-    {% endfor %}
+                <div id="collapse_{{ record.id }}" class="panel-collapse collapse" role="tabpanel">
+                    <div class="panel-body">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">预占</div>
+                            <div class="panel-body">
+                                <div class="row">
+                                    <div class="col-sm-11">
+                                        <form action="{% url 'get_device_allocated_segment'  %}" method="POST">
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <div class="form-group">
+                                                        <label for="id_reserved_gw" class="col-sm-3 control-label">可选网段(双击刷新)</label>
+                                                        <select name="reserved_gw" class="col-sm-9 form-control reserved_gw" id="id_reserved_gw" style="width: 70%">
+                                                        <!-- ajax 回填 -->
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <div class="form-group">
+                                                        <label for="id_reserved_cnt" class="col-sm-3 control-label">预占数量(必填)</label>
+                                                        <input type="number" name="reserved_cnt" class="col-sm-9 form-control" style="width: 30%" id="id_reserved_cnt">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <br>
+                                            <div class="row">
+                                                <div class="col-sm-6">
+                                                    <div class="form-group">
+                                                        <label for="id_client_name" class="col-sm-3 control-label">客户(必填)</label>
+                                                        <input type="text" name="client_name" class="col-sm-9 form-control" style="width: 70%" id="id_reserved_cnt">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <button type="submit" class="btn btn-success reserve_segment_btn">马上预占</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <th>地址段</th>
+                                    <th>状态</th>
+                                    <th>预占人</th>
+                                    <th>客户</th>
+                                    <th>预占时间</th>
+                                </thead>
+                                <tbody class='segment_detail'>
+                                <!-- ajax填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="row">
+        <div class="col-lg-2 counter">
+            <p class="counter">
+                <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                Found <strong>{{ page_of_objects.paginator.count }}</strong> records
+            </p>
+        </div>
+        <div class="col-lg-10">
+            <div class="paginator">
+                <ul class="pagination">
+                    {# 上一页 #}
+                    <li>
+                        {% if page_of_objects.has_previous %}
+                            <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        {% else %}
+                            <span aria-hidden="true">&laquo;</span>
+                        {% endif %}
+                    </li>
+                    {# 中间页码 #}
+                    {% for page_num in page_range %}
+                        {% if page_num == page_of_objects.number %}
+                            <li class='active'><span>{{ page_num }}</span></li>
+                        {% else %}
+                            {% if page_num == '...' %}
+                                <li><span>{{ page_num }}</span></li>
+                            {% else %}
+                                <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {# 下一页 #}
+                    <li>
+                        {% if page_of_objects.has_next %}
+                            <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        {% else %}
+                            <span aria-hidden="true">&raquo;</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
 {% endblock %}
 
-{% block paginator %}
-<div class="paginator">
-    <ul class="pagination">
-        {# 上一页 #}
-        <li>
-            {% if page_of_objects.has_previous %}
-                <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            {% else %}
-                <span aria-hidden="true">&laquo;</span>
-            {% endif %}
-        </li>
-        {# 中间页码 #}
-        {% for page_num in page_range %}
-            {% if page_num == page_of_objects.number %}
-                <li class='active'><span>{{ page_num }}</span></li>
-            {% else %}
-                {% if page_num == '...' %}
-                    <li><span>{{ page_num }}</span></li>
-                {% else %}
-                    <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
-                {% endif %}
-            {% endif %}
-        {% endfor %}
-        {# 下一页 #}
-        <li>
-            {% if page_of_objects.has_next %}
-                <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            {% else %}
-                <span aria-hidden="true">&raquo;</span>
-            {% endif %}
-        </li>
-    </ul>
-</div>
-{% endblock%}
+{% block tail_script %}
+<script>
+// ajax 请求占用信息
+    $(document).ready(function(){
+        $(".detail_trigger").click(function(){
+            $(".reserved_gw").html();
+            var gws = $(this).parent().attr('title');
+            $.ajax({
+                url: "{% url 'ajax_get_segment_used_detail'  %}",  // 异步请求的地址
+                type: 'GET',    // 请求方式
+                data: {gws: btoa(gws),},   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        // console.log(data);
+                        var reserved_dict = JSON.parse(data['reserved_dict']);
+                        var dataStr = '';
+                        
+                        for(var key in reserved_dict){
+                            var data_list = reserved_dict[key];
+                            dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>'
+                        }
+                        $(".segment_detail").html(dataStr);
+                    }else{
+                        console.log(data);
+                        alert('没有找到相关对象');
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+
+        // 请求剩余信息
+        $(".reserved_gw").dblclick(function(){
+            var reserved_candidate = $(this);
+            reserved_candidate.html('<option value="None">查询中...</option>');
+            var gws = $(this).parents(".panel-collapse").prev().find(".title_gws").attr('title');
+            console.log(gws);
+            $.ajax({
+                url: "{% url 'ajax_get_segment_left_cnt'  %}",
+                type: 'GET',
+                data: {gws: btoa(gws),},
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        var can_be_reserved = JSON.parse(data['can_be_reserved']);
+                        var option_str = '';
+                        for(var key in can_be_reserved){
+                            var d = can_be_reserved[key];
+                            option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0]+'/'+d[1]+' 可供预占'+d[2]+'个</option>';
+                        }
+                        reserved_candidate.html(option_str);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+
+        // 预占
+        $(".reserve_segment_btn").click(function(){
+            var submit_data = $(this).parent().prev().find("form");
+            $.ajax({
+                url: "{% url 'reserve_segment'  %}",
+                type: 'POST',
+                data: submit_data.serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        window.location.reload();
+                        alert("预占成功");
+                    }else{
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

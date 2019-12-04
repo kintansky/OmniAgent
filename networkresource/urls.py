@@ -20,7 +20,9 @@ urlpatterns = [
 
     path('ajax_search_slot_ports/', views.ajax_search_slot_ports, name='ajax_search_slot_ports'),
 
-    path('ip/ip_allocated_segment/<str:user_type>/', views.get_device_allocated_segment, name='get_device_allocated_segment'),
-    path('ip/ip_allocated_segment/search/<str:user_type>/', views.search_device_allocated_segment, name='search_device_allocated_segment'),
-    path('ip/ip_allocated_segment/not_used/<str:user_type>/', views.get_not_used_ip, name='get_not_used_ip'),
+    path('ip/ip_allocated_segment/', views.get_device_allocated_segment, name='get_device_allocated_segment'),
+    path('ip/ip_allocated_segment/search/', views.search_device_allocated_segment, name='search_device_allocated_segment'),
+    path('ip/ip_allocated_segment/get_segment_used_detail/', views.ajax_get_segment_used_detail, name='ajax_get_segment_used_detail'),
+    path('ip/ip_allocated_segment/get_segment_left_cnt/', views.ajax_get_segment_left_cnt, name='ajax_get_segment_left_cnt'),
+    path('ip/ip_allocated_segment/reserve_segment/', views.reserve_segment, name='reserve_segment'),
 ]

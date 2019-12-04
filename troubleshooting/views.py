@@ -4,8 +4,10 @@ from watchdog.models import Device
 from funcpack import snmp_func
 from funcpack.funcs import quickSortObj
 import json
+from django.contrib.auth.decorators import permission_required
 
 # Create your views here.
+@permission_required('watchdog.view_device', login_url='/login/')
 def link_utilization(request):
     context = {}
     return render(request, 'link_utilization.html', context)

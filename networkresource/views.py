@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment
+from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve
 from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas
 from django.http import FileResponse, JsonResponse
@@ -11,6 +11,8 @@ from django.utils import timezone
 from IPy import IP
 import json
 from django.db.models import Q, Count
+import base64
+from django.contrib.auth.decorators import permission_required
 
 # Create your views here.
 
@@ -58,6 +60,7 @@ def formHtmlCallBack_slot(target_ports, data):
 
 
 #
+@permission_required('networkresource.view_iprecord', login_url='/login/')
 def ip_list(request):
     ip_all_list = IpRecord.objects.all()
     page_of_objects, page_range = pages(request, ip_all_list)
@@ -346,7 +349,7 @@ def ajax_confirm_allocate(request):
         data['other_error'] = '分配目标地址为空'
     return JsonResponse(data)
 
-
+@permission_required('networkresource.view_iprecord', login_url='/login/')
 def ip_allocated_client_list(request):
     context = {}
     client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
@@ -635,13 +638,14 @@ def ajax_mod_allocated_ip(request, operation_type):
         data['error_info'] = '非法操作'
     return JsonResponse(data)
 
+
 all_device_ip_segment_query_line = '\
     SELECT id, olt, count(DISTINCT subnet_gateway) AS gw_cnt, \
     GROUP_CONCAT(DISTINCT  CONCAT(subnet_gateway, "/", subnet_mask)) AS gws,\
     cast(SUM(used_cnt) AS SIGNED) AS used, cast(SUM(all_cnt) AS SIGNED) AS total \
     FROM (\
     SELECT seg_util.*, gw_olt.olt FROM (\
-    SELECT id, subnet_gateway, subnet_mask, SUM(ip_state) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment \
+    SELECT id, subnet_gateway, subnet_mask, SUM(if(ip_state=1, 1, 0)) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment \
     WHERE segment_state IS TRUE AND subnet_gateway != "" AND subnet_gateway IS NOT NULL \
     AND subnet_gateway NOT IN ( \
     SELECT gateway FROM ( \
@@ -652,30 +656,30 @@ all_device_ip_segment_query_line = '\
     HAVING cnt > 1 ) AS a) \
     GROUP BY subnet_gateway \
     ) AS seg_util \
-    LEFT JOIN MR_STS_olt_gateway_references AS gw_olt \
+    LEFT JOIN ( \
+    SELECT gateway, ip_mask AS mask, olt FROM MR_STS_ip_olt_detail \
+    WHERE olt IS NOT NULL \
+    GROUP BY gateway, ip_mask, olt \
+    ) AS gw_olt \
     ON seg_util.subnet_gateway = gw_olt.gateway \
     HAVING olt IS NOT NULL \
     ) AS olt_util \
     GROUP BY olt \
 '
 
-
-def get_device_allocated_segment(request, user_type):
+@permission_required('networkresource.view_groupclientipsegment', login_url='/login/')
+def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
-
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['device_allocated_segment_search_form'] = DeviceIpSegmentForm()
-    htmlPath = 'ip_allocated_segment.html'
-    if user_type == 'out':
-        htmlPath = 'ip_allocated_segment_out.html'
-    return render(request, htmlPath, context)
+    return render(request, 'ip_allocated_segment.html', context)
 
 
-def search_device_allocated_segment(request, user_type):
+def search_device_allocated_segment(request):
     context = {}
     segment_search_form = DeviceIpSegmentForm(request.GET)
     if segment_search_form.is_valid():
@@ -693,41 +697,98 @@ def search_device_allocated_segment(request, user_type):
     context['page_range'] = page_range
     context['device_allocated_segment_search_form'] = segment_search_form
     context['search_paras'] = dict2SearchParas(segment_search_form.cleaned_data)
-    htmlPath = 'ip_allocated_segment.html'
-    if user_type == 'out':
-        htmlPath = 'ip_allocated_segment_out.html'
-    return render(request, htmlPath, context)
+    return render(request, 'ip_allocated_segment.html', context)
     
-# subnet_gateway过滤了共享网关
-segment_not_used_query_line = '\
-    SELECT * FROM MR_REC_group_client_ip_segment \
-    WHERE segment_state IS TRUE AND ip_state IS FALSE \
-    AND subnet_gateway IN ({}) AND subnet_gateway NOT IN ( \
-    SELECT gateway FROM ( \
-    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
-    FROM MR_STS_ip_olt_detail \
-    WHERE ip_mask != 32 \
-    GROUP BY gateway \
-    HAVING cnt > 1 ) AS a \
-    )\
-    ORDER BY id \
-' 
 
-def get_not_used_ip(request, user_type):
-    context = {}
-    subnet_gateway = request.GET.get('subnet_gateway')
-    gateway_list = [s.split('/')[0] for s in subnet_gateway.split(',')]
-    # print(gateway_list)
-    not_used_ip_list = GroupClientIPSegment.objects.raw(
-        segment_not_used_query_line.format(','.join(['%s']*len(gateway_list))),
-        tuple(gateway_list)
+def ajax_get_segment_used_detail(request):
+    data = {}
+    gws = request.GET.get('gws', '')
+    gwList = [s.split('/')[0] for s in base64.b64decode(gws).decode('ascii').split(',')]
+    reserved_list = GroupClientIpReserve.objects.filter(subnet_gateway__in=tuple(gwList)).order_by('-reserved_time')
+    # print(reserved_list[0].reserved_person)
+    reserved_dict = {}
+    for r in reserved_list:
+        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, r.reserved_time.strftime('%Y-%m-%d %H:%M:%S')]
+    data['reserved_dict'] = json.dumps(reserved_dict)
+    # print(data)
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+
+def ajax_get_segment_left_cnt(request):
+    data = {}
+    gws = request.GET.get('gws', '')
+    gwList = [s.split('/')[0] for s in base64.b64decode(gws).decode('ascii').split(',')]
+    # print(gwList)
+    can_be_reserved_query = '\
+        SELECT id, left_detail.subnet_gateway, left_detail.subnet_mask, CAST(left_detail.left_cnt-ifnull(reserve_detail.all_reserved_cnt, 0) AS SIGNED) AS can_be_reserved FROM (\
+        SELECT id, subnet_gateway, subnet_mask, COUNT(*) AS left_cnt FROM MR_REC_group_client_ip_segment \
+        WHERE segment_state IS TRUE AND ip_state = 0 \
+        AND subnet_gateway IN ({}) AND subnet_gateway NOT IN ( \
+        SELECT gateway FROM ( \
+        SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
+        FROM MR_STS_ip_olt_detail \
+        WHERE ip_mask != 32 \
+        GROUP BY gateway \
+        HAVING cnt > 1 ) AS a \
+        )\
+        GROUP BY subnet_gateway\
+        ) AS left_detail\
+        LEFT JOIN ( \
+        SELECT subnet_gateway, SUM(reserved_cnt) AS all_reserved_cnt FROM MR_REC_group_client_ip_reserve \
+        WHERE subnet_gateway IN ({}) \
+        GROUP BY subnet_gateway) AS reserve_detail \
+        ON left_detail.subnet_gateway = reserve_detail.subnet_gateway \
+    '
+    can_be_reserved_list = GroupClientIPSegment.objects.raw(
+        can_be_reserved_query.format(','.join(['%s',]*len(gwList)), ','.join(['%s',]*len(gwList))),
+        tuple(gwList)+tuple(gwList)
     )
-    page_of_objects, page_range = pages(request, not_used_ip_list)
-    context['records'] = page_of_objects.object_list
-    context['page_of_objects'] = page_of_objects
-    context['page_range'] = page_range
-    context['search_paras'] = '&subnet_gateway=' + subnet_gateway
-    htmlPath = 'get_not_used_ip.html'
-    if user_type == 'out':
-        htmlPath = 'get_not_used_ip_out.html'
-    return render(request, htmlPath, context)
+    can_be_reserved_dict = {}
+    for r in can_be_reserved_list:
+        # can_be_reserved_dict[r.id] = r.subnet_gateway+'/'+str(r.subnet_mask)+'(剩余{}个可分配)'.format(r.can_be_reserved)
+        can_be_reserved_dict[r.id] = [r.subnet_gateway, r.subnet_mask, r.can_be_reserved]
+    data['can_be_reserved'] = json.dumps(can_be_reserved_dict)
+    # print(data)
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+
+@permission_required('networkresource.add_groupclientipreserve', login_url='/login/')
+def reserve_segment(request):
+    data = {}
+    reserved_gateway, reserved_mask = request.POST.get('reserved_gw').split('/')
+    if request.POST.get('reserved_cnt') == '':
+        data['status'] = 'error'
+        data['error_info'] = '预留个数有误'
+        return JsonResponse(data) 
+    reserved_cnt = int(request.POST.get('reserved_cnt'))
+    client_name = request.POST.get('client_name', '')
+    all_ip_left_cnt = GroupClientIPSegment.objects.filter(subnet_gateway=reserved_gateway, segment_state=1, ip_state=0).count()
+    already_reserved_ip = GroupClientIpReserve.objects.filter(subnet_gateway=reserved_gateway).values('reserved_cnt')
+    already_reserved_cnt = 0
+    for d in already_reserved_ip:
+        already_reserved_cnt += d['reserved_cnt']
+    if reserved_cnt <= 0:
+        data['status'] = 'error'
+        data['error_info'] = '预留个数有误'
+        return JsonResponse(data)
+    if reserved_cnt > all_ip_left_cnt-already_reserved_cnt:
+        data['status'] = 'error'
+        data['error_info'] = '个数不足无法分配'
+        return JsonResponse(data)
+    if client_name == '':
+        data['status'] = 'error'
+        data['error_info'] = '请填写客户名'
+
+    ip_reserve = GroupClientIpReserve()
+    ip_reserve.subnet_gateway = reserved_gateway
+    ip_reserve.subnet_mask = int(reserved_mask)
+    ip_reserve.reserved_cnt = reserved_cnt
+    ip_reserve.reserved_person = request.user.first_name
+    ip_reserve.contact = request.user.email
+    ip_reserve.client_name = client_name
+    ip_reserve.reserved_time = timezone.datetime.now()
+    ip_reserve.save()
+    data['status'] = 'success'
+    return JsonResponse(data)

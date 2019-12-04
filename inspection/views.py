@@ -10,12 +10,14 @@ import json
 from django.db.models import F, Q
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.decorators import permission_required
 
 
 
 # Create your views here.
 
 # 光模块检查模块
+@permission_required('inspection.view_opticalmoudlediff', login_url='/login/')
 def moudle_list(request):
     # 默认展示前3天数据
     moudle_all_list = OpticalMoudleDiff.objects.filter(
@@ -169,6 +171,7 @@ def __queryline(order_field, otherCmd=''):
     return porterror_query
 
 
+@permission_required('inspection.view_porterrordiff', login_url='/login/')
 def port_error_list(request):
     order_field = request.GET.get('order_field', 'crc')
     time_begin, time_end = getDateRange(-2)    # 默认-2
@@ -536,6 +539,8 @@ __QUERY_ONEWAY_LIST = "\
 "
 __ONEWAY_ORDER_FIELD = 'ORDER BY not_show ASC, record_time DESC'
 
+
+@permission_required('inspection.view_onewaydevice', login_url='/login/')
 def oneway_list(request):
     time_begin, time_end = getDateRange(-1)
     time_range = (time_begin, time_end)
@@ -694,6 +699,7 @@ def search_group_client(request):
     return render(request, 'group_client_list.html', context)
 
 
+@permission_required('inspection.view_natpoolusage', login_url='/login/')
 def natpool_list(request):
     context = {}
     natpool_all_list = NatPoolUsage.objects.filter(record_time__range=getDateRange(-2)).annotate(nat_total=(F('device1_nat_usage')+F('device2_nat_usage'))).order_by(F('nat_total').desc())
@@ -854,6 +860,7 @@ __PING_COST_HOUR_GROUP = "\
 减轻查询压力，改用数据库事件自动更新
 '''
 
+@permission_required('inspection.view_linkpingtest', login_url='/login/')
 def ping_result_list(request):
     context = {}
     time_begin, _ = getDateRange(-2)

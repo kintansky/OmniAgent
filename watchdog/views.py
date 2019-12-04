@@ -7,9 +7,12 @@ from django.utils import timezone
 # 下面为了引入funcpack的公共函数
 from funcpack.funcs import pages, dumpOlt2Json
 from django.db.models import Q
+from django.contrib.auth.decorators import permission_required
 
 # Create your views here.
 
+
+@permission_required('watchdog.view_device', login_url='/login/')
 def device_list(request):
     device_all_list = Device.objects.all()
     page_of_objects, page_range = pages(request, device_all_list)
@@ -22,6 +25,7 @@ def device_list(request):
     return render(request, 'device_list.html', context)
 
 
+@permission_required('watchdog.view_device', login_url='/login/')
 def search_device(request):
     ip_address = request.GET.get('ip_address', '')
     device_name = request.GET.get('device_name', '')
@@ -49,6 +53,7 @@ def search_device(request):
     return render(request, 'device_list.html', context)
 
 
+@permission_required('watchdog.view_device', login_url='/login/')
 def add_device(request):
     status = 0
     if request.method == 'POST':
@@ -78,6 +83,7 @@ def add_device(request):
     return render(request, 'add_device.html', context)
 
 
+@permission_required('watchdog.view_device', login_url='/login/')
 def device_detail(request, device_name):
     context = {}
     device = get_object_or_404(Device, device_name=device_name)
