@@ -662,6 +662,8 @@ __GROUP_CLIENT_QUERY = "\
     ON client_info.device_name = re_tb.device_name AND client_info.logic_port_num = re_tb.logic_port \
 "
 
+
+@permission_required('networkresource.view_zxclientinfo', login_url='/login/')
 def group_client_list(request):
     context = {}
     group_client_all_list = ZxClientInfo.objects.raw(__GROUP_CLIENT_QUERY)

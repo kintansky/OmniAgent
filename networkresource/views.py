@@ -667,7 +667,7 @@ all_device_ip_segment_query_line = '\
     GROUP BY olt \
 '
 
-@permission_required('networkresource.view_groupclientipsegment', login_url='/login/')
+# @permission_required('networkresource.view_groupclientipsegment', login_url='/login/')
 def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
@@ -754,7 +754,7 @@ def ajax_get_segment_left_cnt(request):
     return JsonResponse(data)
 
 
-@permission_required('networkresource.add_groupclientipreserve', login_url='/login/')
+# @permission_required('networkresource.add_groupclientipreserve', login_url='/login/')
 def reserve_segment(request):
     data = {}
     reserved_gateway, reserved_mask = request.POST.get('reserved_gw').split('/')
