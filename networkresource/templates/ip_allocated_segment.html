@@ -79,7 +79,7 @@
                                             <div class="row">
                                                 <div class="col-sm-6">
                                                     <div class="form-group">
-                                                        <label for="id_reserved_gw" class="col-sm-3 control-label">可选网段(双击刷新)</label>
+                                                        <label for="id_reserved_gw" class="col-sm-3 control-label">可选网段(双击选框刷新)</label>
                                                         <select name="reserved_gw" class="col-sm-9 form-control reserved_gw" id="id_reserved_gw" style="width: 70%">
                                                         <!-- ajax 回填 -->
                                                         </select>
@@ -188,6 +188,7 @@
 
 {% block tail_script %}
 <script>
+    var user_is_staff = "{{ user.is_staff }}";
 // ajax 请求占用信息
     $(document).ready(function(){
         $(".detail_trigger").click(function(){
@@ -206,8 +207,11 @@
                         
                         for(var key in reserved_dict){
                             var data_list = reserved_dict[key];
-                            dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
-                            // dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                            if(user_is_staff == 'True'){
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                            }else{
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                            }
                         }
                         $(".segment_detail").html(dataStr);
                     }else{
@@ -226,7 +230,7 @@
             var reserved_candidate = $(this);
             reserved_candidate.html('<option value="None">查询中...</option>');
             var gws = $(this).parents(".panel-collapse").prev().find(".title_gws").attr('gws');
-            console.log(gws);
+            // console.log(gws);
             $.ajax({
                 url: "{% url 'ajax_get_segment_left_cnt'  %}",
                 type: 'GET',
@@ -238,7 +242,11 @@
                         var option_str = '';
                         for(var key in can_be_reserved){
                             var d = can_be_reserved[key];
-                            option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0].substr(0, 8)+'***/'+d[1]+' 可供预占'+d[2]+'个</option>';
+                            if(user_is_staff == 'True'){
+                                option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0]+'/'+d[1]+' 可供预占'+d[2]+'个</option>';
+                            }else{
+                                option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0].substr(0, 8)+'***/'+d[1]+' 可供预占'+d[2]+'个</option>';
+                            }
                         }
                         reserved_candidate.html(option_str);
                     }
