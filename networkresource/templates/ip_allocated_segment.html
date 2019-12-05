@@ -42,12 +42,23 @@
                                 <strong>{{ record.olt|truncatechars:30 }}</strong>
                             </h3>
                         </div>
-                        <div class="col-md-4 title_gws" data-toggle="tooltip" data-placement="top" title="{{ record.gws }}">
-                            <span class="label label-primary">{{ record.gw_cnt }}个段</span>
-                            <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
-                                {{ record.gws|truncatechars:40 }}
-                            </a>
-                        </div>
+                        {% if user.is_staff %}
+                        {# 脱敏原因，地址段不显示 #}
+                            <div class="col-md-4 title_gws" data-toggle="tooltip" data-placement="top" title="{{ record.gws }}" gws="{{ record.gws }}">
+                                <span class="label label-primary">{{ record.gw_cnt }}个段</span>
+                                <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
+                                    {{ record.gws|truncatechars:40 }}
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="col-md-4 title_gws" gws="{{ record.gws }}">
+                                <span class="label label-primary">{{ record.gw_cnt }}个段</span>
+                                <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
+                                    点击查看
+                                </a>
+                            </div>
+                        {% endif %}
+                        
                         <div class="col-md-3" data-toggle="tooltip" data-placement="top" title="在用{{ record.used }}个(不含预占) / 共{{ record.total }}个">
                             <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" aria-valuenow="{{ record.used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="width: {% widthratio record.used record.total 100 %}%;">
                                 <span class="sr-only">{% widthratio record.used record.total 100 %} Used</span>
@@ -85,10 +96,17 @@
                                             <div class="row">
                                                 <div class="col-sm-6">
                                                     <div class="form-group">
-                                                        <label for="id_client_name" class="col-sm-3 control-label">客户(必填)</label>
-                                                        <input type="text" name="client_name" class="col-sm-9 form-control" style="width: 70%" id="id_reserved_cnt">
+                                                        <label for="id_contact" class="col-sm-3 control-label">预占人电话(必填)</label>
+                                                        <input type="text" name="contact" class="col-sm-9 form-control" style="width: 70%" id="id_contact">
                                                     </div>
                                                 </div>
+                                                <div class="col-sm-6">
+                                                    <div class="form-group">
+                                                        <label for="id_client_name" class="col-sm-3 control-label">客户(必填)</label>
+                                                        <input type="text" name="client_name" class="col-sm-9 form-control" style="width: 70%" id="id_client_name">
+                                                    </div>
+                                                </div>
+                                                
                                             </div>
                                         </form>
                                     </div>
@@ -174,7 +192,7 @@
     $(document).ready(function(){
         $(".detail_trigger").click(function(){
             $(".reserved_gw").html();
-            var gws = $(this).parent().attr('title');
+            var gws = $(this).parent().attr('gws');
             $.ajax({
                 url: "{% url 'ajax_get_segment_used_detail'  %}",  // 异步请求的地址
                 type: 'GET',    // 请求方式
@@ -188,7 +206,8 @@
                         
                         for(var key in reserved_dict){
                             var data_list = reserved_dict[key];
-                            dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>'
+                            dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                            // dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
                         }
                         $(".segment_detail").html(dataStr);
                     }else{
@@ -206,7 +225,7 @@
         $(".reserved_gw").dblclick(function(){
             var reserved_candidate = $(this);
             reserved_candidate.html('<option value="None">查询中...</option>');
-            var gws = $(this).parents(".panel-collapse").prev().find(".title_gws").attr('title');
+            var gws = $(this).parents(".panel-collapse").prev().find(".title_gws").attr('gws');
             console.log(gws);
             $.ajax({
                 url: "{% url 'ajax_get_segment_left_cnt'  %}",
@@ -219,7 +238,7 @@
                         var option_str = '';
                         for(var key in can_be_reserved){
                             var d = can_be_reserved[key];
-                            option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0]+'/'+d[1]+' 可供预占'+d[2]+'个</option>';
+                            option_str += '<option value="'+d[0]+'/'+d[1]+'">'+d[0].substr(0, 8)+'***/'+d[1]+' 可供预占'+d[2]+'个</option>';
                         }
                         reserved_candidate.html(option_str);
                     }

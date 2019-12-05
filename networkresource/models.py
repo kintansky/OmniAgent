@@ -237,8 +237,8 @@ class GroupClientIpReserve(models.Model):
     subnet_mask = models.PositiveSmallIntegerField()
     reserved_cnt = models.PositiveIntegerField()
     reserved_person = models.CharField(max_length=20)
-    client_name = models.CharField(max_length=225)
-    contact = models.EmailField()
+    client_name = models.CharField(max_length=255)
+    contact = models.CharField(max_length=11)   # 联系电话
     reserved_time = models.DateTimeField()
 
     class Meta:

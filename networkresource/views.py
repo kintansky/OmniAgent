@@ -12,7 +12,9 @@ from IPy import IP
 import json
 from django.db.models import Q, Count
 import base64
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.admin.views.decorators import staff_member_required
+
 
 # Create your views here.
 
@@ -60,7 +62,8 @@ def formHtmlCallBack_slot(target_ports, data):
 
 
 #
-@permission_required('networkresource.view_iprecord', login_url='/login/')
+# @permission_required('networkresource.view_iprecord', login_url='/login/')
+@staff_member_required(redirect_field_name='from', login_url='login')
 def ip_list(request):
     ip_all_list = IpRecord.objects.all()
     page_of_objects, page_range = pages(request, ip_all_list)
@@ -349,7 +352,8 @@ def ajax_confirm_allocate(request):
         data['other_error'] = '分配目标地址为空'
     return JsonResponse(data)
 
-@permission_required('networkresource.view_iprecord', login_url='/login/')
+# @permission_required('networkresource.view_iprecord', login_url='/login/')
+@staff_member_required(redirect_field_name='from', login_url='login')
 def ip_allocated_client_list(request):
     context = {}
     client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
@@ -667,7 +671,9 @@ all_device_ip_segment_query_line = '\
     GROUP BY olt \
 '
 
-@permission_required('networkresource.view_groupclientipsegment', login_url='/login/')
+
+@login_required(redirect_field_name='from', login_url='login')
+@permission_required('networkresource.view_groupclientipsegment', raise_exception=True)
 def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
@@ -754,7 +760,8 @@ def ajax_get_segment_left_cnt(request):
     return JsonResponse(data)
 
 
-@permission_required('networkresource.add_groupclientipreserve', login_url='/login/')
+@login_required(redirect_field_name='from', login_url='login')
+@permission_required('networkresource.add_groupclientipreserve', raise_exception=True)
 def reserve_segment(request):
     data = {}
     reserved_gateway, reserved_mask = request.POST.get('reserved_gw').split('/')
@@ -764,6 +771,7 @@ def reserve_segment(request):
         return JsonResponse(data) 
     reserved_cnt = int(request.POST.get('reserved_cnt'))
     client_name = request.POST.get('client_name', '')
+    contact = request.POST.get('contact', '')
     all_ip_left_cnt = GroupClientIPSegment.objects.filter(subnet_gateway=reserved_gateway, segment_state=1, ip_state=0).count()
     already_reserved_ip = GroupClientIpReserve.objects.filter(subnet_gateway=reserved_gateway).values('reserved_cnt')
     already_reserved_cnt = 0
@@ -775,18 +783,23 @@ def reserve_segment(request):
         return JsonResponse(data)
     if reserved_cnt > all_ip_left_cnt-already_reserved_cnt:
         data['status'] = 'error'
-        data['error_info'] = '个数不足无法分配'
+        data['error_info'] = '地址个数不足无法分配'
         return JsonResponse(data)
     if client_name == '':
         data['status'] = 'error'
         data['error_info'] = '请填写客户名'
+        return JsonResponse(data)
+    if contact == '' or not re.match(r'\d{11}', contact):
+        data['status'] = 'error'
+        data['error_info'] = '请正确填写预占人联系电话'
+        return JsonResponse(data)
 
     ip_reserve = GroupClientIpReserve()
     ip_reserve.subnet_gateway = reserved_gateway
     ip_reserve.subnet_mask = int(reserved_mask)
     ip_reserve.reserved_cnt = reserved_cnt
     ip_reserve.reserved_person = request.user.first_name
-    ip_reserve.contact = request.user.email
+    ip_reserve.contact = contact
     ip_reserve.client_name = client_name
     ip_reserve.reserved_time = timezone.datetime.now()
     ip_reserve.save()
