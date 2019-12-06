@@ -45,25 +45,23 @@
                         {% if user.is_staff %}
                         {# 脱敏原因，地址段不显示 #}
                             <div class="col-md-4 title_gws" data-toggle="tooltip" data-placement="top" title="{{ record.gws }}" gws="{{ record.gws }}">
-                                <span class="label label-primary">{{ record.gw_cnt }}个段</span>
-                                <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
-                                    {{ record.gws|truncatechars:40 }}
+                                <a role="button" class="btn btn-primary btn-xs detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
+                                    {{ record.gw_cnt }}个段 <span class="glyphicon glyphicon-collapse-down"></span> {{ record.gws|truncatechars:40 }}
                                 </a>
                             </div>
                         {% else %}
                             <div class="col-md-4 title_gws" gws="{{ record.gws }}">
-                                <span class="label label-primary">{{ record.gw_cnt }}个段</span>
-                                <a role="button" class="detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
-                                    点击查看
+                                <a role="button" class="btn btn-primary btn-xs detail_trigger" data-toggle="collapse" data-parent="#accordion" href="#collapse_{{ record.id }}" aria-expanded="true" aria-controls="collapse_{{ record.id }}">
+                                    {{ record.gw_cnt }}个段 <span class="glyphicon glyphicon-collapse-down"></span> 点击查看
                                 </a>
                             </div>
                         {% endif %}
                         
                         <div class="col-md-3" data-toggle="tooltip" data-placement="top" title="在用{{ record.used }}个(不含预占) / 共{{ record.total }}个">
-                            <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" aria-valuenow="{{ record.used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="width: {% widthratio record.used record.total 100 %}%;">
-                                <span class="sr-only">{% widthratio record.used record.total 100 %} Used</span>
-                                {% widthratio record.used 1 -1 as used %}
-                                {{ record.total|add:used }} Free
+                            {% widthratio record.used 1 -1 as used %}
+                            <div class="progress-bar progress-bar-danger progress-bar-striped active" role="progressbar" aria-valuenow="{{ record.total|add:used }}" aria-valuemin="0" aria-valuemax="{{ record.total }}" style="min-width: 4em; width: {% widthratio record.total|add:used record.total 100 %}%;">
+                                <span class="sr-only">{% widthratio record.total|add:used record.total 100 %} Free</span>
+                                    {{ record.total|add:used }} Free
                             </div>
                         </div>
                     </div>
@@ -125,6 +123,7 @@
                                     <th>预占人</th>
                                     <th>客户</th>
                                     <th>预占时间</th>
+                                    <th>操作</th>
                                 </thead>
                                 <tbody class='segment_detail'>
                                 <!-- ajax填充 -->
@@ -189,7 +188,7 @@
 {% block tail_script %}
 <script>
     var user_is_staff = "{{ user.is_staff }}";
-// ajax 请求占用信息
+    // ajax 请求占用信息
     $(document).ready(function(){
         $(".detail_trigger").click(function(){
             $(".reserved_gw").html();
@@ -208,9 +207,9 @@
                         for(var key in reserved_dict){
                             var data_list = reserved_dict[key];
                             if(user_is_staff == 'True'){
-                                dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+data_list[6]+'>撤销</a></td></tr>';
                             }else{
-                                dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td></tr>';
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+data_list[6]+'>撤销</a></td></tr>';
                             }
                         }
                         $(".segment_detail").html(dataStr);
@@ -269,6 +268,28 @@
                     if(data['status'] == 'success'){
                         window.location.reload();
                         alert("预占成功");
+                    }else{
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 取消预占
+        $(document).on("click", ".cancle_reserve_btn", function(){
+            var cancle_record = $(this);
+            $.ajax({
+                url: '{% url "cancle_reserve" %}',
+                type: 'POST',
+                data: "rid=" + cancle_record.attr('rid') + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        window.location.reload();
+                        // cancle_record.remove();
+                        alert("取消成功");
                     }else{
                         alert(data['error_info']);
                     }

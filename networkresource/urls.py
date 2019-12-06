@@ -25,4 +25,5 @@ urlpatterns = [
     path('ip/ip_allocated_segment/get_segment_used_detail/', views.ajax_get_segment_used_detail, name='ajax_get_segment_used_detail'),
     path('ip/ip_allocated_segment/get_segment_left_cnt/', views.ajax_get_segment_left_cnt, name='ajax_get_segment_left_cnt'),
     path('ip/ip_allocated_segment/reserve_segment/', views.reserve_segment, name='reserve_segment'),
+    path('ip/ip_allocated_segment/cancle_reserve/', views.cancle_reserve, name='cancle_reserve'),
 ]

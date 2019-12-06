@@ -714,7 +714,7 @@ def ajax_get_segment_used_detail(request):
     # print(reserved_list[0].reserved_person)
     reserved_dict = {}
     for r in reserved_list:
-        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, r.reserved_time.strftime('%Y-%m-%d %H:%M:%S')]
+        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, r.reserved_time.strftime('%Y-%m-%d %H:%M:%S'), r.id]
     data['reserved_dict'] = json.dumps(reserved_dict)
     # print(data)
     data['status'] = 'success'
@@ -791,7 +791,7 @@ def reserve_segment(request):
         return JsonResponse(data)
     if contact == '' or not re.match(r'\d{11}', contact):
         data['status'] = 'error'
-        data['error_info'] = '请正确填写预占人联系电话'
+        data['error_info'] = '请正确填写11位的预占人联系电话'
         return JsonResponse(data)
 
     ip_reserve = GroupClientIpReserve()
@@ -805,3 +805,22 @@ def reserve_segment(request):
     ip_reserve.save()
     data['status'] = 'success'
     return JsonResponse(data)
+
+
+def cancle_reserve(request):
+    data = {}
+    rid = request.POST.get('rid', None)
+    if rid is not None:
+        try:
+            record = GroupClientIpReserve.objects.get(id=rid)
+            record.delete()
+            data['status'] = 'success'
+        except ObjectDoesNotExist:
+            data['status'] = 'error'
+            data['error_info'] = '记录不存在'
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '传递参数有误'
+
+    return JsonResponse(data)
+    
