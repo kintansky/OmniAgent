@@ -367,7 +367,8 @@ def porterror_fix_list(request):
         time_begin = timezone.datetime.strptime(
             time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
-    fix_records = PortErrorFixRecord.objects.all().order_by('-begin_time')
+    # fix_records = PortErrorFixRecord.objects.all().order_by('-begin_time')
+    fix_records = PortErrorFixRecord.objects.exclude(problem_detail__icontains='系统自判').order_by('-begin_time')
     page_of_objects, page_range = pages(request, fix_records)
 
     context['records'] = page_of_objects.object_list
@@ -387,7 +388,7 @@ def search_porterror_fix(request):
     if port_error_fix_record_search_form.is_valid():
         time_begin = port_error_fix_record_search_form.cleaned_data['time_begin']
         time_end = port_error_fix_record_search_form.cleaned_data['time_end']
-        fix_records = PortErrorFixRecord.objects.filter(begin_time__range=(time_begin, time_end)).order_by('-begin_time')
+        fix_records = PortErrorFixRecord.objects.exclude(problem_detail__icontains='系统自判').filter(begin_time__range=(time_begin, time_end)).order_by('-begin_time')
     else:
         context['port_error_fix_record_search_form'] = PortErrorFixRecordSearchForm()
         return render(request, 'port_error_fix_record_list.html', context)
@@ -417,7 +418,7 @@ def export_porterrorfix(request):
         time_begin = timezone.datetime.strptime(
             time_begin, '%Y-%m-%d %H:%M:%S')
         time_end = timezone.datetime.strptime(time_end, '%Y-%m-%d %H:%M:%S')
-    fix_records = PortErrorFixRecord.objects.filter(begin_time__range=(time_begin, time_end))
+    fix_records = PortErrorFixRecord.objects.exclude(problem_detail__icontains='系统自判').filter(begin_time__range=(time_begin, time_end))
     output = exportXls(PortErrorFixRecord._meta.fields,
                        fix_records, ('begin_time', 'end_time'))
     response = FileResponse(
