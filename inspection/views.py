@@ -127,7 +127,7 @@ __PORTERROR_QUERY = "\
             WHERE record_time BETWEEN %s AND %s\
         ) AS npp \
     ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
-    AND DATE_FORMAT(error_info.record_time, '%Y-%m-%d') = DATE_FORMAT(npp.record_time, '%Y-%m-%d') \
+    AND DATE_FORMAT(error_info.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(npp.record_time, '%%Y-%%m-%%d') \
 "
 '''
 CRC_FILTER = 60
@@ -153,7 +153,7 @@ __PORTERROR_QUERY = "\
         SELECT * FROM omni_agent.OM_REC_port_perf \
         WHERE record_time BETWEEN %s AND %s\
     ) AS pp\
-        ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%Y-%m-%d') = DATE_FORMAT(pp.record_time, '%Y-%m-%d')\
+        ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')\
     LEFT JOIN (\
         SELECT cnt_tb.*, COUNT(*) AS cnt FROM (\
             SELECT device_name, port FROM omni_agent.OM_REP_port_error_diff \
@@ -353,7 +353,7 @@ def portOperationHtmlCallBack(data, rid):   # 构造处理完成时需要填写�
     data['operation_form'] = h
     return data
 
-
+@staff_member_required(redirect_field_name='from', login_url='login')
 def porterror_fix_list(request):
     context = {}
     time_begin = request.GET.get('time_begin', '')
@@ -499,19 +499,19 @@ __QUERY_MY_FIX_TASKS = "\
         ped.stateCRC, ped.stateIpv4HeadError, ped.record_time, ped.fix_status,\
         pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out \
     FROM (\
-        SELECT * FROM omni_agent.inspection_porterrorfixrecord WHERE worker = %s \
+        SELECT * FROM OM_REC_port_error_fix_record WHERE worker = %s \
     ) AS pef \
     left JOIN (\
-        SELECT * FROM omni_agent.inspection_porterrordiff \
+        SELECT * FROM OM_REP_port_error_diff \
         WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE()\
     ) AS ped\
     ON pef.device_name = ped.device_name AND pef.port = ped.port \
-    LEFT JOIN omni_agent.inspection_portperf AS pp\
-    ON pef.device_name = pp.device_name AND pef.port = pp.port AND DATE_FORMAT(ped.record_time, '%Y-%m-%d') = DATE_FORMAT(pp.record_time, '%Y-%m-%d')\
+    LEFT JOIN OM_REC_port_perf AS pp\
+    ON pef.device_name = pp.device_name AND pef.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')\
     ORDER BY begin_time DESC, fix_status\
 "
 
-
+@staff_member_required(redirect_field_name='from', login_url='login')
 def my_port_error_tasks(request):
     context = {}
     worker = request.user.first_name
@@ -749,7 +749,7 @@ def search_natpool(request):
 __NATPOOL_QUERY = "\
     SELECT id, device1, device1_nat_usage, device2, device2_nat_usage, record_time, (device1_nat_usage + device2_nat_usage) AS nat_total \
     FROM OM_REC_nat_pool_usage \
-    WHERE (device1 LIKE '%{}%' OR device2 LIKE '%{}%') AND record_time BETWEEN '{}' and '{}' \
+    WHERE (device1 LIKE '%%{}%%' OR device2 LIKE '%%{}%%') AND record_time BETWEEN '{}' and '{}' \
     ORDER BY (device1_nat_usage + device2_nat_usage) DESC \
 "
 
