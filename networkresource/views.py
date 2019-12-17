@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve
 from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -10,7 +10,7 @@ import os
 from django.utils import timezone
 from IPy import IP
 import json
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 import base64
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -678,9 +678,12 @@ def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
+    expireDate, _ = getDateRange(-8)    # 系统自动清理9天前的预占，因此显示8天前的预占信息作为即将过期的信息
+    almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
+    context['almost_expire_cnt'] = almostExpireCnt
     context['device_allocated_segment_search_form'] = DeviceIpSegmentForm()
     return render(request, 'ip_allocated_segment.html', context)
 
@@ -697,10 +700,13 @@ def search_device_allocated_segment(request):
         all_device_ip_segment_query_line + otherCmd
     )
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
+    expireDate, _ = getDateRange(-8)
+    almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
 
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
+    context['almost_expire_cnt'] = almostExpireCnt
     context['device_allocated_segment_search_form'] = segment_search_form
     context['search_paras'] = dict2SearchParas(segment_search_form.cleaned_data)
     return render(request, 'ip_allocated_segment.html', context)
@@ -823,4 +829,22 @@ def cancle_reserve(request):
         data['error_info'] = '传递参数有误'
 
     return JsonResponse(data)
+
+
+@login_required(redirect_field_name='from', login_url='login')
+def ajax_get_my_reserved_list(request):
+    data = {}
+    reserved_person = request.user
+    my_reserved_list = GroupClientIpReserve.objects.filter(reserved_person=reserved_person.first_name)
+    my_reserved_dict = {}
+    for my_reserved in my_reserved_list:
+        my_reserved_dict[my_reserved.id] = [
+            my_reserved.subnet_gateway, my_reserved.subnet_mask, my_reserved.reserved_cnt, 
+            my_reserved.client_name, my_reserved.contact, 
+            my_reserved.reserved_time.strftime('%Y-%m-%d'), 
+        ]
+    data['status'] = 'success'
+    data['my_reserved_dict'] = json.dumps(my_reserved_dict)
+    return JsonResponse(data)
+
     

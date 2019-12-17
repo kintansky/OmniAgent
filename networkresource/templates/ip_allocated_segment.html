@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %} 设备可用地址段情况 {% endblock %}
+{% block title %} IP资源查询 {% endblock %}
 
 {% load static %}
 {% block header_extends %}
@@ -9,15 +9,43 @@
 {% block navbar_resource_active %}active{% endblock %}
 
 {% block subheader %}
-    设备可用地址段情况
+    IP资源查询
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="page-header">
-        <h1 class="text-center">IP资源查询 </h1>
+        <h1 class="text-center">IP资源查询</h1>
     </div>
     <div class="row">
+        <div class="panel-group" role="tablist">
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="collapseListGroupHeading1">
+                <h4 class="panel-title">
+                    <a class="collapsed" role="button" data-toggle="collapse" href="#collapseListGroup1" aria-expanded="false" aria-controls="collapseListGroup1">
+                        <span class="glyphicon glyphicon-expand"></span>
+                        <strong>注意：</strong> 占用有效期为<strong> 9 </strong>天，逾期占用将被自动清理，即将逾期清单：
+                    </a>
+                </h4>
+                </div>
+                <div id="collapseListGroup1" class="panel-collapse collapse" role="tabpanel" aria-labelledby="collapseListGroupHeading1">
+                <ul class="list-group">
+                    {% for expireCnt in almost_expire_cnt %}
+                        <li class="list-group-item">
+                            <strong> {{ expireCnt.reserved_person }} </strong>预占的 <strong>{{ expireCnt.reserved_cnt__sum }}</strong> 个IP即将逾期
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="panel-footer">*以上占用将在凌晨被系统自动清理，请确认是否已经完成数据配置</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-md-1">
+            <a id="modal_form_trigger" class="btn btn-danger" href="" role="button" data-toggle="modal" data-target=".bs-example-modal-lg">我的占用</a>
+        </div>
         <div class="col-md-10">
             <form action="{% url 'search_device_allocated_segment'  %}" method="GET" class="form-inline">
                 {% for field in device_allocated_segment_search_form %}
@@ -183,6 +211,36 @@
 
     </div>
 </div>
+
+{# modal #}
+<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">我的占用</h4>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>IP段</th>
+                                <th>客户</th>
+                                <th>预占时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="my_reserved_list">
+                            <!-- ajax回填 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer"></div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block tail_script %}
@@ -290,6 +348,36 @@
                         window.location.reload();
                         // cancle_record.remove();
                         alert("取消成功");
+                    }else{
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+
+        // 我的占用情况
+        $("#modal_form_trigger").click(function(){
+            $.ajax({
+                url: '{% url "ajax_get_my_reserved_list" %}',
+                type: 'GET',
+                data: {},
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        var my_reserved_dict = JSON.parse(data['my_reserved_dict']);
+                        var my_reserved_data = '';
+                        for(var key in my_reserved_dict){
+                            var d = my_reserved_dict[key];
+                            if(user_is_staff == 'True'){
+                                my_reserved_data += '<tr><td>'+d[0]+'/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+key+'>撤销</a></td></tr>';
+                            }else{
+                                my_reserved_data += '<tr><td>'+d[0].substr(0, 8)+'***/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+key+'>撤销</a></td></tr>';
+                            }
+                        }
+                        $('#my_reserved_list').html(my_reserved_data);
                     }else{
                         alert(data['error_info']);
                     }
