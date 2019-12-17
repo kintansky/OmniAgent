@@ -32,7 +32,8 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'ENGINE': 'mysql.connector.django',
+        # 'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'omni_agent',
         'USER': 'root',
         'PASSWORD': 'hlw2019!@#$',
@@ -44,7 +45,8 @@ DATABASES = {
     },
     # networkresource使用的是cmdb数据库，migrate的时候需要指定--database=...
     'cmdb': {
-        'ENGINE': 'mysql.connector.django',
+        # 'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'cmdb',
         'USER': 'root',
         'PASSWORD': 'hlw2019!@#$',

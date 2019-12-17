@@ -32,7 +32,8 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        'ENGINE': 'mysql.connector.django',
+        # 'ENGINE': 'mysql.connector.django', # mysql提供的数据库连接器bug，8.0.5版本后无法处理decimal类型
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'omni_agent',
         'USER': 'root',
         'PASSWORD': 'password',
@@ -44,7 +45,8 @@ DATABASES = {
     },
     # networkresource使用的是cmdb数据库，migrate的时候需要指定--database=...
     'cmdb': {
-        'ENGINE': 'mysql.connector.django',
+        # 'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'cmdb',
         'USER': 'root',
         'PASSWORD': 'password',
