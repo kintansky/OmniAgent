@@ -257,7 +257,7 @@ def ajax_get_olt_bng(request, device_type):
     data = {}
     if device_type == 'olt':
         olt = request.GET.get('olt', '').strip()
-        rawQueryCmd = 'select id, olt from omni_agent.MR_REP_olt_bng_references where olt LIKE "%{}%" GROUP BY olt'.format(olt)
+        rawQueryCmd = 'select id, olt from omni_agent.MR_REP_olt_bng_references where olt LIKE "%%{}%%" GROUP BY olt'.format(olt)
         olts = IpmanResource.objects.raw(rawQueryCmd)
         olt_list = [d.olt for d in olts]
         if len(olt_list) > 10:
@@ -612,7 +612,7 @@ def ajax_mod_allocated_ip(request, operation_type):
             mod_msg = None
         # mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
         raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
-        mod_target_list = IPAllocation.objects.raw(raw_query, ('已删除', '%{}%'.format(client_name), group_id, order_num, product_id))
+        mod_target_list = IPAllocation.objects.raw(raw_query, ('已删除', '%%{}%%'.format(client_name), group_id, order_num, product_id))
         # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
         for mod_target in mod_target_list:
             # old_data = objectDataSerializer(mod_target, {})
