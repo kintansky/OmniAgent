@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block new_button %}
-    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+    <button id="new_btn" type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
         新增
     </button>
 {% endblock %}
@@ -79,6 +79,7 @@
                             {{ field }}
                         </div>
                     {% endfor %}
+                    <button type="reset" class="btn btn-primary">重置</button>
                 </form>
             </div>
             <div class="modal-footer">
@@ -103,6 +104,9 @@
 {% block tail_script %}
 <script>
     $(document).ready(function(){
+        $('#new_btn').click(function(){
+            $(":reset").trigger("click");
+        });
         $('#new_segment_btn').click(function(){
             $('#loading').modal('show');
             $.ajax({
