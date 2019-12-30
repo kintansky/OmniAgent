@@ -187,3 +187,13 @@ class NewIPAllocationForm(forms.Form):
 
 class DeviceIpSegmentForm(forms.Form):
     device_name = forms.CharField(label='Device', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:200px'}))
+
+
+class NewIpSegmentForm(forms.Form):
+    SEGMENT_STATE_CHOICES = (
+        (0, '未启用'),
+        (1, '启用'),
+    )
+    segment = forms.GenericIPAddressField(label='IP地址', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0'}))
+    mask = forms.IntegerField(label='掩码', widget=forms.NumberInput(attrs={'class': 'form-control', }))
+    segment_state = forms.ChoiceField(label='状态', choices=SEGMENT_STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control', }))

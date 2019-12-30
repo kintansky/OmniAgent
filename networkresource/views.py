@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -594,6 +594,7 @@ def ajax_mod_allocated_ip(request, operation_type):
     elif operation_type == 'del_multi':
         order_num = request.POST.get('order_num')
         group_id = request.POST.get('group_id')
+        print(group_id)
         product_id = request.POST.get('product_id')
         client_name = request.POST.get('client_name')
         if request.POST.get('mod_order_num') is None:
@@ -670,6 +671,44 @@ all_device_ip_segment_query_line = '\
     ) AS olt_util \
     GROUP BY olt \
 '
+
+
+def list_all_ip_segment(request):
+    context = {}
+    all_ip_segment = GroupClientIPSegment.objects.all().values('segment', 'mask').annotate(Count('ip'))
+    page_of_objects, page_range = pages(request, all_ip_segment)
+    new_ip_segment_form = NewIpSegmentForm()
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['new_ip_segment_form'] = new_ip_segment_form
+    return render(request, 'all_ip_segment.html', context)
+
+def ajax_confirm_new_segment(request):
+    data = {}
+    new_ip_segment_form = NewIpSegmentForm(request.POST)
+    if new_ip_segment_form.is_valid():
+        segment = new_ip_segment_form.cleaned_data['segment']
+        mask = new_ip_segment_form.cleaned_data['mask']
+        segment_state = new_ip_segment_form.cleaned_data['segment_state']
+        snet = IP.make_net(segment, mask)
+        if GroupClientIPSegment.objects.filter(segment=snet[0].strNormal()):
+            data['status'] = 'error'
+            data['error_info'] = '网段已存在'
+        else:
+            for ip in snet:
+                target = GroupClientIPSegment()
+                target.ip = ip.strNormal()
+                target.ip_state = 0
+                target.segment = snet[0].strNormal()
+                target.mask = mask
+                target.segment_state = segment_state
+                target.save()
+            data['status'] = 'success'
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '表单信息有误'
+    return JsonResponse(data)
 
 
 @login_required(redirect_field_name='from', login_url='login')

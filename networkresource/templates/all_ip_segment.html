@@ -1,0 +1,132 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} 可用网段 {% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
+
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li><a href="">Resource</a></li>
+    <li class="active">ALL Ip Segment</li>
+{% endblock %}
+
+{% block subheader %}
+    可用网段
+{% endblock %}
+
+{% block new_button %}
+    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+        新增
+    </button>
+{% endblock %}
+
+{% block search_form %}
+    <form action="{% url 'allocated_client_search' %}" method="GET" class="form-inline">
+        {% for field in client_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
+{% block alert_content %}
+    {% if client_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ client_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block table_title %}
+        <th>地址段</th>
+        <th>地址数量</th>
+        <th>操作</th>
+{% endblock %}
+
+{% block table_body %}
+    {% for record in records %}
+        <tr>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.segment }}/{{ record.mask }}">
+                {{ record.segment }} / {{ record.mask }}
+            </td>
+            <td>
+                {{ record.ip__count }}
+            </td>
+            <td>操作</td>
+        </tr>
+    {% endfor %}
+{% endblock %}
+
+{% block other_content %}
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">新增网段</h4>
+            </div>
+            <div class="modal-body">
+                <form id="new_segment_form" action="{% url 'allocated_client_search' %}" method="POST">
+                    {% for field in new_ip_segment_form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button  id="new_segment_btn" type="button" class="btn btn-success">新增</button>
+                <!-- <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button> -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- loading提示 -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body ">
+                <p class="text-center">正在处理，请稍候...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tail_script %}
+<script>
+    $(document).ready(function(){
+        $('#new_segment_btn').click(function(){
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'ajax_confirm_new_segment' %}",  // 异步请求的地址
+                type: "POST",    // 请求方式
+                data: $("#new_segment_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        $('#loading').modal('hide');
+                        $('#myModal').modal('hide');
+                        alert('新增成功');
+                        window.location.reload();
+                    }else{
+                        $('#loading').modal('hide');
+                        alert('新增失败：' + data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    $('#loading').modal('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
