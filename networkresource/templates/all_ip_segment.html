@@ -1,90 +1,137 @@
-{% extends 'list_base.html' %}
-
-{# 下面仅对base.html进行扩展#}
+{% extends 'base.html' %}
 {% block title %} 可用网段 {% endblock %}
-{% block navbar_resource_active %}active{% endblock %}
 
-{# 下面对list_base.html进行扩展#}
-{% block breadcrumb %}
-    <li><a href="">Resource</a></li>
-    <li class="active">ALL Ip Segment</li>
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
 {% endblock %}
+
+{% block navbar_resource_active %}active{% endblock %}
 
 {% block subheader %}
     可用网段
 {% endblock %}
 
-{% block new_button %}
-    <button id="new_btn" type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">
-        新增
-    </button>
-{% endblock %}
-
-{% block search_form %}
-    <form action="{% url 'allocated_client_search' %}" method="GET" class="form-inline">
-        {% for field in client_search_form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+{% block content %}
+<div class="container-fluid">
+    <br>
+    <ol class="breadcrumb">
+        <li><a href="{% url 'dashboard' %}">Home</a></li>
+        <li>resource</li>
+        <li class="active">可用网段</li>
+    </ol>
+    <h2 class="sub-header">可用网段情况</h2>
+    <div class="row">
+        <div class="col-md-7">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>地址段</th>
+                            <th>地址数量</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                            <tr>
+                                <td data-toggle="tooltip" data-placement="top" title="{{ record.segment }}/{{ record.mask }}">
+                                    {{ record.segment }} / {{ record.mask }}
+                                </td>
+                                <td>
+                                    {{ record.ip__count }}
+                                </td>
+                                <td>操作</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">搜索</button>
-    </form>
-{% endblock %}
-
-{% block alert_content %}
-    {% if client_search_form.errors %}
-        <br>
-        <div class="alert alert-danger alert-dismissible" role="alert">
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <strong>Input Error: </strong>{{ client_search_form.errors.as_text }}
         </div>
-    {% endif %}
-{% endblock %}
-
-{% block table_title %}
-        <th>地址段</th>
-        <th>地址数量</th>
-        <th>操作</th>
-{% endblock %}
-
-{% block table_body %}
-    {% for record in records %}
-        <tr>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.segment }}/{{ record.mask }}">
-                {{ record.segment }} / {{ record.mask }}
-            </td>
-            <td>
-                {{ record.ip__count }}
-            </td>
-            <td>操作</td>
-        </tr>
-    {% endfor %}
-{% endblock %}
-
-{% block other_content %}
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="myModalLabel">新增网段</h4>
-            </div>
-            <div class="modal-body">
-                <form id="new_segment_form" action="{% url 'allocated_client_search' %}" method="POST">
-                    {% for field in new_ip_segment_form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
+        <div class="col-md-5">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            搜索网段
                         </div>
-                    {% endfor %}
-                    <button type="reset" class="btn btn-primary">重置</button>
-                </form>
+                        <div class="panel-body">
+                            <form action="{% url 'search_all_ip_segment' %}" method="GET">
+                                <div class="form-group">
+                                    <label for="id_ip">IP地址</label>
+                                    <input type="text" name="ip" class="form-control" placeholder="192.168.1.0" required="" id="id_ip">
+                                </div>
+                                <button type="submit" class="btn btn-primary">搜索</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            新增网段
+                            <button id="reset_btn" type="button" class="btn btn-danger btn-xs pull-right">重置</button>
+                        </div>
+                        <div class="panel-body">
+                            <form id="new_segment_form" action="" method="POST">
+                                {% for field in new_ip_segment_form %}
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                        {{ field }}
+                                    </div>
+                                {% endfor %}
+                                <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
+                            </form>
+                        </div>
+                        <div class="panel-footer">
+                            <button id="new_segment_btn" type="submit" class="btn btn-success">新增</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button  id="new_segment_btn" type="button" class="btn btn-success">新增</button>
-                <!-- <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button> -->
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2 counter">
+            <p class="counter">
+                <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                Found <strong>{{ page_of_objects.paginator.count }}</strong> records
+            </p>
+        </div>
+        <div class="col-lg-10">
+            <div class="paginator">
+                <ul class="pagination">
+                    {# 上一页 #}
+                    <li>
+                        {% if page_of_objects.has_previous %}
+                            <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        {% else %}
+                            <span aria-hidden="true">&laquo;</span>
+                        {% endif %}
+                    </li>
+                    {# 中间页码 #}
+                    {% for page_num in page_range %}
+                        {% if page_num == page_of_objects.number %}
+                            <li class='active'><span>{{ page_num }}</span></li>
+                        {% else %}
+                            {% if page_num == '...' %}
+                                <li><span>{{ page_num }}</span></li>
+                            {% else %}
+                                <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {# 下一页 #}
+                    <li>
+                        {% if page_of_objects.has_next %}
+                            <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        {% else %}
+                            <span aria-hidden="true">&raquo;</span>
+                        {% endif %}
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -104,8 +151,8 @@
 {% block tail_script %}
 <script>
     $(document).ready(function(){
-        $('#new_btn').click(function(){
-            $(":reset").trigger("click");
+        $('#reset_btn').click(function(){
+            $(':reset').trigger('click');
         });
         $('#new_segment_btn').click(function(){
             $('#loading').modal('show');
@@ -117,7 +164,6 @@
                 success: function(data){    // 回调函数，返回data
                     if(data['status'] == 'success'){
                         $('#loading').modal('hide');
-                        $('#myModal').modal('hide');
                         alert('新增成功');
                         window.location.reload();
                     }else{

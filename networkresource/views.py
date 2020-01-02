@@ -684,6 +684,20 @@ def list_all_ip_segment(request):
     context['new_ip_segment_form'] = new_ip_segment_form
     return render(request, 'all_ip_segment.html', context)
 
+
+def search_all_ip_segment(request):
+    context = {}
+    target_segment = request.GET.get('ip')
+    all_ip_segment = GroupClientIPSegment.objects.filter(segment=target_segment).values('segment', 'mask').annotate(Count('ip'))
+    page_of_objects, page_range = pages(request, all_ip_segment)
+    new_ip_segment_form = NewIpSegmentForm()
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['new_ip_segment_form'] = new_ip_segment_form
+    return render(request, 'all_ip_segment.html', context)
+
+
 def ajax_confirm_new_segment(request):
     data = {}
     new_ip_segment_form = NewIpSegmentForm(request.POST)
