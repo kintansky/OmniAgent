@@ -872,8 +872,12 @@ def cancle_reserve(request):
     if rid is not None:
         try:
             record = GroupClientIpReserve.objects.get(id=rid)
-            record.delete()
-            data['status'] = 'success'
+            if record.reserved_person == request.user.first_name:
+                record.delete()
+                data['status'] = 'success'
+            else:
+                data['status'] = 'error'
+                data['error_info'] = '越权操作：预占人与取消人账号不一致'
         except ObjectDoesNotExist:
             data['status'] = 'error'
             data['error_info'] = '记录不存在'
