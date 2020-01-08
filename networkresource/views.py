@@ -663,7 +663,7 @@ all_device_ip_segment_query_line = '\
     ) AS seg_util \
     LEFT JOIN ( \
     SELECT gateway, ip_mask AS mask, olt FROM MR_STS_ip_olt_detail \
-    WHERE olt IS NOT NULL \
+    WHERE olt LIKE "%%OLT%%" \
     GROUP BY gateway, ip_mask, olt \
     ) AS gw_olt \
     ON seg_util.subnet_gateway = gw_olt.gateway \
