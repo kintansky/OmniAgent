@@ -773,7 +773,7 @@ def ajax_get_segment_used_detail(request):
     # print(reserved_list[0].reserved_person)
     reserved_dict = {}
     for r in reserved_list:
-        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, r.reserved_time.strftime('%Y-%m-%d %H:%M:%S'), r.id]
+        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, (r.reserved_time+timezone.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S'), r.id]
     data['reserved_dict'] = json.dumps(reserved_dict)
     # print(data)
     data['status'] = 'success'
