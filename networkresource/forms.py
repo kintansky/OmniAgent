@@ -94,6 +94,7 @@ class NewIPAllocationForm(forms.Form):
     ACCESS_CHOICES = (
         ('GPON', 'GPON'),
         ('PTN', 'PTN'),
+        ('DIRECT', 'DIRECT'),
         ('OTHER', 'OTHER'),
     )
     order_num = forms.CharField(label='服开单号', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))

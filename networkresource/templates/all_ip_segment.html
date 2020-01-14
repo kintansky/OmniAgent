@@ -9,7 +9,7 @@
 {% block navbar_resource_active %}active{% endblock %}
 
 {% block subheader %}
-    可用网段
+    新增网段
 {% endblock %}
 
 {% block content %}
@@ -18,9 +18,9 @@
     <ol class="breadcrumb">
         <li><a href="{% url 'dashboard' %}">Home</a></li>
         <li>resource</li>
-        <li class="active">可用网段</li>
+        <li class="active">新增网段</li>
     </ol>
-    <h2 class="sub-header">可用网段情况</h2>
+    <h2 class="sub-header">在用网段情况</h2>
     <div class="row">
         <div class="col-md-7">
             <div class="table-responsive">
@@ -41,7 +41,17 @@
                                 <td>
                                     {{ record.ip__count }}
                                 </td>
-                                <td>操作</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-danger btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            操作 <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="#">启用</a></li>
+                                            <li><a href="#">未启用</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>

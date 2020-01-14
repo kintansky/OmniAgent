@@ -672,7 +672,8 @@ all_device_ip_segment_query_line = '\
     GROUP BY olt \
 '
 
-
+# 新增公网网段
+@staff_member_required(redirect_field_name='from', login_url='login')
 def list_all_ip_segment(request):
     context = {}
     all_ip_segment = GroupClientIPSegment.objects.all().values('segment', 'mask').annotate(Count('ip'))
@@ -724,7 +725,7 @@ def ajax_confirm_new_segment(request):
         data['error_info'] = '表单信息有误'
     return JsonResponse(data)
 
-
+# IP资源使用情况
 @login_required(redirect_field_name='from', login_url='login')
 @permission_required('networkresource.view_groupclientipsegment', raise_exception=True)
 def get_device_allocated_segment(request):
@@ -818,7 +819,7 @@ def ajax_get_segment_left_cnt(request):
     data['status'] = 'success'
     return JsonResponse(data)
 
-
+# IP资源预占操作
 @login_required(redirect_field_name='from', login_url='login')
 @permission_required('networkresource.add_groupclientipreserve', raise_exception=True)
 def reserve_segment(request):
