@@ -38,6 +38,16 @@
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <strong>Input Error: </strong>{{ client_search_form.errors.as_text }}
         </div>
+    {% else %}
+        <br>
+        <div class="alert alert-info alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                以下内容为录入的分配台账，设备提取的IP信息请转至
+                <a href="{% url 'ip_record' %}">设备业务IP现网状态</a>
+            </p>
+        </div>
     {% endif %}
 {% endblock %}
 

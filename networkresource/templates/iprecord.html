@@ -1,7 +1,7 @@
 {% extends 'list_base.html' %}
 
 {# 下面仅对base.html进行扩展#}
-{% block title %} IP地址记录 {% endblock %}
+{% block title %} 业务IP现网状态 {% endblock %}
 {% block navbar_resource_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
@@ -10,10 +10,11 @@
     <li class="active">IP Record</li>
 {% endblock %}
 
-{% block subheader %} 业务地址信息 {% endblock %}
+{% block subheader %} 业务IP现网状态 {% endblock %}
 
 {% block new_button %}
-<a class="btn btn-success" href="{% url 'new_ip_allocate' %}" role="button">新增</a>
+<!-- data-toggle="tooltip" data-placement="left" title="为避免误会，分配台账入口已迁移，请进入IP分配台账点击新增进行分配" -->
+    <a data-toggle="popover" title="提醒" data-content="为避免误会，分配动作入口已迁移，请通过导航栏进入-IP分配台账-点击新增进行分配、调整" class="btn btn-success"  role="button">新增</a>
 {% endblock %}
 
 {% block search_form %}
@@ -45,7 +46,15 @@
         <br>
         <div class="alert alert-info alert-dismissible" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            * 搜索优先级：<strong>IP</strong> > <strong>Device</strong>;
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                以下内容为设备提取的IP信息，非分配台账，录入的分配台账请转至
+                <a href="{% url 'ip_allocated_client_list' %}">IP分配台账</a>
+            </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                搜索优先级：<strong>IP</strong> > <strong>Device</strong>;
+            </p>
         </div>
     {% endif %}
 {% endblock %}
@@ -58,24 +67,30 @@
     <th>内层Vlan</th>
     <th>描述</th>
     <th>记录时间</th>
-    <th>类型</th>
 {% endblock %}
 
 {% block table_body %}
     {% for record in records %}
         <tr>
-            <td>{{ record.device_ip }}/{{ record.ip_mask }}</td>
-            <td>{{ record.device_name }}</td>
-            <td>{{ record.logic_port }}</td>
+            <td>
+                {% if record.ip_type == 'private' %}
+                <span class="label label-success">{{ record.ip_type }}</span>
+                {% else %}
+                <span class="label label-primary">{{ record.ip_type }}</span>
+                {% endif %}
+                <span class="label label-default">{{ record.device_ip }}/{{ record.ip_mask }}</span>
+            </td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.device_name }}">{{ record.device_name|truncatechars:30 }}</td>
+            <td>
+                <span class="label label-danger">{{ record.logic_port }}</span>
+            </td>
             <td>{{ record.svlan }}</td>
             <td>{{ record.cvlan }}</td>
-            <td>{{ record.ip_description|truncatechars:40 }}</td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.ip_description }}">{{ record.ip_description|truncatechars:40 }}</td>
             <td>{{ record.record_time|date:"Y-m-d" }}</td>
-            <td>{{ record.ip_type }}</td>
         </tr>
     {% empty %}
         <tr>
-            <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>
