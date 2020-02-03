@@ -66,7 +66,7 @@
                     <span class="label label-info">{{ record.state }}</span>
                 {% elif record.state == '已启用' %}
                     <span class="label label-success">{{ record.state }}</span>
-                {% elif record.state == '已停用' %}
+                {% elif record.state == '临时禁用' %}
                     <span class="label label-danger">{{ record.state }}</span>
                 {% endif %}
                 {{ record.order_num|truncatechars:15 }}
@@ -191,7 +191,7 @@
                                 <select name="state" class="form-control" id="state" style="width:70%">
                                     <option value="预分配">预分配</option>
                                     <option value="已启用">已启用</option>
-                                    <option value="已停用">已停用</option>
+                                    <option value="临时禁用">临时禁用</option>
                                 </select>
                             </div>
                         </div>
@@ -361,7 +361,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger modal_del">删除</button>
+                <button type="button" class="btn btn-danger modal_del">删除数据</button>
+                <button type="button" class="btn btn-warning modal_ban">临时禁用</button>
                 <button type="button" class="btn btn-success modal_mod">变更</button>
             </div>
         </div>
@@ -420,6 +421,27 @@
                     if(data['status'] == 'success'){
                         $('.modal').modal('hide');  // 修改成功后关闭modal
                         alert('删除成功');
+                        window.location.reload();
+                    }else{
+                        console.log(data);
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 临时禁用
+        $(".modal_ban").click(function(){
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'ban' %}",
+                type: "POST",
+                data: $("#mod_order_num").serialize()+"&"+$("#mod_msg").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        alert('临时禁用成功');
                         window.location.reload();
                     }else{
                         console.log(data);

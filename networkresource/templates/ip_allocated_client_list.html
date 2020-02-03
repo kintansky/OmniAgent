@@ -66,18 +66,20 @@
         <tr>
             <td>
                 <a href="{% url 'ip_allocates_search' %}?order_num={{ record.order_num }}&group_id={{ record.group_id }}&product_id={{ record.product_id }}&client_name={{ record.client_name }}" target="_blank">
-                    <span class="glyphicon glyphicon-list-alt"></span>
+                    <span data-toggle="tooltip" data-placement="top" title="详细数据" class="glyphicon glyphicon-list-alt"></span>
                 </a>
             </td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.order_num }}" class="order_num">{{ record.order_num|truncatechars:50 }}</td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.client_name }}" class="client_name">{{ record.client_name|truncatechars:40 }}</td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.group_id }}" class="group_id">{{ record.group_id }}</td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.product_id }}" class="product_id">{{ record.product_id }}</td>
-            <td>{{ record.id__count }}</td>
+            <td>
+                <span class="label label-danger">{{ record.id__count }}</span>
+            </td>
             {% if user.is_authenticated %}
                 <td>
                     <a href="" data-toggle="modal" data-target=".bs-example-modal" class="modal_form_trigger">
-                        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                        <span data-toggle="tooltip" data-placement="top" title="临时禁用 / 删除数据" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
                     </a>
                 </td>
             {% else %}
@@ -136,7 +138,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">请提供删除依据</h4>
+                <h4 class="modal-title">请提供操作依据</h4>
             </div>
             <div class="modal-body">
                 <p class="bg-primary text-center"><strong>以下为批量操作, 请注意</strong></p>
@@ -169,7 +171,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger modal_del">删除</button>
+                <button type="button" class="btn btn-danger modal_del">删除数据</button>
+                <button type="button" class="btn btn-warning modal_ban">临时禁用</button>
             </div>
         </div>
     </div>
@@ -198,6 +201,31 @@
             $("#product_id").val($(this).parent().siblings(".product_id").text());
         });
         // 批量操作
+        // 禁用操作
+        $(".modal_ban").click(function(){
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'ban_multi' %}",
+                type: "POST",
+                data: $("#mod_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        $('#loading').modal('hide');
+                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        alert('临时禁用成功');
+                        window.location.reload();
+                    }else{
+                        $('#loading').modal('hide');
+                        console.log(data);
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 删除操作
         $(".modal_del").click(function(){
             $('#loading').modal('show');
             $.ajax({
@@ -208,7 +236,7 @@
                     if(data['status'] == 'success'){
                         $('#loading').modal('hide');
                         $('.modal').modal('hide');  // 修改成功后关闭modal
-                        alert('删除成功');
+                        alert('数据删除成功');
                         window.location.reload();
                     }else{
                         $('#loading').modal('hide');

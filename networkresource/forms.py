@@ -51,7 +51,7 @@ class IPTargetForm(forms.Form):
     STATE_CHOICES = (
         ('预分配', '预分配'),
         ('已启用', '已启用'),
-        ('已停用', '已停用'),
+        ('临时禁用', '临时禁用'),
     )
     ip_func = forms.ChoiceField(label='IP类型', choices=IPFUNC_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
     state = forms.ChoiceField(label='状态', choices=STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))

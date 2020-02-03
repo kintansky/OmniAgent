@@ -338,6 +338,7 @@ def ajax_confirm_allocate(request):
                         ip_allocation.comment = new_ip_allocation_form.cleaned_data['comment']
                         ip_allocation.alc_user = request.user.first_name
                         ip_allocation.alc_time = timezone.datetime.now()
+                        ip_allocation.last_mod_time = ip_allocation.alc_time
 
                         ip_allocation.save()
 
@@ -376,15 +377,15 @@ def allocated_client_search(request):
         group_id = client_search_form.cleaned_data['group_id']
         product_id = client_search_form.cleaned_data['product_id']
         if order_num != '':
-            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+            client_all_list = IPAllocation.objects.filter(order_num=order_num).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
         elif client_name != '':
-            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), client_name__icontains=client_name).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+            client_all_list = IPAllocation.objects.filter(client_name__icontains=client_name).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
         elif group_id is not None:
-            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), group_id=group_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+            client_all_list = IPAllocation.objects.filter(group_id=group_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
         elif product_id is not None:
-            client_all_list = IPAllocation.objects.filter(~Q(state='已删除'), product_id=product_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+            client_all_list = IPAllocation.objects.filter(product_id=product_id).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
         else:
-            client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+            client_all_list = IPAllocation.objects.all().values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
 
     page_of_objects, page_range = pages(request, client_all_list)
     context['count'] = client_all_list.count()
@@ -398,7 +399,7 @@ def allocated_client_search(request):
 
 def ip_allocated_list(request):
     context = {}
-    ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'))
+    ip_all_list = IPAllocation.objects.all()
     page_of_objects, page_range = pages(request, ip_all_list)
     context['count'] = ip_all_list.count()
 
@@ -419,19 +420,19 @@ def ip_allocated_search(request):
         group_id = ip_search_form.cleaned_data['group_id']
         product_id = ip_search_form.cleaned_data['product_id']
         if ip_address != '':
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), ip=ip_address)
+            ip_all_list = IPAllocation.objects.filter(ip=ip_address)
         elif order_num != '':
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, client_name__icontains=client_name)
+            ip_all_list = IPAllocation.objects.filter(order_num=order_num, client_name__icontains=client_name)
             if group_id is not None and product_id is not None:
-                ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+                ip_all_list = IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
         elif group_id is not None:
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), group_id=group_id)
+            ip_all_list = IPAllocation.objects.filter(group_id=group_id)
         elif product_id is not None:
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), product_id=product_id)
+            ip_all_list = IPAllocation.objects.filter(product_id=product_id)
         elif client_name != '':
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'), client_name__icontains=client_name)
+            ip_all_list = IPAllocation.objects.filter(client_name__icontains=client_name)
         else:
-            ip_all_list = IPAllocation.objects.filter(~Q(state='已删除'))
+            ip_all_list = IPAllocation.objects.all()
     else:
         context['ip_search_form'] = ip_search_form
         return render(request, 'ip_allocated_list.html', context)
@@ -487,6 +488,10 @@ def ajax_mod_allocated_ip(request, operation_type):
         ip_target_form = IPTargetForm(form2Dict)    # form实例化可以直接传入dict, model不行
         if ip_target_form.is_valid() and new_ip_allocation_form.is_valid():
             mod_target = IPAllocation.objects.get(id=rid)
+            if mod_target.state == ip_target_form.cleaned_data['state'] == "临时禁用":
+                data['status'] = 'error'
+                data['error_info'] = '本条记录处于禁用状态，不允许修改'
+                return JsonResponse(data)
             old_data = objectDataSerializer(mod_target, {})
             # 备份旧数据
             # print(new_ip_allocation_form.cleaned_data)
@@ -515,7 +520,10 @@ def ajax_mod_allocated_ip(request, operation_type):
                 old_data['cevlan'] = 0
             old_data['mod_user'] = request.user.first_name
             old_data['mod_time'] = timezone.datetime.now()
-            old_data['mod_type'] = 'mod'
+            if ip_target_form.cleaned_data['state'] == "临时禁用":
+                old_data['mod_type'] = 'ban'    # 适配点击变更按钮来临时禁用的操作
+            else:
+                old_data['mod_type'] = 'mod'
             mod_record = IPMod(**old_data)
             mod_record.save()
             # 更新新数据
@@ -555,7 +563,93 @@ def ajax_mod_allocated_ip(request, operation_type):
             # print(errorDict)
             for f in errorDict:
                 data['error_info'] = '无效字段{}：{}'.format(f, errorDict[f][0]['message'])
-    elif operation_type == 'del':
+    elif operation_type == 'ban':
+        rid = request.POST.get('rid')
+        mod_target = IPAllocation.objects.get(id=rid)
+        if mod_target.state == "临时禁用":
+            data['status'] = 'error'
+            data['error_info'] = '本数据已处于禁用状态，无需再次禁用'
+            return JsonResponse(data)
+        old_data = objectDataSerializer(mod_target, {})
+        old_data['mod_target_id'] = old_data.pop('id')
+        old_data.pop('comment')
+        old_data.pop('alc_user')
+        old_data.pop('alc_time')
+        old_data.pop('last_mod_time')
+        if request.POST.get('mod_order_num') is None:
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        elif request.POST.get('mod_order_num').strip() == '':
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        else:
+            old_data['mod_order_num'] = request.POST.get('mod_order_num').strip()
+        if request.POST.get('mod_msg') is not None:
+            old_data['mod_msg'] = request.POST.get('mod_msg').strip()
+        # 需要处理数据库对0时返回None的情况
+        if old_data['svlan'] is None:
+            old_data['svlan'] = 0
+        if old_data['cevlan'] is None:
+            old_data['cevlan'] = 0
+        old_data['mod_user'] = request.user.first_name
+        old_data['mod_time'] = timezone.datetime.now()
+        old_data['mod_type'] = 'ban'
+        mod_record = IPMod(**old_data)
+        mod_record.save()
+
+        mod_target.last_mod_time = old_data['mod_time']
+        mod_target.state = '临时禁用'
+        mod_target.save()
+        data['status'] = 'success'
+    elif operation_type == 'ban_multi':
+        order_num = request.POST.get('order_num')
+        group_id = request.POST.get('group_id')
+        product_id = request.POST.get('product_id')
+        client_name = request.POST.get('client_name')
+        if request.POST.get('mod_order_num') is None:
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        elif request.POST.get('mod_order_num').strip() == '':
+            data['status'] = 'error'
+            data['error_info'] = '请提供有效的变更单号'
+            return JsonResponse(data)
+        else:
+            mod_order_num = request.POST.get('mod_order_num').strip()
+        if request.POST.get('mod_msg') is not None:
+            mod_msg = request.POST.get('mod_msg').strip()
+        else:
+            mod_msg = ''
+        # mod_target_list = IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
+        mod_target_list = IPAllocation.objects.raw(raw_query, ('临时禁用', '%%{}%%'.format(client_name), group_id, order_num, product_id))
+        # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
+        mod_time = timezone.datetime.now()
+        for mod_target in mod_target_list:
+            # old_data = objectDataSerializer(mod_target, {})
+            old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
+            old_data['mod_target_id'] = old_data.pop('id')
+            old_data.pop('comment')
+            old_data.pop('alc_user')
+            old_data.pop('alc_time')
+            old_data.pop('last_mod_time')
+            old_data['mod_order_num'] = mod_order_num
+            old_data['mod_msg'] = mod_msg
+            if old_data['svlan'] is None:
+                old_data['svlan'] = 0
+            if old_data['cevlan'] is None:
+                old_data['cevlan'] = 0
+            old_data['mod_user'] = request.user.first_name
+            old_data['mod_time'] = mod_time
+            old_data['mod_type'] = 'ban'
+            mod_record = IPMod(**old_data)
+            mod_record.save()
+        # update更新原分配表数据为临时禁用,已禁用的无需再禁用
+        IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=mod_time, state = '临时禁用')
+        data['status'] = 'success'
+    elif operation_type == 'del': # 删除数据
         rid = request.POST.get('rid')
         mod_target = IPAllocation.objects.get(id=rid)
         old_data = objectDataSerializer(mod_target, {})
@@ -586,15 +680,11 @@ def ajax_mod_allocated_ip(request, operation_type):
         old_data['mod_type'] = 'del'
         mod_record = IPMod(**old_data)
         mod_record.save()
-
-        mod_target.last_mod_time = old_data['mod_time']
-        mod_target.state = '已删除'
-        mod_target.save()
+        mod_target.delete() # 最后删除原数据
         data['status'] = 'success'
-    elif operation_type == 'del_multi':
+    elif operation_type == 'del_multi': # 批量删除
         order_num = request.POST.get('order_num')
         group_id = request.POST.get('group_id')
-        print(group_id)
         product_id = request.POST.get('product_id')
         client_name = request.POST.get('client_name')
         if request.POST.get('mod_order_num') is None:
@@ -610,10 +700,10 @@ def ajax_mod_allocated_ip(request, operation_type):
         if request.POST.get('mod_msg') is not None:
             mod_msg = request.POST.get('mod_msg').strip()
         else:
-            mod_msg = None
-        # mod_target_list = IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
-        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
-        mod_target_list = IPAllocation.objects.raw(raw_query, ('已删除', '%%{}%%'.format(client_name), group_id, order_num, product_id))
+            mod_msg = ''
+        # mod_target_list = IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
+        mod_target_list = IPAllocation.objects.raw(raw_query, ('%%{}%%'.format(client_name), group_id, order_num, product_id))
         # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
         for mod_target in mod_target_list:
             # old_data = objectDataSerializer(mod_target, {})
@@ -624,8 +714,7 @@ def ajax_mod_allocated_ip(request, operation_type):
             old_data.pop('alc_time')
             old_data.pop('last_mod_time')
             old_data['mod_order_num'] = mod_order_num
-            if mod_msg:
-                old_data['mod_msg'] = mod_msg
+            old_data['mod_msg'] = mod_msg
             if old_data['svlan'] is None:
                 old_data['svlan'] = 0
             if old_data['cevlan'] is None:
@@ -635,8 +724,8 @@ def ajax_mod_allocated_ip(request, operation_type):
             old_data['mod_type'] = 'del'
             mod_record = IPMod(**old_data)
             mod_record.save()
-
-        IPAllocation.objects.filter(~Q(state='已删除'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=old_data['mod_time'], state = '已删除')
+        # delete原表数据
+        IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).delete()
         data['status'] = 'success'
     else:
         data['status'] = 'error'
