@@ -97,7 +97,7 @@
             {% if user.is_authenticated %}
                 <td>
                     <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}">
-                        <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                        <span data-toggle="tooltip" data-placement="top" title="点击修改" class="glyphicon glyphicon-edit" aria-hidden="true"></span>
                     </a>
                 </td>
             {% else %}
@@ -340,7 +340,7 @@
                     <hr>
                     <div class="row">
                         <div class="col-sm-12">
-                            <span class="label label-danger">变更或删除依据</span>
+                            <span class="label label-danger">变更或删除依据 (注意: 变更后会把填入的变更单号作为新服开单号)</span>
                         </div>
                     </div>
                     <br>

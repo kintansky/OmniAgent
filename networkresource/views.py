@@ -168,14 +168,37 @@ def new_allocate_ip(request):
     return render(request, 'ipallocate.html', context)
 
 
-def ajax_generate_ip_list(request):
+GET_OLT_CAN_ALLOCATED_IP = '''
+    SELECT seg.id, seg.ip, seg.subnet_gateway, seg.subnet_mask FROM MR_REC_group_client_ip_segment AS seg
+    inner JOIN (
+    SELECT gateway, ip_mask AS mask, olt FROM MR_STS_ip_olt_detail 
+    WHERE olt = %s
+    AND gateway NOT IN (
+    SELECT gateway FROM (
+    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt 
+    FROM MR_STS_ip_olt_detail 
+    WHERE ip_mask != 32 
+    GROUP BY gateway 
+    HAVING cnt > 1) AS a) 
+    GROUP BY gateway, ip_mask, olt) AS target_gw
+    ON seg.subnet_gateway = target_gw.gateway AND target_gw.mask = seg.subnet_mask 
+    AND seg.segment_state = TRUE AND seg.ip_state = FALSE 
+'''
+
+def ajax_get_olt_can_allocated_ip(request):
+    data = {}
+    olt = request.GET.get('olt', '').strip()
+    ips = GroupClientIPSegment.objects.raw(GET_OLT_CAN_ALLOCATED_IP, (olt,))
+    ip_list = ['{}/{} 网关{}'.format(d.ip, d.subnet_mask, d.subnet_gateway) for d in ips]
+    data['ip_list'] = ','.join(ip_list)
+    data['status'] = 'success'
+    return JsonResponse(data)
+
+
+def ajax_generate_ip_list2(request):
     data = {}
     ip_target_form = IPTargetForm(request.POST)
-    target_list = request.POST.get('target-list', '{}')
     include_private_ip = 'n'
-    if target_list == '':
-        target_list = '{}'
-    target_dict = json.loads(target_list)
     if ip_target_form.is_valid():
         ip_func = ip_target_form.cleaned_data['ip_func']
         first_ip = ip_target_form.cleaned_data['first_ip']
@@ -197,26 +220,9 @@ def ajax_generate_ip_list(request):
             else:
                 last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
             data['target'] = first_ip + 'p' + str(ip_num)
-        # if ip_num:
-        #     ip_sep = first_ip.split('.')
-        #     last_num = int(ip_sep[3]) + ip_num - 1
-        #     if last_num > 255:
-        #         last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), '0'])
-        #     else:
-        #         last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
-        #     data['target'] = first_ip + 'p' + str(ip_num)
-        # elif ip_segment:
-        #     subnet = IP.make_net(*ip_segment.split('/'))
-        #     first_ip = subnet[0].strNormal()
-        #     last_ip = subnet[-1].strNormal()
-        #     data['target'] = subnet.strNormal()
-        target_dict[data['target']] = [ip_func, state, gateway]
-        for t in target_dict:
-            if '私网' in target_dict[t]:
-                include_private_ip = 'y'
-                break
+        if ip_func == '私网':
+            include_private_ip = 'y'
         data['include_private_ip'] = include_private_ip
-        data['target_list'] = json.dumps(target_dict)   # 通过json传回
         data['ip_func'] = ip_func
         data['first_ip'] = first_ip
         data['last_ip'] = last_ip
@@ -224,7 +230,6 @@ def ajax_generate_ip_list(request):
         data['state'] = state
         data['status'] = 'success'
     else:
-        data['target_list'] = json.dumps(target_dict)
         data['status'] = 'error'
         error_info = ''
         errorDict = ip_target_form.errors.get_json_data()
@@ -233,8 +238,62 @@ def ajax_generate_ip_list(request):
         data['error_info'] = error_info
     return JsonResponse(data)
 
+def confirm_ready_ip(request):
+    data = {}
+    target_list = request.POST.get('target-list', '{}')
+    include_private_ip = 'n'
+    if target_list == '':
+        target_list = '{}'
+    target_dict = json.loads(target_list)
+    target_list_append = request.POST.get('target_list_append', '{}')
+    target_dict_append = json.loads(target_list_append)
 
-def ajax_remove_ip(request):
+    for appendKey in target_dict_append:
+        targetKey = [k for k in target_dict]
+        targetIP = [t.split('p')[0] for t in targetKey]
+        if 'p' in appendKey:
+            searchKey = appendKey.split('p')
+            if searchKey[0] in targetIP:
+                i = targetIP.index(searchKey[0])
+                if int(searchKey[1]) >= int(targetKey[i].split('p')[1]):
+                    target_dict.pop(targetKey[i])
+                    target_dict[appendKey] = target_dict_append[appendKey]
+            else:
+                target_dict[appendKey] = target_dict_append[appendKey]
+        else:
+            if appendKey not in targetKey:
+                target_dict[appendKey] = target_dict_append[appendKey]
+    table_data = {}
+    for t in target_dict:
+        if 'p' in t:
+            ip, ip_num = t.split('p')
+            temp_ip, mask = ip.split('/')
+            ip_sep = temp_ip.split('.')
+            last_num = int(ip_sep[3]) + int(ip_num)
+            last_ip = ''
+            if last_num > 255:
+                last_ip = '.'.join(ip_sep[0:2]+[str(int(ip_sep[2])+1), str(last_num-255-1)])
+            else:
+                last_ip = '.'.join(ip_sep[0:3]+[str(last_num),])
+            table_data[t] = [target_dict[t][0], ip, last_ip, target_dict[t][2], target_dict[t][1]]
+        else:
+            subnet = IP.make_net(*t.split('/'))
+            first_ip = subnet[0].strNormal()
+            last_ip = subnet[-1].strNormal()
+            table_data[t] = [target_dict[t][0], first_ip, last_ip,  target_dict[t][2], target_dict[t][1]]
+    for t in target_dict:
+        if '私网' in target_dict[t]:
+            include_private_ip = 'y'
+            break
+
+    data['status'] = 'success'
+    data['target_list'] = json.dumps(target_dict)
+    data['table_data'] = json.dumps(table_data)
+    data['include_private_ip'] = include_private_ip
+    
+    return JsonResponse(data)
+
+def remove_conf_ip(request):
     data = {}
     include_private_ip = 'n'
     target_dict = json.loads(request.POST.get('target-list', '{}'))
@@ -357,7 +416,7 @@ def ajax_confirm_allocate(request):
 @staff_member_required(redirect_field_name='from', login_url='login')
 def ip_allocated_client_list(request):
     context = {}
-    client_all_list = IPAllocation.objects.filter(~Q(state='已删除')).values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
+    client_all_list = IPAllocation.objects.all().values('order_num', 'client_name', 'group_id', 'product_id').annotate(Count('id')).order_by()
     page_of_objects, page_range = pages(request, client_all_list)
     context['count'] = client_all_list.count()
 

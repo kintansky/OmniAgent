@@ -5,7 +5,7 @@ from .forms import LoginForm, RegisterForm
 from django.contrib.auth.models import User
 from watchdog.models import Device
 from inspection.models import OpticalMoudleDiff, PortErrorDiff, OneWayDevice, NatPoolUsage, LinkPingHourAggregate
-from networkresource.models import IpRecord
+from networkresource.models import IpRecord, IPAllocation, IPMod
 import datetime
 from django.utils import timezone
 from django.db.models import Count, Q, Max, Sum, F
@@ -127,6 +127,49 @@ def dashboard(request):
             temp.append(str(val))
         l[cost_hour.direction] = ','.join(temp)
     context['cost_hour_group_list'] = l
+    # 业务开通情况
+    # 当天情况
+    ip_mod_aggregate = IPMod.objects.filter(mod_time__range=getDateRange(-1)).values('mod_type').annotate(Count('ip', distinct=True)).order_by()
+    ip_alloc_num = IPAllocation.objects.filter(alc_time__range=getDateRange(-1)).values('ip').annotate(Count('ip', distinct=True)).order_by().count()
+    context['ip_mod_aggregate'] = ip_mod_aggregate
+    context['ip_alloc_num'] = ip_alloc_num
+    # 历史7天开通情况
+    ip_mod_7day_raw_query = '''
+    SELECT id, mod_type,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 6 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d0,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 5 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d1,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 4 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d2,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 3 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d3,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 2 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d4,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d5,
+    sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 0 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d6
+    FROM (SELECT id, ip, mod_type, DATE_FORMAT(mod_time, '%%Y-%%m-%%d') AS mt FROM mr_rec_ip_mod_record GROUP BY ip, mod_type, mt) AS mod_agg
+    GROUP BY mod_type
+    ORDER BY mod_type ASC 
+    '''
+    ip_mod_dict = {}
+    ip_mod_7day_result = IPMod.objects.raw(ip_mod_7day_raw_query)
+    for mod_data in ip_mod_7day_result:
+        temp = []
+        for f in ip_mod_7day_result.columns[2::]:
+            val = mod_data.serializable_value(f)
+            temp.append(str(val))
+        ip_mod_dict[mod_data.mod_type] = ','.join(temp)
+    context['ip_mod_dict'] = ip_mod_dict
+    ip_alloc_7day_raw_query = '''
+    SELECT id, COUNT(DISTINCT(ip)) AS cnt, DATE_FORMAT(alc_time, '%%Y-%%m-%%d') AS alct 
+    FROM mr_rec_ip_allocation
+    WHERE alc_time >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+    GROUP BY alc_time ORDER BY alct ASC 
+    '''
+    # alloc_date_list = []
+    # ip_alloc_dict = {}
+    # temp_ip_alloc_list = []
+    # ip_alloc_7day_result = IPAllocation.objects.raw(ip_alloc_7day_raw_query)
+    # for alloc_data in ip_alloc_7day_result:
+    #     alloc_date_list.append(alloc_data.alct)
+    #     temp_ip_alloc_list.append(str(alloc_data.cnt))
+    # context['ip_alloc_dict'] = {'alloc': ','.join(temp_ip_alloc_list)}
     # 其他
     today_time = datetime.datetime.now()
     context['time_begin'] = '%d-%d-%d+00:00:00' % (

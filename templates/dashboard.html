@@ -166,6 +166,41 @@
             </div>
         </div>
 
+        <div class="page-header">
+            <h2 class="text-center">&laquo; 业务开通情况 &raquo;</h2>
+        </div>
+        <div class="row">
+            <div class="col-md-5">
+                <h3>&raquo; 今日开通情况</h3>
+                <div class="alert alert-success" role="alert">
+                    今日开通情况如下：
+                </div>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <span class="badge">{{ ip_alloc_num }} 个IP</span>
+                        新增开通
+                    </li>
+                    {% for ip_mod_data in ip_mod_aggregate%}
+                    <li class="list-group-item">
+                        <span class="badge">{{ ip_mod_data.ip__count|floatformat|default:"0" }} 个IP</span>
+                        {% if ip_mod_data.mod_type == 'mod' %}
+                        业务变更
+                        {% elif ip_mod_data.mod_type == 'ban' %}
+                        临时禁用
+                        {% elif ip_mod_data.mod_type == 'del' %}
+                        删除数据
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-7">
+                <h3>&raquo; 近期开通情况统计</h3>
+                <div id="id_ipallocation_line" style="width:100%;height:200px;"></div>
+                <p><a class="btn btn-primary" href="{% url 'ip_allocated_client_list' %}" role="button">台账详情 &raquo;</a></p>
+            </div>
+        </div>
+
     </div>
     
     <!-- Device Detail Modal -->
@@ -350,6 +385,68 @@
         costLine.setOption(option);
         window.addEventListener("resize", function () {
             costLine.resize();
+        });
+
+        // ip allocation  line
+        // ping line
+        var ipAllocationLine = echarts.init(document.getElementById('id_ipallocation_line'), 'infographic');
+        ipAllocationLine.showLoading();
+        var h = new Array();
+        for(var i=0; i<7; i++){
+            h.push(i);
+        }
+        var option = {
+            // title: {
+            //     text: '时延趋势ms(月平均)'
+            // },
+            tooltip: {
+                trigger: 'axis',
+            },
+            legend: {
+                data:['临时禁用', '删除数据', '业务变更'],
+                x : 'right',
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            toolbox: {
+                feature: {
+                    saveAsImage: {}
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: h,
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+                {
+                    name: '临时禁用',
+                    type: 'line',
+                    data: '{{ ip_mod_dict.ban }}'.split(',')
+                },
+                {
+                    name: '删除数据',
+                    type: 'line',
+                    data: '{{ ip_mod_dict.del }}'.split(',')
+                },
+                {
+                    name: '业务变更',
+                    type: 'line',
+                    data: '{{ ip_mod_dict.mod }}'.split(',')
+                },
+            ]
+        };
+        ipAllocationLine.hideLoading();
+        ipAllocationLine.setOption(option);
+        window.addEventListener("resize", function () {
+            ipAllocationLine.resize();
         });
     });
 
