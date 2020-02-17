@@ -143,7 +143,7 @@ def dashboard(request):
     sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 2 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d4,
     sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 1 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d5,
     sum(if(date_format(DATE_SUB(CURDATE(), INTERVAL 0 DAY), '%%Y-%%m-%%d')=mt, 1, 0)) AS d6
-    FROM (SELECT id, ip, mod_type, DATE_FORMAT(mod_time, '%%Y-%%m-%%d') AS mt FROM mr_rec_ip_mod_record GROUP BY ip, mod_type, mt) AS mod_agg
+    FROM (SELECT id, ip, mod_type, DATE_FORMAT(mod_time, '%%Y-%%m-%%d') AS mt FROM MR_REC_ip_mod_record GROUP BY ip, mod_type, mt) AS mod_agg
     GROUP BY mod_type
     ORDER BY mod_type ASC 
     '''
