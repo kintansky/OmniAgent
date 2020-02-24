@@ -112,55 +112,55 @@ def export_moudle(request):
 
 # 端口质量模块
 # port error 采用rawquery做连接查询，取出其他关联信息 用于请求CRC+光功率的信息
+
+__PORTERROR_QUERY = '''
+    SELECT error_info.*, npp.* FROM (
+        SELECT np.*, ni.port_description, ni.port_status 
+            FROM omni_agent.OM_REP_port_error_diff as np 
+            LEFT JOIN omni_agent.MR_REC_ipman_resource AS ni 
+            ON np.device_name = ni.device_name AND np.port = ni.port 
+            WHERE np.record_time between %s AND %s
+        ) AS error_info 
+    LEFT JOIN (
+        SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time 
+            FROM omni_agent.OM_REC_port_perf 
+            WHERE record_time BETWEEN %s AND %s
+        ) AS npp 
+    ON error_info.device_name = npp.device_name AND error_info.port = npp.port 
+    AND DATE_FORMAT(error_info.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(npp.record_time, '%%Y-%%m-%%d') 
 '''
-__PORTERROR_QUERY = "\
-    SELECT error_info.*, npp.* FROM (\
-        SELECT np.*, ni.port_description, ni.port_status \
-            FROM omni_agent.OM_REP_port_error_diff as np \
-            LEFT JOIN omni_agent.MR_REC_ipman_resource AS ni \
-            ON np.device_name = ni.device_name AND np.port = ni.port \
-            WHERE np.record_time between %s AND %s\
-        ) AS error_info \
-    LEFT JOIN (\
-        SELECT device_name, `port`, tx_now_power, tx_high_warm, tx_low_warm, tx_state, rx_now_power, rx_high_warm, rx_low_warm, rx_state, utility_in, utility_out, record_time \
-            FROM omni_agent.OM_REC_port_perf \
-            WHERE record_time BETWEEN %s AND %s\
-        ) AS npp \
-    ON error_info.device_name = npp.device_name AND error_info.port = npp.port \
-    AND DATE_FORMAT(error_info.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(npp.record_time, '%%Y-%%m-%%d') \
-"
-'''
+
 CRC_FILTER = 60
 IPV4HEADERROR_FILTER = 1000
-__PORTERROR_QUERY = "\
-    SELECT \
-        ped.*,\
-        des.port_description, des.port_status,\
-        pef.problem_type, pef.problem_detail, pef.begin_time, pef.end_time, pef.worker, pef.status, pef.claim,\
-        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,\
-        error_cnt_tb.cnt\
-    FROM (\
-        SELECT * FROM omni_agent.OM_REP_port_error_diff \
-        WHERE record_time BETWEEN %s AND %s AND (stateCRC >= {} OR stateIpv4HeadError >= {})\
-    ) AS ped \
-    LEFT JOIN omni_agent.MR_REC_ipman_resource AS des\
-        ON ped.device_name = des.device_name AND ped.port = des.port\
-    LEFT JOIN (\
-        SELECT * FROM omni_agent.OM_REC_port_error_fix_record WHERE claim = 1\
-    ) AS pef \
-        ON ped.device_name = pef.device_name AND ped.port = pef.port\
-    LEFT JOIN (\
-        SELECT * FROM omni_agent.OM_REC_port_perf \
-        WHERE record_time BETWEEN %s AND %s\
-    ) AS pp\
-        ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')\
-    LEFT JOIN (\
-        SELECT cnt_tb.*, COUNT(*) AS cnt FROM (\
-            SELECT device_name, port FROM omni_agent.OM_REP_port_error_diff \
-            WHERE (stateCRC >= {} or stateIpv4HeadError >= {}) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE()) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.port\
-    ) AS error_cnt_tb\
-    ON ped.device_name = error_cnt_tb.device_name AND ped.port = error_cnt_tb.port \
-".format(CRC_FILTER, IPV4HEADERROR_FILTER, CRC_FILTER, IPV4HEADERROR_FILTER)
+__PORTERROR_QUERY = '''
+    SELECT 
+        ped.*,
+        des.port_description, des.port_status,
+        pef.problem_type, pef.problem_detail, pef.begin_time, pef.end_time, pef.worker, pef.status, pef.claim,
+        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out,
+        error_cnt_tb.cnt
+    FROM (
+        SELECT * FROM omni_agent.OM_REP_port_error_diff 
+        WHERE record_time BETWEEN %s AND %s AND (stateCRC >= {} OR stateIpv4HeadError >= {})
+    ) AS ped 
+    LEFT JOIN omni_agent.MR_REC_ipman_resource AS des
+        ON ped.device_name = des.device_name AND ped.port = des.port
+    LEFT JOIN (
+        SELECT * FROM omni_agent.OM_REC_port_error_fix_record WHERE claim = 1
+    ) AS pef 
+        ON ped.device_name = pef.device_name AND ped.port = pef.port
+    LEFT JOIN (
+        SELECT * FROM omni_agent.OM_REC_port_perf 
+        WHERE record_time BETWEEN %s AND %s
+    ) AS pp
+        ON ped.device_name = pp.device_name AND ped.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')
+    LEFT JOIN (
+        SELECT cnt_tb.*, COUNT(*) AS cnt FROM (
+            SELECT device_name, port FROM omni_agent.OM_REP_port_error_diff 
+            WHERE (stateCRC >= {} or stateIpv4HeadError >= {}) and record_time between DATE_SUB(CURDATE(), INTERVAL 7 DAY) and CURDATE()) AS cnt_tb GROUP BY cnt_tb.device_name, cnt_tb.port
+    ) AS error_cnt_tb
+    ON ped.device_name = error_cnt_tb.device_name AND ped.port = error_cnt_tb.port 
+'''.format(CRC_FILTER, IPV4HEADERROR_FILTER, CRC_FILTER, IPV4HEADERROR_FILTER)
 # 注意修改__queryline的排序字段
 
 
@@ -202,20 +202,20 @@ def port_error_list(request):
 
 
 # 通过端口查找,端口下划分的ip及对应客户,最内层select可以与model对象再做一次join查询
-__QUERY_ERROR_AFFECT = "\
-    SELECT p_ip_tb.*, client_tb.product_id, client_tb.client_name, client_tb.ip \
-    FROM ( \
-        SELECT pp_tb.*, ip_tb.device_ip, ip_tb.ip_type \
-        FROM ( \
-            SELECT id, device_name, `port`, logic_port \
-            FROM omni_agent.networkresource_ipmanresource \
-            WHERE device_name = %s AND `port` = %s \
-        ) AS pp_tb \
-        LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb \
-        ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num HAVING ip_tb.ip_type IN ('public_outer', 'public_inner') \
-    ) AS p_ip_tb LEFT JOIN omni_agent.networkresource_zxclientinfo AS client_tb \
-    ON p_ip_tb.device_ip = client_tb.ip HAVING client_name IS NOT NULL \
-"
+__QUERY_ERROR_AFFECT = '''
+    SELECT p_ip_tb.*, client_tb.product_id, client_tb.client_name, client_tb.ip 
+    FROM ( 
+        SELECT pp_tb.*, ip_tb.device_ip, ip_tb.ip_type 
+        FROM ( 
+            SELECT id, device_name, `port`, logic_port 
+            FROM omni_agent.networkresource_ipmanresource 
+            WHERE device_name = %s AND `port` = %s 
+        ) AS pp_tb 
+        LEFT JOIN omni_agent.networkresource_iprecord AS ip_tb 
+        ON pp_tb.device_name = ip_tb.device_name AND pp_tb.logic_port = ip_tb.logic_port_num HAVING ip_tb.ip_type IN ('public_outer', 'public_inner') 
+    ) AS p_ip_tb LEFT JOIN omni_agent.networkresource_zxclientinfo AS client_tb 
+    ON p_ip_tb.device_ip = client_tb.ip HAVING client_name IS NOT NULL 
+'''
 
 
 def ajax_search_error_effect(request):
@@ -493,23 +493,23 @@ def ajax_port_operate(request, operation_type):
     return JsonResponse(data)
 
 
-__QUERY_MY_FIX_TASKS = "\
-    SELECT \
-        pef.id, pef.device_name, pef.port, pef.worker, pef.claim, pef.status, pef.begin_time,\
-        ped.stateCRC, ped.stateIpv4HeadError, ped.record_time, ped.fix_status,\
-        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out \
-    FROM (\
-        SELECT * FROM OM_REC_port_error_fix_record WHERE worker = %s \
-    ) AS pef \
-    left JOIN (\
-        SELECT * FROM OM_REP_port_error_diff \
-        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE()\
-    ) AS ped\
-    ON pef.device_name = ped.device_name AND pef.port = ped.port \
-    LEFT JOIN OM_REC_port_perf AS pp\
-    ON pef.device_name = pp.device_name AND pef.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')\
-    ORDER BY begin_time DESC, fix_status\
-"
+__QUERY_MY_FIX_TASKS = '''
+    SELECT 
+        pef.id, pef.device_name, pef.port, pef.worker, pef.claim, pef.status, pef.begin_time,
+        ped.stateCRC, ped.stateIpv4HeadError, ped.record_time, ped.fix_status,
+        pp.tx_now_power, pp.tx_high_warm, pp.tx_low_warm, pp.tx_state, pp.rx_now_power, pp.rx_high_warm, pp.rx_low_warm, pp.rx_state, pp.utility_in, pp.utility_out 
+    FROM (
+        SELECT * FROM OM_REC_port_error_fix_record WHERE worker = %s 
+    ) AS pef 
+    left JOIN (
+        SELECT * FROM OM_REP_port_error_diff 
+        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE()
+    ) AS ped
+    ON pef.device_name = ped.device_name AND pef.port = ped.port 
+    LEFT JOIN OM_REC_port_perf AS pp
+    ON pef.device_name = pp.device_name AND pef.port = pp.port AND DATE_FORMAT(ped.record_time, '%%Y-%%m-%%d') = DATE_FORMAT(pp.record_time, '%%Y-%%m-%%d')
+    ORDER BY begin_time DESC, fix_status
+'''
 
 @staff_member_required(redirect_field_name='from', login_url='login')
 def my_port_error_tasks(request):
@@ -528,18 +528,18 @@ def my_port_error_tasks(request):
 
 
 # 单通设备检查模块
-__QUERY_ONEWAY_LIST = "\
-    SELECT \
-        dev.*,\
-        tag.delay_count, tag.tag, tag.tag_user, tag.tag_time, \
-        DATE_ADD(tag_time, INTERVAL delay_count DAY) AS end_time, \
-        (DATE_SUB(tag_time, INTERVAL 1 day) < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show \
-    FROM ( \
-        SELECT * FROM omni_agent.OM_REP_oneway_device WHERE record_time BETWEEN %s AND %s \
-    )AS dev \
-    LEFT JOIN omni_agent.OM_REC_oneway_device_tag AS tag \
-    ON dev.device_name = tag.device_name AND dev.port = tag.port \
-"
+__QUERY_ONEWAY_LIST = '''
+    SELECT 
+        dev.*,
+        tag.delay_count, tag.tag, tag.tag_user, tag.tag_time, 
+        DATE_ADD(tag_time, INTERVAL delay_count DAY) AS end_time, 
+        (DATE_SUB(tag_time, INTERVAL 1 day) < record_time AND record_time < DATE_ADD(tag_time, INTERVAL delay_count day) ) AS not_show 
+    FROM ( 
+        SELECT * FROM omni_agent.OM_REP_oneway_device WHERE record_time BETWEEN %s AND %s 
+    )AS dev 
+    LEFT JOIN omni_agent.OM_REC_oneway_device_tag AS tag 
+    ON dev.device_name = tag.device_name AND dev.port = tag.port 
+'''
 __ONEWAY_ORDER_FIELD = 'ORDER BY not_show ASC, record_time DESC'
 
 
@@ -653,18 +653,18 @@ def export_oneway(request):
     return response
 
 
-__GROUP_CLIENT_QUERY = "\
-    SELECT client_info.*, re_tb.port_phy_status, re_tb.port_status FROM ( \
-        SELECT \
-            zx_tb.id, zx_tb.client_name, zx_tb.product_id, zx_tb.ip, zx_tb.guard_level, \
-            ip_tb.device_name, ip_tb.logic_port, ip_tb.logic_port_num, ip_tb.ip_description \
-        FROM omni_agent.MR_REC_group_client_info as zx_tb \
-        LEFT JOIN omni_agent.MR_REC_ip_record AS ip_tb \
-        ON zx_tb.ip = ip_tb.device_ip HAVING zx_tb.ip != '' \
-    ) AS client_info \
-    LEFT JOIN omni_agent.MR_REC_ipman_resource AS re_tb \
-    ON client_info.device_name = re_tb.device_name AND client_info.logic_port_num = re_tb.logic_port \
-"
+__GROUP_CLIENT_QUERY = '''
+    SELECT client_info.*, re_tb.port_phy_status, re_tb.port_status FROM ( 
+        SELECT 
+            zx_tb.id, zx_tb.client_name, zx_tb.product_id, zx_tb.ip, zx_tb.guard_level, 
+            ip_tb.device_name, ip_tb.logic_port, ip_tb.logic_port_num, ip_tb.ip_description 
+        FROM omni_agent.MR_REC_group_client_info as zx_tb 
+        LEFT JOIN omni_agent.MR_REC_ip_record AS ip_tb 
+        ON zx_tb.ip = ip_tb.device_ip HAVING zx_tb.ip != '' 
+    ) AS client_info 
+    LEFT JOIN omni_agent.MR_REC_ipman_resource AS re_tb 
+    ON client_info.device_name = re_tb.device_name AND client_info.logic_port_num = re_tb.logic_port 
+'''
 
 
 # @permission_required('networkresource.view_zxclientinfo', login_url='/login/')
@@ -746,12 +746,12 @@ def search_natpool(request):
     return render(request, 'natpool.html', context)
 
 
-__NATPOOL_QUERY = "\
-    SELECT id, device1, device1_nat_usage, device2, device2_nat_usage, record_time, (device1_nat_usage + device2_nat_usage) AS nat_total \
-    FROM OM_REC_nat_pool_usage \
-    WHERE (device1 LIKE '%%{}%%' OR device2 LIKE '%%{}%%') AND record_time BETWEEN '{}' and '{}' \
-    ORDER BY (device1_nat_usage + device2_nat_usage) DESC \
-"
+__NATPOOL_QUERY = '''
+    SELECT id, device1, device1_nat_usage, device2, device2_nat_usage, record_time, (device1_nat_usage + device2_nat_usage) AS nat_total 
+    FROM OM_REC_nat_pool_usage 
+    WHERE (device1 LIKE '%%{}%%' OR device2 LIKE '%%{}%%') AND record_time BETWEEN '{}' and '{}' 
+    ORDER BY (device1_nat_usage + device2_nat_usage) DESC 
+'''
 
 def export_natpool(request):
     time_begin = request.GET.get('time_begin', '')
@@ -775,26 +775,26 @@ def export_natpool(request):
     return response
 
 
-__PING_QUERY = "\
-    SELECT \
-    id, source_device, target_device, \
-    CAST(round(AVG(loss), 0) AS SIGNED) AS avg_loss, CAST(round(AVG(cost), 0) AS SIGNED) AS avg_cost, \
-    CAST(SUM(high_loss) AS SIGNED) AS high_loss_cnt, CAST(SUM(high_cost) AS SIGNED) AS high_cost_cnt FROM (\
-    SELECT *,\
-    if(loss>0, 1, 0) AS high_loss,\
-    case \
-        when target_device LIKE '%%IPMAN-RT%%' AND cost > 10 then 1\
-        when target_device LIKE '%%IPMAN-SW%%' AND cost > 10 then 1\
-        when source_device LIKE '%%IPMAN-BNG%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 10 then 1\
-        when target_device LIKE 'GDGZ-%%' AND cost > 20 then 1\
-        when (target_device LIKE '%%-OTV%%' OR target_device LIKE '%%CDN%%') AND cost > 20 then 1\
-        when source_device LIKE '%%IPMAN-SR%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 20 then 1\
-    ELSE 0\
-    END AS high_cost\
-    FROM OM_REP_ping_test WHERE loss != -1 AND record_time BETWEEN %s AND %s\
-    ) AS oneday\
-    GROUP BY source_device, target_device \
-"
+__PING_QUERY = '''
+    SELECT 
+    id, source_device, target_device, 
+    CAST(round(AVG(loss), 0) AS SIGNED) AS avg_loss, CAST(round(AVG(cost), 0) AS SIGNED) AS avg_cost, 
+    CAST(SUM(high_loss) AS SIGNED) AS high_loss_cnt, CAST(SUM(high_cost) AS SIGNED) AS high_cost_cnt FROM (
+    SELECT *,
+    if(loss>0, 1, 0) AS high_loss,
+    case 
+        when target_device LIKE '%%IPMAN-RT%%' AND cost > 10 then 1
+        when target_device LIKE '%%IPMAN-SW%%' AND cost > 10 then 1
+        when source_device LIKE '%%IPMAN-BNG%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 10 then 1
+        when target_device LIKE 'GDGZ-%%' AND cost > 20 then 1
+        when (target_device LIKE '%%-OTV%%' OR target_device LIKE '%%CDN%%') AND cost > 20 then 1
+        when source_device LIKE '%%IPMAN-SR%%' AND (target_device LIKE '%%OLT%%' OR target_device LIKE '%%FH%%') AND cost > 20 then 1
+    ELSE 0
+    END AS high_cost
+    FROM OM_REP_ping_test WHERE loss != -1 AND record_time BETWEEN %s AND %s
+    ) AS oneday
+    GROUP BY source_device, target_device 
+'''
 
 def __queryline_ping(order_field, filterCmd=''):
     if order_field == 'loss':
@@ -806,67 +806,6 @@ def __queryline_ping(order_field, filterCmd=''):
 __PING_FILTER_HIGH_COST_CNT = 5
 __PING_FILTER_HIGH_LOSS_CNT = 5
 
-'''
-__PING_COST_GROUP = "\
-    SELECT \
-    avg_tb.id,\
-    case \
-        when avg_tb.cost_avg < 5 then 0\
-        when avg_tb.cost_avg BETWEEN 5 and 10 then 5\
-    ELSE 10\
-    END AS step,\
-    COUNT(*) AS cnt\
-    FROM (\
-        SELECT id, source_device, target_device, AVG(loss) AS loss_avg, AVG(cost) AS cost_avg\
-        FROM OM_REP_ping_test\
-        WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE() AND loss NOT IN (100, -1)\
-        GROUP BY source_device, target_device\
-    ) AS avg_tb\
-    GROUP BY step\
-    ORDER BY step ASC\
-"
-
-__PING_COST_HOUR_GROUP = "\
-    SELECT \
-    id,\
-    case \
-        when target_device LIKE '%%-BB%%' then 'BNG_BB'\
-        when target_device LIKE '%%CMNET-BR%%' then 'BNG_BR'\
-        when target_device LIKE '%%-OTV%%' OR target_device LIKE '%%CDN%%' then 'BNG_CDN'\
-        when target_device LIKE '%%IPMAN-RT%%' then 'BNG_CR'\
-        when target_device LIKE '%%IPMAN-SW%%' then 'BNG_SW'\
-    ELSE 'BNG_OLT'\
-    END AS direction,\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '00', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '00', 1, 0)), 2) AS UNSIGNED) AS 'h0',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '01', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '01', 1, 0)), 2) AS UNSIGNED) AS 'h1',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '02', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '02', 1, 0)), 2) AS UNSIGNED) AS 'h2',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '03', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '03', 1, 0)), 2) AS UNSIGNED) AS 'h3',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '04', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '04', 1, 0)), 2) AS UNSIGNED) AS 'h4',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '05', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '05', 1, 0)), 2) AS UNSIGNED) AS 'h5',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '06', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '06', 1, 0)), 2) AS UNSIGNED) AS 'h6',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '07', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '07', 1, 0)), 2) AS UNSIGNED) AS 'h7',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '08', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '08', 1, 0)), 2) AS UNSIGNED) AS 'h8',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '09', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '09', 1, 0)), 2) AS UNSIGNED) AS 'h9',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '10', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '10', 1, 0)), 2) AS UNSIGNED) AS 'h10',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '11', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '11', 1, 0)), 2) AS UNSIGNED) AS 'h11',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '12', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '12', 1, 0)), 2) AS UNSIGNED) AS 'h12',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '13', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '13', 1, 0)), 2) AS UNSIGNED) AS 'h13',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '14', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '14', 1, 0)), 2) AS UNSIGNED) AS 'h14',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '15', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '15', 1, 0)), 2) AS UNSIGNED) AS 'h15',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '16', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '16', 1, 0)), 2) AS UNSIGNED) AS 'h16',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '17', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '17', 1, 0)), 2) AS UNSIGNED) AS 'h17',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '18', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '18', 1, 0)), 2) AS UNSIGNED) AS 'h18',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '19', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '19', 1, 0)), 2) AS UNSIGNED) AS 'h19',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '20', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '20', 1, 0)), 2) AS UNSIGNED) AS 'h20',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '21', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '21', 1, 0)), 2) AS UNSIGNED) AS 'h21',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '22', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '22', 1, 0)), 2) AS UNSIGNED) AS 'h22',\
-    CAST(ROUND(SUM(if(DATE_FORMAT(record_time, '%H') = '23', cost, 0))/SUM(if(DATE_FORMAT(record_time, '%H') = '23', 1, 0)), 2) AS UNSIGNED) AS 'h23'\
-    FROM OM_REP_ping_test\
-    WHERE record_time BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND CURDATE() AND loss not in (100, -1)\
-    GROUP BY direction\
-"
-减轻查询压力，改用数据库事件自动更新
-'''
 
 # @permission_required('inspection.view_linkpingtest', login_url='/login/')
 @staff_member_required(redirect_field_name='from', login_url='login')

@@ -217,7 +217,7 @@ class OltInfoWG(models.Model):
 class GroupClientIPSegment(models.Model):
     ip = models.GenericIPAddressField(protocol='both', unique=True)
     # ip_state = models.BooleanField(default=False)
-    ip_state = models.SmallIntegerField(default=0)  # -1预占 0未使用 1已用
+    ip_state = models.SmallIntegerField(default=0)  # 0未使用 1已用 2下沉地址已用
     segment = models.GenericIPAddressField(protocol='both')
     mask = models.PositiveSmallIntegerField()
     segment_state = models.BooleanField(default=False)

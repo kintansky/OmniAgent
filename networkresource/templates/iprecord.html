@@ -61,10 +61,9 @@
 
 {% block table_title %}
     <th>主机地址</th>
+    <th>网关</th>
     <th>设备</th>
     <th>接口</th>
-    <th>外层Vlan</th>
-    <th>内层Vlan</th>
     <th>描述</th>
     <th>记录时间</th>
 {% endblock %}
@@ -72,26 +71,24 @@
 {% block table_body %}
     {% for record in records %}
         <tr>
-            <td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.ip_func }}地址">
                 {% if record.ip_type == 'private' %}
-                <span class="label label-success">{{ record.ip_type }}</span>
+                <span class="label label-success">私网</span>
                 {% else %}
-                <span class="label label-primary">{{ record.ip_type }}</span>
+                <span class="label label-primary">公网</span>
                 {% endif %}
-                <span class="label label-default">{{ record.device_ip }}/{{ record.ip_mask }}</span>
+                {{ record.device_ip }}/{{ record.ip_mask }}
             </td>
+            <td><span class="label label-default">{{ record.gateway }}</span></td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.device_name }}">{{ record.device_name|truncatechars:30 }}</td>
-            <td>
+            <td data-toggle="tooltip" data-placement="top" title="外层VLAN {{ record.svlan }} / 内层VLAN {{ record.cevlan|default:'0' }}">
                 <span class="label label-danger">{{ record.logic_port }}</span>
             </td>
-            <td>{{ record.svlan }}</td>
-            <td>{{ record.cvlan }}</td>
-            <td data-toggle="tooltip" data-placement="top" title="{{ record.ip_description }}">{{ record.ip_description|truncatechars:40 }}</td>
+            <td data-toggle="tooltip" data-placement="top" title="{{ record.ip_description }}">{{ record.ip_description|truncatechars:45 }}</td>
             <td>{{ record.record_time|date:"Y-m-d" }}</td>
         </tr>
     {% empty %}
         <tr>
-            <td>Null</td>
             <td>Null</td>
             <td>Null</td>
             <td>Null</td>

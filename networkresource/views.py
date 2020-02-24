@@ -24,11 +24,12 @@ def ajax_search_slot_ports(request):
     slot = int(request.GET.get('slot').replace('collapse', ''))
     target_ports = IpmanResource.objects.filter(
         device_name=device_name, slot=slot)
-    rawQueryCmd = 'SELECT ni.id, ni.port, ni.brand_width, ni.port_status, \
-                ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC \
-                FROM omni_agent.MR_REC_ipman_resource AS ni LEFT JOIN omni_agent.OM_REP_port_error_diff as np \
-                ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s \
-                WHERE ni.device_name = %s AND ni.slot = %s'
+    rawQueryCmd = '''SELECT ni.id, ni.port, ni.brand_width, ni.port_status, 
+                ni.port_phy_status, ni.logic_port, ni.port_description, np.stateCRC 
+                FROM omni_agent.MR_REC_ipman_resource AS ni LEFT JOIN omni_agent.OM_REP_port_error_diff as np 
+                ON np.device_name = ni.device_name AND np.port = ni.port AND np.record_time BETWEEN %s and %s 
+                WHERE ni.device_name = %s AND ni.slot = %s
+    '''
     today_time = timezone.datetime.now()
     time_end = timezone.datetime(year=today_time.year, month=today_time.month,
                                  day=today_time.day, hour=23, minute=59, second=59)
@@ -182,7 +183,7 @@ GET_OLT_CAN_ALLOCATED_IP = '''
     HAVING cnt > 1) AS a) 
     GROUP BY gateway, ip_mask, olt) AS target_gw
     ON seg.subnet_gateway = target_gw.gateway AND target_gw.mask = seg.subnet_mask 
-    AND seg.segment_state = TRUE AND seg.ip_state = FALSE 
+    AND seg.segment_state = TRUE AND seg.ip_state = 0 
 '''
 
 def ajax_get_olt_can_allocated_ip(request):
@@ -792,33 +793,33 @@ def ajax_mod_allocated_ip(request, operation_type):
     return JsonResponse(data)
 
 
-all_device_ip_segment_query_line = '\
-    SELECT id, olt, count(DISTINCT subnet_gateway) AS gw_cnt, \
-    GROUP_CONCAT(DISTINCT  CONCAT(subnet_gateway, "/", subnet_mask)) AS gws,\
-    cast(SUM(used_cnt) AS SIGNED) AS used, cast(SUM(all_cnt) AS SIGNED) AS total \
-    FROM (\
-    SELECT seg_util.*, gw_olt.olt FROM (\
-    SELECT id, subnet_gateway, subnet_mask, SUM(if(ip_state=1, 1, 0)) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment \
-    WHERE segment_state IS TRUE AND subnet_gateway != "" AND subnet_gateway IS NOT NULL \
-    AND subnet_gateway NOT IN ( \
-    SELECT gateway FROM ( \
-    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
-    FROM MR_STS_ip_olt_detail \
-    WHERE ip_mask != 32 \
-    GROUP BY gateway \
-    HAVING cnt > 1 ) AS a) \
-    GROUP BY subnet_gateway \
-    ) AS seg_util \
-    LEFT JOIN ( \
-    SELECT gateway, ip_mask AS mask, olt FROM MR_STS_ip_olt_detail \
-    WHERE olt LIKE "%%OLT%%" \
-    GROUP BY gateway, ip_mask, olt \
-    ) AS gw_olt \
-    ON seg_util.subnet_gateway = gw_olt.gateway \
-    HAVING olt IS NOT NULL \
-    ) AS olt_util \
-    GROUP BY olt \
-'
+all_device_ip_segment_query_line = '''
+    SELECT id, olt, count(DISTINCT subnet_gateway) AS gw_cnt, 
+    GROUP_CONCAT(DISTINCT  CONCAT(subnet_gateway, "/", subnet_mask)) AS gws,
+    cast(SUM(used_cnt) AS SIGNED) AS used, cast(SUM(all_cnt) AS SIGNED) AS total 
+    FROM (
+    SELECT seg_util.*, gw_olt.olt FROM (
+    SELECT id, subnet_gateway, subnet_mask, SUM(if(ip_state=1, 1, 0)) AS used_cnt, COUNT(*) AS all_cnt FROM MR_REC_group_client_ip_segment 
+    WHERE segment_state IS TRUE AND subnet_gateway != "" AND subnet_gateway IS NOT NULL 
+    AND subnet_gateway NOT IN ( 
+    SELECT gateway FROM ( 
+    SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt 
+    FROM MR_STS_ip_olt_detail 
+    WHERE ip_mask != 32 
+    GROUP BY gateway 
+    HAVING cnt > 1 ) AS a) 
+    GROUP BY subnet_gateway 
+    ) AS seg_util 
+    LEFT JOIN ( 
+    SELECT gateway, ip_mask AS mask, olt FROM MR_STS_ip_olt_detail 
+    WHERE olt LIKE "%%OLT%%" 
+    GROUP BY gateway, ip_mask, olt 
+    ) AS gw_olt 
+    ON seg_util.subnet_gateway = gw_olt.gateway 
+    HAVING olt IS NOT NULL 
+    ) AS olt_util 
+    GROUP BY olt 
+'''
 
 # 新增公网网段
 @staff_member_required(redirect_field_name='from', login_url='login')
@@ -934,26 +935,26 @@ def ajax_get_segment_left_cnt(request):
     gws = request.GET.get('gws', '')
     gwList = [s.split('/')[0] for s in base64.b64decode(gws).decode('ascii').split(',')]
     # print(gwList)
-    can_be_reserved_query = '\
-        SELECT id, left_detail.subnet_gateway, left_detail.subnet_mask, CAST(left_detail.left_cnt-ifnull(reserve_detail.all_reserved_cnt, 0) AS SIGNED) AS can_be_reserved FROM (\
-        SELECT id, subnet_gateway, subnet_mask, COUNT(*) AS left_cnt FROM MR_REC_group_client_ip_segment \
-        WHERE segment_state IS TRUE AND ip_state = 0 \
-        AND subnet_gateway IN ({}) AND subnet_gateway NOT IN ( \
-        SELECT gateway FROM ( \
-        SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt \
-        FROM MR_STS_ip_olt_detail \
-        WHERE ip_mask != 32 \
-        GROUP BY gateway \
-        HAVING cnt > 1 ) AS a \
-        )\
-        GROUP BY subnet_gateway\
-        ) AS left_detail\
-        LEFT JOIN ( \
-        SELECT subnet_gateway, SUM(reserved_cnt) AS all_reserved_cnt FROM MR_REC_group_client_ip_reserve \
-        WHERE subnet_gateway IN ({}) \
-        GROUP BY subnet_gateway) AS reserve_detail \
-        ON left_detail.subnet_gateway = reserve_detail.subnet_gateway \
-    '
+    can_be_reserved_query = '''
+        SELECT id, left_detail.subnet_gateway, left_detail.subnet_mask, CAST(left_detail.left_cnt-ifnull(reserve_detail.all_reserved_cnt, 0) AS SIGNED) AS can_be_reserved FROM (
+        SELECT id, subnet_gateway, subnet_mask, COUNT(*) AS left_cnt FROM MR_REC_group_client_ip_segment 
+        WHERE segment_state IS TRUE AND ip_state = 0 
+        AND subnet_gateway IN ({}) AND subnet_gateway NOT IN ( 
+        SELECT gateway FROM ( 
+        SELECT gateway, ip_mask, COUNT(DISTINCT olt) AS cnt 
+        FROM MR_STS_ip_olt_detail 
+        WHERE ip_mask != 32 
+        GROUP BY gateway 
+        HAVING cnt > 1 ) AS a 
+        )
+        GROUP BY subnet_gateway
+        ) AS left_detail
+        LEFT JOIN ( 
+        SELECT subnet_gateway, SUM(reserved_cnt) AS all_reserved_cnt FROM MR_REC_group_client_ip_reserve 
+        WHERE subnet_gateway IN ({}) 
+        GROUP BY subnet_gateway) AS reserve_detail 
+        ON left_detail.subnet_gateway = reserve_detail.subnet_gateway 
+    '''
     can_be_reserved_list = GroupClientIPSegment.objects.raw(
         can_be_reserved_query.format(','.join(['%s',]*len(gwList)), ','.join(['%s',]*len(gwList))),
         tuple(gwList)+tuple(gwList)
