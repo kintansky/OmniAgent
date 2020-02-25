@@ -29,6 +29,7 @@
                         <tr>
                             <th>地址段</th>
                             <th>地址数量</th>
+                            <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -39,16 +40,24 @@
                                     {{ record.segment }} / {{ record.mask }}
                                 </td>
                                 <td>
-                                    {{ record.ip__count }}
+                                    <span class="label label-danger">已用 {{ record.used_cnt }}</span>
+                                    <span class="label label-default">全量 {{ record.ip__count }}</span>
+                                </td>
+                                <td>
+                                    {% if record.segment_state is True %}
+                                        <span class="label label-success">启用</span>
+                                    {% else %}
+                                        <span class="label label-danger">关闭</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-danger btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             操作 <span class="caret"></span>
                                         </button>
                                         <ul class="dropdown-menu">
-                                            <li><a href="#">启用</a></li>
-                                            <li><a href="#">未启用</a></li>
+                                            <li class="turnon_seg" rdata="{{ record.segment }}/{{ record.mask }}"><a>启用</a></li>
+                                            <li class="turnoff_seg" rdata="{{ record.segment }}/{{ record.mask }}"><a>关闭</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -187,6 +196,56 @@
                 }
             });
         });
+        $('.turnon_seg').click(function(){
+            var rdata = $(this).attr('rdata');
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'ajax_turn_segment_state' 'on' %}",  // 异步请求的地址
+                type: "POST",    // 请求方式
+                data: "rdata=" + rdata + "&csrfmiddlewaretoken="+"{{ csrf_token }}",   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        $('#loading').modal('hide');
+                        alert('变更成功');
+                        window.location.reload();
+                    }else{
+                        $('#loading').modal('hide');
+                        alert('变更失败');
+                    }
+                },
+                error: function(xhr){
+                    $('#loading').modal('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+
+        $('.turnoff_seg').click(function(){
+            var rdata = $(this).attr('rdata');
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'ajax_turn_segment_state' 'off' %}",  // 异步请求的地址
+                type: "POST",    // 请求方式
+                data: "rdata=" + rdata + "&csrfmiddlewaretoken="+"{{ csrf_token }}",   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        $('#loading').modal('hide');
+                        alert('变更成功');
+                        window.location.reload();
+                    }else{
+                        $('#loading').modal('hide');
+                        alert('变更失败');
+                    }
+                },
+                error: function(xhr){
+                    $('#loading').modal('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+
     });
 </script>
 {% endblock %}

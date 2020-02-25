@@ -825,7 +825,7 @@ all_device_ip_segment_query_line = '''
 @staff_member_required(redirect_field_name='from', login_url='login')
 def list_all_ip_segment(request):
     context = {}
-    all_ip_segment = GroupClientIPSegment.objects.all().values('segment', 'mask').annotate(Count('ip'))
+    all_ip_segment = GroupClientIPSegment.objects.all().values('segment', 'mask', 'segment_state').annotate(Count('ip'), used_cnt=Count('ip_state', filter=Q(ip_state__gt=0)))
     page_of_objects, page_range = pages(request, all_ip_segment)
     new_ip_segment_form = NewIpSegmentForm()
     context['records'] = page_of_objects.object_list
@@ -838,7 +838,7 @@ def list_all_ip_segment(request):
 def search_all_ip_segment(request):
     context = {}
     target_segment = request.GET.get('ip')
-    all_ip_segment = GroupClientIPSegment.objects.filter(segment=target_segment).values('segment', 'mask').annotate(Count('ip'))
+    all_ip_segment = GroupClientIPSegment.objects.filter(segment=target_segment).values('segment', 'mask', 'segment_state').annotate(Count('ip'), used_cnt=Count('ip_state', filter=Q(ip_state__gt=0)))
     page_of_objects, page_range = pages(request, all_ip_segment)
     new_ip_segment_form = NewIpSegmentForm()
     context['records'] = page_of_objects.object_list
@@ -873,6 +873,23 @@ def ajax_confirm_new_segment(request):
         data['status'] = 'error'
         data['error_info'] = '表单信息有误'
     return JsonResponse(data)
+
+def ajax_turn_segment_state(request, operation_type):
+    data = {}
+    rdata = request.POST.get('rdata')
+    seg, seg_mask = rdata.split('/')
+    if operation_type == 'on':
+        GroupClientIPSegment.objects.filter(segment=seg, mask=int(seg_mask), segment_state=False).update(segment_state=True)
+        data['status'] = 'success'
+        return JsonResponse(data)
+    elif operation_type == 'off':
+        GroupClientIPSegment.objects.filter(segment=seg, mask=int(seg_mask), segment_state=True).update(segment_state=False)
+        data['status'] = 'success'
+        return JsonResponse(data)
+    else:
+        data['status'] = 'error'
+    return JsonResponse(data)
+
 
 # IP资源使用情况
 @login_required(redirect_field_name='from', login_url='login')
