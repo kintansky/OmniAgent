@@ -47,6 +47,18 @@
                 以下内容为录入的分配台账，设备提取的IP信息请转至
                 <a href="{% url 'ip_record' %}">设备业务IP现网状态</a>
             </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                以下记录按照<strong>服开单号、客户名、集团编号、产品编号</strong>进行唯一性聚合，如看到一个用户存在多条聚合记录，也是因为此原因
+            </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                如果<strong>同一个客户下部分IP需要变更</strong>，因为变更操作会使用新服开单作为新单号，所以可能会<strong>拆分记录</strong>，因此，<strong>变更后请刷新本页面，即可看到新记录，无需重新分配</strong> 
+            </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                <strong>批量操作</strong>会对对象进行批量变更，请注意使用
+            </p>
         </div>
     {% endif %}
 {% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'list_base.html' %}
 
 {# 下面仅对base.html进行扩展#}
-{% block title %} IP地址分配 {% endblock %}
+{% block title %} 已分配的IP地址 {% endblock %}
 {% block navbar_resource_active %}active{% endblock %}
 
 {# 下面对list_base.html进行扩展#}
@@ -38,6 +38,23 @@
             <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
         </div>
+    {% else %}
+        <br>
+        <div class="alert alert-info alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                <strong>变更</strong>后如<strong>记录消失</strong>是因为此页面聚合条件为以上搜索框内容，<strong>更新搜索条件模糊搜索即可</strong>，无需重新分配
+            </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                <strong>临时禁用</strong> 即将记录状态设置为<strong>临时停用</strong>，记录不会从IP分配台账消失，可重新启用
+            </p>
+            <p>
+                <span class="glyphicon glyphicon-info-sign"></span>
+                <strong>删除数据</strong> 即将记录从IP分配台账<strong>删除</strong>，不能重新启用，且历史数据只能从操作记录寻回
+            </p>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -49,6 +66,7 @@
         <th>接入设备</th>
         <th>上联设备</th>
         <th>子接口</th>
+        <th>修改时间</th>
         <th>分配人</th>
         <th>操作</th>
 {% endblock %}
@@ -92,6 +110,9 @@
             <td data-toggle="tooltip" data-placement="top" title="描述：{{ record.description }}">
                 {{ record.logic_port }}:{{ record.svlan|default:'0' }}.{{ record.cevlan|default:'0' }}
                 <span class="label label-danger">{{ record.brand_width }}M</span>
+            </td>
+            <td data-toggle="tooltip" data-placement="top" title="创建时间：{{ record.alc_time|date:'Y-m-d H:i' }} 最后修改时间：{{ record.last_mod_time|date:'Y-m-d H:i' }}">
+                {{ record.last_mod_time|date:"Y-m-d H:i" }}
             </td>
             <td>{{ record.alc_user }}</td>
             {% if user.is_authenticated %}
