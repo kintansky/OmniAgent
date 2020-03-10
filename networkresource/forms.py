@@ -1,5 +1,6 @@
 from django import forms
 import re
+from omni.forms import TimeRangeForm
 
 class IPsearchForm(forms.Form):
     CHOICES = (
@@ -198,3 +199,10 @@ class NewIpSegmentForm(forms.Form):
     segment = forms.GenericIPAddressField(label='IP地址', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0'}))
     mask = forms.IntegerField(label='掩码', widget=forms.NumberInput(attrs={'class': 'form-control', }))
     segment_state = forms.ChoiceField(label='状态', choices=SEGMENT_STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control', }))
+
+
+class WorkLoadSearchForm(TimeRangeForm):
+    worker = forms.CharField(label='用户', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    def clean_worker(self):
+        return self.cleaned_data['worker'].strip()

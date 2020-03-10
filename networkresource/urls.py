@@ -34,5 +34,9 @@ urlpatterns = [
     path('ip/ip_allocated_segment/get_segment_left_cnt/', views.ajax_get_segment_left_cnt, name='ajax_get_segment_left_cnt'),
     path('ip/ip_allocated_segment/reserve_segment/', views.reserve_segment, name='reserve_segment'),
     path('ip/ip_allocated_segment/cancle_reserve/', views.cancle_reserve, name='cancle_reserve'),
-    path('ip/ip_allocated_segment/get_my_reserved_list/', views.ajax_get_my_reserved_list, name='ajax_get_my_reserved_list')
+    path('ip/ip_allocated_segment/get_my_reserved_list/', views.ajax_get_my_reserved_list, name='ajax_get_my_reserved_list'),
+
+    # 开通工作量情况统计
+    path('ip/allocate/workload/', views.list_workload, name='list_workload'),
+    
 ]

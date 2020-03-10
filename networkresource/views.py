@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -791,6 +791,12 @@ def ajax_mod_allocated_ip(request, operation_type):
         data['status'] = 'error'
         data['error_info'] = '非法操作'
     return JsonResponse(data)
+
+# 工作量统计
+def list_workload(request):
+    context = {}
+    context['workload_search_form'] = WorkLoadSearchForm()
+    return render(request, 'workload.html', context)
 
 
 all_device_ip_segment_query_line = '''

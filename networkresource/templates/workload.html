@@ -1,0 +1,108 @@
+{% extends 'list_base.html' %}
+
+{# 下面仅对base.html进行扩展#}
+{% block title %} 业务开通工作量统计 {% endblock %}
+{% block navbar_resource_active %}active{% endblock %}
+
+{# 下面对list_base.html进行扩展#}
+{% block breadcrumb %}
+    <li><a href="">Resource</a></li>
+    <li><a href="{% url 'ip_allocated_client_list' %}">分配情况</a></li>
+    <li class="active">工作量统计</li>
+{% endblock %}
+
+{% block subheader %} 业务开通工作量统计 {% endblock %}
+
+{% block search_form %}
+    <form action="{% url 'search_ip' %}" method="GET" class="form-inline">
+        {% for field in workload_search_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                <!-- <p class="text-danger">{{ field.errors.as_text }}</p> -->
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">搜索</button>
+    </form>
+{% endblock %}
+
+{% block alert_content %}
+    {% if ip_search_form.errors %}
+        <br>
+        <div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <strong>Input Error: </strong>{{ ip_search_form.errors.as_text }}
+        </div>
+    {% endif %}
+{% endblock %}
+
+
+{% block table_title %}
+    <th>操作人</th>
+    <th>新增开通</th>
+    <th>业务变更</th>
+    <th>临时禁用</th>
+    <th>删除数据</th>
+{% endblock %}
+
+
+{% block table_body %}
+
+{% endblock %}
+
+
+{% block paginator %}
+<div class="paginator">
+    <ul class="pagination">
+        {# 上一页 #}
+        <li>
+            {% if page_of_objects.has_previous %}
+                {# if 作为判断用户是否有搜索内容，有搜索内容需要从后端返回搜索字段 #}
+                {% if search_device_name or search_ip_address or search_description or search_ip_type %}
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                {% else %}
+                    <a href="?page={{ page_of_objects.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <span aria-hidden="true">&laquo;</span>
+            {% endif %}
+        </li>
+        {# 中间页码 #}
+        {% for page_num in page_range %}
+            {% if page_num == page_of_objects.number %}
+                <li class='active'><span>{{ page_num }}</span></li>
+            {% else %}
+                {% if page_num == '...' %}
+                    <li><span>{{ page_num }}</span></li>
+                {% else %}
+                    {% if search_device_name or search_ip_address or search_description or search_ip_type %}
+                        <li><a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_num }}">{{ page_num }}</a></li>
+                    {% else %}
+                        <li><a href="?page={{ page_num }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {# 下一页 #}
+        <li>
+            {% if page_of_objects.has_next %}
+                {% if search_device_name or search_ip_address or search_description %}
+                    <a href="?ip_address={{ search_ip_address }}&device_name={{ search_device_name }}&description={{ search_description }}&ip_type={{ search_ip_type }}&page={{ page_num }}">{{ page_num }}
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                {% else %}
+                    <a href="?page={{ page_of_objects.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                {% endif %}
+            {% else %}
+                <span aria-hidden="true">&raquo;</span>
+            {% endif %}
+        </li>
+    </ul>
+</div>
+{% endblock%}
