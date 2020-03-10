@@ -92,6 +92,23 @@ class PublicIpSegment(models.Model):
         ordering = ['id', ]
 
 
+class PublicIPSegmentSchema(models.Model):
+    ip = models.GenericIPAddressField(protocol='both', unique=True)
+    upper_segment = models.GenericIPAddressField(protocol='both')
+    upper_mask = models.PositiveSmallIntegerField()
+    state = models.SmallIntegerField(null=True)
+    subnet_gateway = models.CharField(max_length=10, null=True)
+    subnet_mask = models.PositiveSmallIntegerField(null=True)
+    access_bng = models.CharField(max_length=255, null=True)
+    access_olt = models.CharField(max_length=255, null=True)
+    access_type = models.CharField(max_length=10, null=True)  # 前端使用choice限制 
+    alc_user = models.CharField(max_length=10, null=True)
+    alc_time = models.DateTimeField()
+
+    class Meta:
+        db_table = 'MR_REC_public_segment_schema'
+
+
 class ZxClientInfo(models.Model):
     group_id = models.BigIntegerField(null=True)
     client_name = models.CharField(max_length=255, null=True)
