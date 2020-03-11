@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve
+from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema
 from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -426,6 +426,22 @@ def ip_allocated_client_list(request):
     context['page_range'] = page_range
     context['client_search_form'] = ClientSearchForm()
     return render(request, 'ip_allocated_client_list.html', context)
+
+
+def export_ip_allocation(request):
+    cmd = '''
+    select id, order_num, client_name, state, ip, ip_mask, gateway, 
+    bng, logic_port, svlan, cevlan, description, ip_func, 
+    olt, service_id, brand_width, group_id, product_id, network_type, 
+    community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
+    from MR_REC_ip_allocation order by id
+    '''
+    ip_allocation = IPAllocation.objects.raw(cmd)
+    output = rawQueryExportXls(
+        ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time'))
+
+    response = FileResponse(open(output, 'rb'), as_attachment=True, filename='分配台账{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+    return response
 
 
 def allocated_client_search(request):
@@ -895,6 +911,18 @@ def ajax_turn_segment_state(request, operation_type):
     else:
         data['status'] = 'error'
     return JsonResponse(data)
+
+# 网段规划，需要融合上面的内容
+def list_all_segment(request):
+    context = {}
+    all_segment = PublicIpSegment.objects.all()
+    page_of_objects, page_range = pages(request, all_segment)
+    new_ip_segment_form = NewIpSegmentForm()    # TODO: Form增加专业字段
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['new_ip_segment_form'] = new_ip_segment_form
+    return render(request, 'segment_schema.html', context)
 
 
 # IP资源使用情况
