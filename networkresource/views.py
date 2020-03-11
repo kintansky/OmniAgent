@@ -132,8 +132,13 @@ def export_ip(request):
     if ip_address == device_name == ip_description == '':
         file = os.path.join(
             BASE_DIR, 'collected_static/downloads/files/iprecord_all.xls')
+        cmd = '''
+        select * from MR_REC_ip_record order by id
+        '''
+        ip_all_list = IpRecord.objects.raw(cmd)
+        output = rawQueryExportXls(ip_all_list.columns, ip_all_list, ('record_time',))
         response = FileResponse(
-            open(file, 'rb'), as_attachment=True, filename="iprecord_all.xls")
+            open(output, 'rb'), as_attachment=True, filename="iprecord_all.xls")
         return response
     elif ip_type == 'all':
         if ip_address != '':
