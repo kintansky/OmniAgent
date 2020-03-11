@@ -89,6 +89,38 @@ def rawQueryExportXls(fieldList, rawobj_list, datetime_field=tuple()):    # rawq
     book.save(save_path)
     return save_path
 
+def exportAllocationXls(fieldList, rawobj_list, datetime_field=tuple()):
+    book = xlwt.Workbook()
+    sheet1 = book.add_sheet('私网')
+    sheet2 = book.add_sheet('公网')
+    col = 0
+    for t in fieldList:
+        sheet1.write(0, col, t)
+        sheet2.write(0, col, t)
+        col += 1
+    row1, row2 = 1, 1
+    for rawobj in rawobj_list:
+        col = 0
+        if rawobj.serializable_value('ip_func') == '私网':
+            for t in fieldList:
+                if t in datetime_field:
+                    sheet1.write(row1, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
+                else:
+                    sheet1.write(row1, col, rawobj.serializable_value(t))
+                col += 1
+            row1 += 1
+        else:
+            for t in fieldList:
+                if t in datetime_field:
+                    sheet2.write(row2, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
+                else:
+                    sheet2.write(row2, col, rawobj.serializable_value(t))
+                col += 1
+            row2 += 1
+    save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
+    book.save(save_path)
+    return save_path
+
 def objectDataSerializer(obj, data):    # 序列化单个模型的字段，输出dict，不适用于raw返回的obj
     for f in obj._meta.fields:
         key = f.attname

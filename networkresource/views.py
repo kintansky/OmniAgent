@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportAllocationXls
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -442,9 +442,9 @@ def export_ip_allocation(request):
     from MR_REC_ip_allocation order by id
     '''
     ip_allocation = IPAllocation.objects.raw(cmd)
-    output = rawQueryExportXls(
+    # 分开成两个子表
+    output = exportAllocationXls(
         ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time'))
-
     response = FileResponse(open(output, 'rb'), as_attachment=True, filename='分配台账{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
     return response
 
@@ -920,14 +920,72 @@ def ajax_turn_segment_state(request, operation_type):
 # 网段规划，需要融合上面的内容
 def list_all_segment(request):
     context = {}
-    all_segment = PublicIpSegment.objects.all()
+    all_segment = PublicIpSegment.objects.all().order_by('-id')
     page_of_objects, page_range = pages(request, all_segment)
-    new_ip_segment_form = NewIpSegmentForm()    # TODO: Form增加专业字段
+    new_ip_segment_form = NewSchemaSegmentForm()
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['new_ip_segment_form'] = new_ip_segment_form
     return render(request, 'segment_schema.html', context)
+
+def allocate_segment(request):
+    data = {}
+    new_ip_segment_form = NewSchemaSegmentForm(request.POST)
+    if new_ip_segment_form.is_valid():
+        segmentData = new_ip_segment_form.cleaned_data['segment']
+        seg, mask = segmentData.split('/')
+        specialization = new_ip_segment_form.cleaned_data['specialization']
+        snet = IP.make_net(seg, mask)
+        if PublicIpSegment.objects.filter(upper_segment=snet[0].strNormal()):
+            data['status'] = 'error'
+            data['error_info'] = '网段已存在'
+        else:
+            # 插入网段到mr_rec_public_segment_reference
+            new_seg = PublicIpSegment()
+            new_seg.upper_segment = snet[0].strNormal()
+            new_seg.upper_mask = mask
+            new_seg.specialization = specialization
+            new_seg.save()
+            for ip in snet:
+                # 插入明细到mr_rec_group_client_ip_segment
+                target1 = GroupClientIPSegment()
+                target1.ip = ip.strNormal()
+                target1.ip_state = 0
+                target1.segment = snet[0].strNormal()
+                target1.mask = int(mask)
+                target1.segment_state = 1
+                target1.save()
+                # 插入明细到mr_rec_public_segment_schema
+                target2 = PublicIPSegmentSchema()
+                target2.ip = ip.strNormal()
+                target2.upper_segment = snet[0].strNormal()
+                target2.upper_mask = int(mask)
+                target2.state = 0
+                target2.alc_time = timezone.datetime.now()
+                target2.save()
+            
+            data['status'] = 'success'
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '网段格式有误'
+    return JsonResponse(data)
+
+def search_segment(request):
+    context = {}
+    target_segment = request.GET.get('ip')
+    all_segment = PublicIpSegment.objects.filter(upper_segment=target_segment).order_by('-id')
+    page_of_objects, page_range = pages(request, all_segment)
+    new_ip_segment_form = NewSchemaSegmentForm()
+    context['records'] = page_of_objects.object_list
+    context['page_of_objects'] = page_of_objects
+    context['page_range'] = page_range
+    context['new_ip_segment_form'] = new_ip_segment_form
+    return render(request, 'segment_schema.html', context)
+
+def schema_detail(request):
+    data = {}
+    return JsonResponse(data)
 
 
 # IP资源使用情况
