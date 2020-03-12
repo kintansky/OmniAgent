@@ -196,10 +196,25 @@ class NewIpSegmentForm(forms.Form):
         (0, '未启用'),
         (1, '启用'),
     )
-    segment = forms.GenericIPAddressField(label='IP地址', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0'}))
-    mask = forms.IntegerField(label='掩码', widget=forms.NumberInput(attrs={'class': 'form-control', }))
-    segment_state = forms.ChoiceField(label='状态', choices=SEGMENT_STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control', }))
+    segment = forms.GenericIPAddressField(label='IP', protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0', 'style': 'width:80%'}))
+    mask = forms.IntegerField(label='掩码', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:50%'}))
+    segment_state = forms.ChoiceField(label='状态', choices=SEGMENT_STATE_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
 
+class NewSchemaSegmentForm(forms.Form):
+    SEGMENT_SPECIALIZATION_CHOICES = (
+        ('网吧', '网吧'),
+        ('专线', '专线'),
+        ('其他', '其他'),
+    )
+    segment = forms.CharField(label='网段', required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '192.168.1.0/24', 'style': 'width:80%', }))
+    specialization = forms.ChoiceField(label='专业', choices=SEGMENT_SPECIALIZATION_CHOICES, widget=forms.Select(attrs={'class': 'form-control'}))
+    
+    def clean_segment(self):
+        d = self.cleaned_data['segment'].strip()
+        if re.match(r'(\d+\.){3}\d+/\d{1,2}', d):
+            return d
+        else:
+            raise forms.ValidationError('目标网段格式有误，请正确填写')
 
 class WorkLoadSearchForm(TimeRangeForm):
     worker = forms.CharField(label='用户', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
