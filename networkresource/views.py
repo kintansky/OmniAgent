@@ -433,20 +433,51 @@ def ip_allocated_client_list(request):
     return render(request, 'ip_allocated_client_list.html', context)
 
 
-def export_ip_allocation(request):
-    cmd = '''
-    select id, order_num, client_name, state, ip, ip_mask, gateway, 
-    bng, logic_port, svlan, cevlan, description, ip_func, 
-    olt, service_id, brand_width, group_id, product_id, network_type, 
-    community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
-    from MR_REC_ip_allocation order by id
-    '''
-    ip_allocation = IPAllocation.objects.raw(cmd)
-    # 分开成两个子表
-    output = exportAllocationXls(
-        ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time'))
-    response = FileResponse(open(output, 'rb'), as_attachment=True, filename='分配台账{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
-    return response
+def export_ip_allocation(request, amount):
+    if amount == 'all':
+        cmd = '''
+        select id, order_num, client_name, state, ip, ip_mask, gateway, 
+        bng, logic_port, svlan, cevlan, description, ip_func, 
+        olt, service_id, brand_width, group_id, product_id, network_type, 
+        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
+        from MR_REC_ip_allocation
+        '''
+        ip_allocation = IPAllocation.objects.raw(cmd)
+        output = exportAllocationXls(
+            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time')
+        )
+        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='全量分配台账{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+        return response
+    elif amount == 'today':
+        cmd = '''
+        select id, order_num, client_name, state, ip, ip_mask, gateway, 
+        bng, logic_port, svlan, cevlan, description, ip_func, 
+        olt, service_id, brand_width, group_id, product_id, network_type, 
+        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
+        from MR_REC_ip_allocation
+        '''
+        cmd += " where alc_time between %s and %s or last_mod_time between %s and %s"
+        timeBegin, timeEnd = getDateRange(-1)
+        ip_allocation = IPAllocation.objects.raw(cmd, (timeBegin, timeEnd, timeBegin, timeEnd))
+        output = exportAllocationXls(
+            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time')
+        )
+        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='当日分配台账{}_不含删除.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+        return response
+    elif amount == 'history':
+        cmd = '''
+        select id, mod_order_num, mod_msg, mod_user, mod_time, mod_type, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
+        gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
+        description as old_description, ip_func as old_ip_func, olt as old_olt, access_type as old_access_type, service_id as old_service_id, brand_width as old_brand_width, 
+        group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd
+        from MR_REC_ip_mod_record
+        '''
+        ip_allocation = IPMod.objects.raw(cmd)
+        # 分开成两个子表
+        output = exportAllocationXls(
+            ip_allocation.columns, ip_allocation, ('mod_time',))
+        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='台账修改记录{}_含删除.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+        return response
 
 
 def allocated_client_search(request):

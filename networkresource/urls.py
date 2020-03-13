@@ -5,7 +5,7 @@ urlpatterns = [
     path('ip/', views.ip_list, name='ip_record'),
     path('ip/search/', views.search_ip, name='search_ip'),
     path('ip/download/', views.export_ip, name='export_ip'),
-    # new ip allocate
+    # 分配台账
     path('ip/allocate/', views.new_allocate_ip, name='new_ip_allocate'),
     path('ip/allocate/ajax_get_olt_can_allocated_ip/', views.ajax_get_olt_can_allocated_ip, name='ajax_get_olt_can_allocated_ip'),
     path('ip/allocate/generate_ip2/', views.ajax_generate_ip_list2, name='generate_ip2'),
@@ -19,7 +19,7 @@ urlpatterns = [
     path('ip/allocated_ip_search/', views.ip_allocated_search, name='ip_allocates_search'),
     path('ip/locate_allocated_ip/', views.ajax_locate_allocated_ip, name='locate_allocated_ip'),
     path('ip/mod_allocated_ip/<str:operation_type>', views.ajax_mod_allocated_ip, name='mod_allocated_ip'),
-    path('ip/export_ip_allocation/', views.export_ip_allocation, name='export_ip_allocation'),
+    path('ip/export_ip_allocation/<str:amount>', views.export_ip_allocation, name='export_ip_allocation'),
 
     path('ajax_search_slot_ports/', views.ajax_search_slot_ports, name='ajax_search_slot_ports'),
     # 在用网段情况
@@ -30,6 +30,9 @@ urlpatterns = [
 
     # 网段规划
     path('ip/segment_schema/', views.list_all_segment, name='list_all_segment'),
+    path('ip/segment_schema/ajax_allocate_segment/', views.allocate_segment, name='ajax_allocate_segment'),
+    path('ip/segment_schema/search/', views.search_segment, name='search_segment'),
+    path('ip/segment_schema/detail/', views.schema_detail, name='schema_detail'),
 
     # IP资源使用情况
     path('ip/ip_allocated_segment/', views.get_device_allocated_segment, name='get_device_allocated_segment'),

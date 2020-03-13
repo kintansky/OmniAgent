@@ -33,7 +33,17 @@
 
 {% block export %}
     {# 将form的搜索条件传到views.export_ip #}
-    <a class="btn btn-success" href="{% url 'export_ip_allocation' %}" role="button">导出</a>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            导出
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            <li><a href="{% url 'export_ip_allocation' 'today' %}">当日情况</a></li>
+            <li><a href="{% url 'export_ip_allocation' 'all' %}">全量导出</a></li>
+            <li><a href="{% url 'export_ip_allocation' 'history' %}">变更历史</a></li>
+        </ul>
+    </div>
 {% endblock %}
 
 {% block alert_content %}
