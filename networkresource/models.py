@@ -96,11 +96,11 @@ class PublicIPSegmentSchema(models.Model):
     ip = models.GenericIPAddressField(protocol='both', unique=True)
     upper_segment = models.GenericIPAddressField(protocol='both')
     upper_mask = models.PositiveSmallIntegerField()
-    state = models.SmallIntegerField(null=True)
+    state = models.SmallIntegerField(default=0) # 默认0，预占-1，正常启用1，下沉地址2
     subnet_gateway = models.CharField(max_length=10, null=True)
     subnet_mask = models.PositiveSmallIntegerField(null=True)
-    access_bng = models.CharField(max_length=255, null=True)
-    access_olt = models.CharField(max_length=255, null=True)
+    access_bng = models.CharField(max_length=255, null=True)    # 这里记录的是两台bng，以/分割
+    access_olt = models.CharField(max_length=255, null=True)    # 记录可能是多台olt，以/分割
     access_type = models.CharField(max_length=10, null=True)  # 前端使用choice限制 
     alc_user = models.CharField(max_length=10, null=True)
     alc_time = models.DateTimeField()

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %} 网段规划 {% endblock %}
+
+{% load static %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'devices.css' %}">
+{% endblock %}
+
+{% block navbar_resource_active %}active{% endblock %}
+
+{% block subheader %}
+    网段规划
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <br>
+    <ol class="breadcrumb">
+        <li><a href="{% url 'dashboard' %}">Home</a></li>
+        <li>resource</li>
+        <li class="active">新增网段</li>
+    </ol>
+    <h2 class="sub-header">在用网段情况</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    新增网段
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="btn-group btn-group-xs pull-right" role="group" aria-label="...">
+                                        <button id="reset_btn" type="button" class="btn btn-danger">重置</button>
+                                        <button id="new_segment_btn" type="submit" class="btn btn-success">确认新增</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <form class="form-inline" id="new_segment_form" action="" method="POST">
+                                <div class="row">
+                                    {% for field in new_ip_segment_form %}
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {{ field }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form class="form-inline" action="{% url 'search_segment' %}" method="GET">
+                                        <div class="form-group">
+                                            <label for="id_ip"></label>
+                                            <input type="text" name="ip" class="form-control" placeholder="192.168.1.0" required="" id="id_ip">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">搜索</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>地址段</th>
+                                                    <th>专业</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for record in records %}
+                                                <tr>
+                                                    <td>{{ record.id }}</td>
+                                                    <td>{{ record.upper_segment }} / {{ record.upper_mask }}</td>
+                                                    <td>
+                                                        {{ record.specialization }}
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-primary btn-xs schema_detail_btn" rdata="{{ record.id }}">点击规划</button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2 counter">
+                    <p class="counter">
+                        <span class="glyphicon glyphicon-credit-card" aria-hidden="true"></span>
+                        Found <strong>{{ page_of_objects.paginator.count }}</strong> records
+                    </p>
+                </div>
+                <div class="col-lg-10">
+                    <div class="paginator">
+                        <ul class="pagination">
+                            {# 上一页 #}
+                            <li>
+                                {% if page_of_objects.has_previous %}
+                                    <a href="?page={{ page_of_objects.previous_page_number }}{{ search_paras }}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                {% else %}
+                                    <span aria-hidden="true">&laquo;</span>
+                                {% endif %}
+                            </li>
+                            {# 中间页码 #}
+                            {% for page_num in page_range %}
+                                {% if page_num == page_of_objects.number %}
+                                    <li class='active'><span>{{ page_num }}</span></li>
+                                {% else %}
+                                    {% if page_num == '...' %}
+                                        <li><span>{{ page_num }}</span></li>
+                                    {% else %}
+                                        <li><a href="?page={{ page_num }}{{ search_paras }}">{{ page_num }}</a></li>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {# 下一页 #}
+                            <li>
+                                {% if page_of_objects.has_next %}
+                                    <a href="?page={{ page_of_objects.next_page_number }}{{ search_paras }}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                {% else %}
+                                    <span aria-hidden="true">&raquo;</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-primary">
+                                        <div class="panel-heading">
+                                            在用
+                                        </div>
+                                        <div class="panel-body">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">
+                                            待规划
+                                        </div>
+                                        <div class="panel-body">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- loading提示 -->
+<div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body ">
+                <p class="text-center">正在处理，请稍候...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tail_script %}
+<script>
+    $(document).ready(function(){
+        $('#reset_btn').click(function(){
+            $(':reset').trigger('click');
+        });
+
+        // 新增segment
+        $('#new_segment_btn').click(function(){
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'ajax_allocate_segment' %}",  // 异步请求的地址
+                type: "POST",    // 请求方式
+                data: $("#new_segment_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",   // 发送的json
+                cache: false,
+                success: function(data){    // 回调函数，返回data
+                    if(data['status'] == 'success'){
+                        $('#loading').modal('hide');
+                        alert('新增成功');
+                        // window.location.reload();
+                        window.location.replace("{% url 'list_all_segment' %}");
+                    }else{
+                        $('#loading').modal('hide');
+                        alert('新增失败：' + data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    $('#loading').modal('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+
+        // 请求在用情况
+        $('.schema_detail_btn').click(function(){
+            var rdata = $(this).attr('rdata');
+            $.ajax({
+                url: "{% url 'schema_detail' %}",
+                type: "GET",
+                data: "rdata=" + rdata,
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+
+                    }else{
+                        
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                },
+            });
+        });
+    });
+</script>
+{% endblock %}
