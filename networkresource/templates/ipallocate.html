@@ -551,7 +551,9 @@
         $(document).on("click", ".olt-item", function(){
             var auto_item = $(this).text();
             $("#olt-list").css("display", "none");
-            $("#id_olt").val(auto_item);
+            if (auto_item != '无候选结果'){
+                $("#id_olt").val(auto_item);
+            }
         });
         // // 设置失去焦点时隐藏，避免遮挡
         // $("#id_olt").blur(function(){

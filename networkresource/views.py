@@ -322,6 +322,16 @@ def ajax_get_olt_bng(request, device_type):
     data = {}
     if device_type == 'olt':
         olt = request.GET.get('olt', '').strip()
+        if 'PTN' in olt.upper():
+            data['olt_list'] = '无候选结果'
+            data['access_type'] = 'PTN'
+            data['status'] = 'success'
+            return JsonResponse(data)
+        elif re.match(r'.*?(-BNG\d+)|(-BRAS\d+).*?', olt.upper()):
+            data['olt_list'] = '无候选结果'
+            data['access_type'] = 'DIRECT'
+            data['status'] = 'success'
+            return JsonResponse(data)
         rawQueryCmd = 'select id, olt from omni_agent.MR_REP_olt_bng_references where olt LIKE "%%{}%%" GROUP BY olt'.format(olt)
         olts = IpmanResource.objects.raw(rawQueryCmd)
         olt_list = [d.olt for d in olts]
@@ -336,6 +346,7 @@ def ajax_get_olt_bng(request, device_type):
             data['olt_list'] = ','.join(olt_list)
             data['access_type'] = 'GPON'
             data['status'] = 'success'
+        return JsonResponse(data)
     elif device_type == 'bng':
         olt = request.GET.get('olt', '').strip()
         rawQueryCmd = 'select id, bng from omni_agent.MR_REP_olt_bng_references where olt = %s GROUP BY bng'
@@ -357,7 +368,7 @@ def ajax_confirm_allocate(request):
         # print(target_dict)
         if new_ip_allocation_form.is_valid():
             # print(new_ip_allocation_form.cleaned_data)
-            bngs = new_ip_allocation_form.cleaned_data['bng'].split('/')
+            bngs = new_ip_allocation_form.cleaned_data['bng'].split('/')    # 单台BNG不受影响，分裂的时候如果单台，另一台是空
             for target in target_dict:
                 ipData = target_dict[target]    # target_dict[data['target']] = [ip_func, state, gateway]
                 if 'p' in target:
@@ -411,6 +422,7 @@ def ajax_confirm_allocate(request):
         else:
             data['status'] = 'error'
             errorDict = new_ip_allocation_form.errors.get_json_data()
+            print(errorDict)
             data['error_info'] = json.dumps(errorDict)
     else:
         data['status'] = 'error'

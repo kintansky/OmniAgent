@@ -94,10 +94,10 @@ class NewIPAllocationForm(forms.Form):
         ('单上联', '单上联'),
     )
     ACCESS_CHOICES = (
+        ('', ''),
         ('GPON', 'GPON'),
         ('PTN', 'PTN'),
         ('DIRECT', 'DIRECT'),
-        ('OTHER', 'OTHER'),
     )
     order_num = forms.CharField(label='服开单号', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     client_name = forms.CharField(label='客户名称', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
@@ -127,6 +127,36 @@ class NewIPAllocationForm(forms.Form):
     community = forms.CharField(label='COMMUNITY', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'community', 'style': 'width:70%'}))
     rt = forms.CharField(label='RT', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rt', 'style': 'width:70%'}))
     rd = forms.CharField(label='RD', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rd', 'style': 'width:70%'}))
+    
+    # 如果多字段同时clean只能使用clean，执行顺序是先单字段校验，再进行混合的clean
+    def clean(self):
+        cleaned_data = super().clean()
+        access_type = cleaned_data.get('access_type')
+        olt = cleaned_data.get('olt')
+        if 'PTN' in olt.upper() and access_type != 'PTN':
+            # raise forms.ValidationError('接入设备为PTN，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为PTN，但接入方式为{}'.format(access_type))
+        elif 'OLT' in olt.upper() and access_type != 'GPON':
+            # raise forms.ValidationError('接入设备为OLT，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为OLT，但接入方式为{}'.format(access_type))
+        elif re.match(r'.*?(-BNG\d+)|(-BRAS\d+).*?', olt.upper()) and access_type != 'DIRECT':
+            # raise forms.ValidationError('接入设备为BNG，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为BNG，但接入方式为{}'.format(access_type))
+        return cleaned_data
+
+    def clean_olt(self):
+        return self.cleaned_data['olt'].strip()
+
+    def clean_access_type(self):
+        if self.cleaned_data['access_type'] == '':
+            raise forms.ValidationError('请选择接入类型')
+        else:
+            return self.cleaned_data['access_type']
+
+    def clean_bng(self):
+        bng = self.cleaned_data['bng']
+        bngList = [b.strip() for b in bng.split('/') if b.strip() != '']    # 如果bng填写只有单台，而且/没去掉的情况，这里会处理掉
+        return '/'.join(bngList)
 
     def clean_network_type(self):
         if self.cleaned_data['network_type'] == '':
@@ -136,7 +166,7 @@ class NewIPAllocationForm(forms.Form):
 
     def clean_group_id(self):
         group_id = self.cleaned_data['group_id']
-        num_cnt = 11
+        num_cnt = 10
         if group_id / (10**num_cnt) < 1:
             raise forms.ValidationError('集团编码位数应>={}位'.format(num_cnt))
         else:
@@ -144,7 +174,7 @@ class NewIPAllocationForm(forms.Form):
 
     def clean_product_id(self):
         product_id = self.cleaned_data['product_id']
-        num_cnt = 11
+        num_cnt = 10
         if product_id / (10**num_cnt) < 1:
             raise forms.ValidationError('产品编码位数应>={}位'.format(num_cnt))
         else:
