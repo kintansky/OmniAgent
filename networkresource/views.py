@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema
 from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportAllocationXls
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportClassifiedXls
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -136,7 +136,7 @@ def export_ip(request):
         select * from MR_REC_ip_record order by id
         '''
         ip_all_list = IpRecord.objects.raw(cmd)
-        output = rawQueryExportXls(ip_all_list.columns, ip_all_list, ('record_time',))
+        output = exportClassifiedXls(ip_all_list.columns, ip_all_list, ('record_time',), 'ip_type',)
         response = FileResponse(
             open(output, 'rb'), as_attachment=True, filename="iprecord_all.xls")
         return response
@@ -435,48 +435,58 @@ def ip_allocated_client_list(request):
 
 def export_ip_allocation(request, amount):
     if amount == 'all':
-        cmd = '''
+        cmd_all = '''
         select id, order_num, client_name, state, ip, ip_mask, gateway, 
         bng, logic_port, svlan, cevlan, description, ip_func, 
         olt, service_id, brand_width, group_id, product_id, network_type, 
         community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
         from MR_REC_ip_allocation
+        order by id desc
         '''
-        ip_allocation = IPAllocation.objects.raw(cmd)
-        output = exportAllocationXls(
-            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time')
-        )
-        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='全量分配台账{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
-        return response
-    elif amount == 'today':
-        cmd = '''
-        select id, order_num, client_name, state, ip, ip_mask, gateway, 
-        bng, logic_port, svlan, cevlan, description, ip_func, 
-        olt, service_id, brand_width, group_id, product_id, network_type, 
-        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
-        from MR_REC_ip_allocation
-        '''
-        cmd += " where alc_time between %s and %s or last_mod_time between %s and %s"
-        timeBegin, timeEnd = getDateRange(-1)
-        ip_allocation = IPAllocation.objects.raw(cmd, (timeBegin, timeEnd, timeBegin, timeEnd))
-        output = exportAllocationXls(
-            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time')
-        )
-        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='当日分配台账{}_不含删除.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
-        return response
-    elif amount == 'history':
-        cmd = '''
-        select id, mod_order_num, mod_msg, mod_user, mod_time, mod_type, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
+        ip_allocation = IPAllocation.objects.raw(cmd_all)
+        cmd_his = '''
+        select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
         gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
         description as old_description, ip_func as old_ip_func, olt as old_olt, access_type as old_access_type, service_id as old_service_id, brand_width as old_brand_width, 
         group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd
         from MR_REC_ip_mod_record
+        order by id desc
         '''
-        ip_allocation = IPMod.objects.raw(cmd)
-        # 分开成两个子表
-        output = exportAllocationXls(
-            ip_allocation.columns, ip_allocation, ('mod_time',))
-        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='台账修改记录{}_含删除.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+        mod_his = IPMod.objects.raw(cmd_his)
+        output = exportClassifiedXls(
+            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time'), 'ip_func',
+            mod_his.columns, mod_his, ('mod_time',), '操作日志',
+        )
+        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='全量日志{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
+        return response
+    elif amount == 'today':
+        # 当天的在网记录
+        cmd_today = '''
+        select id, order_num, client_name, state, ip, ip_mask, gateway, 
+        bng, logic_port, svlan, cevlan, description, ip_func, 
+        olt, service_id, brand_width, group_id, product_id, network_type, 
+        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
+        from MR_REC_ip_allocation
+        where alc_time between %s and %s or last_mod_time between %s and %s
+        order by id desc
+        '''
+        timeBegin, timeEnd = getDateRange(-1)
+        ip_allocation = IPAllocation.objects.raw(cmd_today, (timeBegin, timeEnd, timeBegin, timeEnd))
+        # 当天的操作日志
+        cmd_today_history = '''
+        select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
+        gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
+        description as old_description, ip_func as old_ip_func, olt as old_olt, service_id as old_service_id, brand_width as old_brand_width, group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd, access_type as old_access_type
+        from mr_rec_ip_mod_record
+        where mod_time between %s and %s
+        order by id desc
+        '''
+        today_mod_history = IPAllocation.objects.raw(cmd_today_history, (timeBegin, timeEnd))
+        output = exportClassifiedXls(
+            ip_allocation.columns, ip_allocation, ('alc_time','last_mod_time'), 'ip_func',
+            today_mod_history.columns, today_mod_history, ('mod_time',), '当天操作日志',
+        )
+        response = FileResponse(open(output, 'rb'), as_attachment=True, filename='当天日志{}.xls'.format(timezone.now().strftime('%Y%m%d%H%M%S')))
         return response
 
 

@@ -89,34 +89,57 @@ def rawQueryExportXls(fieldList, rawobj_list, datetime_field=tuple()):    # rawq
     book.save(save_path)
     return save_path
 
-def exportAllocationXls(fieldList, rawobj_list, datetime_field=tuple()):
+'''
+ exportClassifiedXls 会按照分类字段进行分类写入不同的sheet，所以注意提供的分类字段不要太多，
+ 同时，还提供了一个写入其他表的接口，但这个表不会分类
+'''
+def exportClassifiedXls(fieldList, rawobj_list, datetime_field, classify_field, none_classify_fieldList=None, none_classify_rawobj_list=None, none_classify_datetime_field=None, none_classify_sheet_name=None):
+    # datetime_field 传入tuple类型
     book = xlwt.Workbook()
-    sheet1 = book.add_sheet('私网')
-    sheet2 = book.add_sheet('公网')
-    col = 0
-    for t in fieldList:
-        sheet1.write(0, col, t)
-        sheet2.write(0, col, t)
-        col += 1
-    row1, row2 = 1, 1
     for rawobj in rawobj_list:
+        # 按照分类字段切换表格进行添加数据
+        if classify_field == '':    # 不分类写表
+            try:
+                sheet = book.get_sheet('全量')
+            except:
+                sheet = book.add_sheet('全量')
+                col = 0
+                for t in fieldList:
+                    sheet.write(0, col, t)
+                    col += 1
+        else:   # 分类写表
+            try:
+                sheet = book.get_sheet(rawobj.serializable_value(classify_field))
+            except:
+                sheet = book.add_sheet(rawobj.serializable_value(classify_field))
+                col = 0
+                for t in fieldList:
+                    sheet.write(0, col, t)
+                    col += 1
         col = 0
-        if rawobj.serializable_value('ip_func') == '私网':
-            for t in fieldList:
-                if t in datetime_field:
-                    sheet1.write(row1, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
+        row = sheet.last_used_row+1
+        for t in fieldList:
+            if t in datetime_field:
+                sheet.write(row, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
+            else:
+                sheet.write(row, col, rawobj.serializable_value(t))
+            col += 1
+    # 其他不分类的数据表
+    if none_classify_rawobj_list is not None:
+        sheet3 = book.add_sheet(none_classify_sheet_name)
+        col = 0
+        for t in none_classify_fieldList:
+            sheet3.write(0, col, t)
+            col += 1
+        for rawobj in none_classify_rawobj_list:
+            col = 0
+            row = sheet3.last_used_row+1
+            for t in none_classify_fieldList:
+                if t in none_classify_datetime_field:
+                    sheet3.write(row, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
                 else:
-                    sheet1.write(row1, col, rawobj.serializable_value(t))
+                    sheet3.write(row, col , rawobj.serializable_value(t))
                 col += 1
-            row1 += 1
-        else:
-            for t in fieldList:
-                if t in datetime_field:
-                    sheet2.write(row2, col, rawobj.serializable_value(t), XLS_DATETIME_FORMAT)
-                else:
-                    sheet2.write(row2, col, rawobj.serializable_value(t))
-                col += 1
-            row2 += 1
     save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
     return save_path
