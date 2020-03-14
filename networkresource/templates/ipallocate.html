@@ -226,18 +226,6 @@
                 </div>
             </div>
         {% endif %}
-        
-
-            <!-- loading提示 -->
-        <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop='static'>
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-body ">
-                        <p class="text-center">正在处理，请稍候...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="modal fade bs-example-modal" id="ready_ip_modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
             <div class="modal-dialog modal-lg" role="document">
@@ -492,41 +480,15 @@
                     }else{
                         // console.log(data);
                         $("p.error-data").text("");
-                        if("error_order_num" in data){
-                            $("#id_error_order_num").text(data["error_order_num"]);
-                        }
-                        if("error_client_name" in data){
-                            $("#id_error_client_name").text(data["error_client_name"]);
-                        }
-                        if("error_olt" in data){
-                            $("#id_error_olt").text(data["error_olt"]);
-                        }
-                        if("error_bng" in data){
-                            $("#id_error_bng").text(data["error_bng"]);
-                        }
-                        if("error_logic_port" in data){
-                            $("#id_error_logic_port").text(data["error_logic_port"]);
-                        }
-                        if("error_description" in data){
-                            $("#id_error_description").text(data["error_description"]);
-                        }
-                        if("error_service_id" in data){
-                            $("#id_error_service_id").text(data["error_service_id"]);
-                        }
-                        if("error_group_id" in data){
-                            $("#id_error_group_id").text(data["error_group_id"]);
-                        }
-                        if("error_product_id" in data){
-                            $("#id_error_product_id").text(data["error_product_id"]);
-                        }
-                        if("error_community" in data){
-                            $("#id_error_community").text(data["error_community"]);
-                        }
-                        if("error_rt" in data){
-                            $("#id_error_rt").text(data["error_rt"]);
-                        }
-                        if("error_rd" in data){
-                            $("#id_error_rd").text(data["error_rd"]);
+                        if ('error_info' in data){
+                            alert("分配失败，请查看对应字段的错误信息");
+                            var error_data = JSON.parse(data['error_info']);
+                            for (var key in error_data){
+                                var item = error_data[key];
+                                // console.log(item[0]['message']);
+                                // 按照对应id补全错误信息
+                                $("#id_error_"+key).text(item[0]['message']);
+                            }
                         }
                         if("other_error" in data){
                             alert(data["other_error"]);
@@ -536,6 +498,7 @@
                 error: function(xhr){
                     $('#loading').modal('hide');
                     console.log(xhr);
+                    alert("分配失败");
                 }
             });
         });

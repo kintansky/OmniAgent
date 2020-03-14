@@ -354,7 +354,7 @@ def ajax_confirm_allocate(request):
     target_list = request.POST.get('target-list', '{}')
     if target_list != '' and target_list != '{}':
         target_dict = json.loads(target_list)
-        print(target_dict)
+        # print(target_dict)
         if new_ip_allocation_form.is_valid():
             # print(new_ip_allocation_form.cleaned_data)
             bngs = new_ip_allocation_form.cleaned_data['bng'].split('/')
@@ -411,11 +411,10 @@ def ajax_confirm_allocate(request):
         else:
             data['status'] = 'error'
             errorDict = new_ip_allocation_form.errors.get_json_data()
-            for f in errorDict:
-                data['error_'+f] = errorDict[f][0]['message']
+            data['error_info'] = json.dumps(errorDict)
     else:
         data['status'] = 'error'
-        data['other_error'] = '分配目标地址为空'
+        data['other_error'] = '分配失败，未提供目标IP'
     return JsonResponse(data)
 
 # @permission_required('networkresource.view_iprecord', login_url='/login/')

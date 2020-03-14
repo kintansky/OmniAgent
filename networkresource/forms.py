@@ -89,6 +89,7 @@ class IPTargetForm(forms.Form):
 
 class NewIPAllocationForm(forms.Form):
     NET_CHOICES = (
+        ('', ''),
         ('双上联', '双上联'),
         ('单上联', '单上联'),
     )
@@ -111,8 +112,8 @@ class NewIPAllocationForm(forms.Form):
     # 描述与带宽的关系
     description = forms.CharField(label='描述', widget=forms.TextInput(attrs={'class': 'form-control', 'style': 'width:70%'}))    
     service_id = forms.IntegerField(label='业务ID', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
-    group_id = forms.IntegerField(label='集团客户编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
-    product_id = forms.IntegerField(label='集团产品编号', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    group_id = forms.IntegerField(label='集团编码', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
+    product_id = forms.IntegerField(label='产品编码', widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width:70%'}))
     network_type = forms.ChoiceField(label='组网类型', choices=NET_CHOICES, widget=forms.Select(attrs={'class': 'form-control', 'style': 'width:70%'}))
 
     # 其他信息
@@ -127,7 +128,30 @@ class NewIPAllocationForm(forms.Form):
     rt = forms.CharField(label='RT', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rt', 'style': 'width:70%'}))
     rd = forms.CharField(label='RD', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rd', 'style': 'width:70%'}))
 
+    def clean_network_type(self):
+        if self.cleaned_data['network_type'] == '':
+            raise forms.ValidationError('请选择组网类型')
+        else:
+            return self.cleaned_data['network_type']
+
+    def clean_group_id(self):
+        group_id = self.cleaned_data['group_id']
+        num_cnt = 11
+        if group_id / (10**num_cnt) < 1:
+            raise forms.ValidationError('集团编码位数应>={}位'.format(num_cnt))
+        else:
+            return group_id
+
+    def clean_product_id(self):
+        product_id = self.cleaned_data['product_id']
+        num_cnt = 11
+        if product_id / (10**num_cnt) < 1:
+            raise forms.ValidationError('产品编码位数应>={}位'.format(num_cnt))
+        else:
+            return product_id
+    
     def clean_order_num(self):
+        # TODO: 增加检验
         return self.cleaned_data['order_num'].strip()
 
     def clean_client_name(self):
