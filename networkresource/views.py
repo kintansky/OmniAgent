@@ -336,7 +336,7 @@ def ajax_get_olt_bng(request, device_type):
         olts = IpmanResource.objects.raw(rawQueryCmd)
         olt_list = [d.olt for d in olts]
         if len(olt_list) > 10:
-            data['olt_list'] = '候选结果过多，请提关键字眼'
+            data['olt_list'] = '候选结果过多，请使用关键字'
             data['status'] = 'error'
         elif len(olt_list) == 0:
             data['olt_list'] = '无候选结果'
