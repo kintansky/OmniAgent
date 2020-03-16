@@ -488,7 +488,7 @@ def export_ip_allocation(request, amount):
         select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
         gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
         description as old_description, ip_func as old_ip_func, olt as old_olt, service_id as old_service_id, brand_width as old_brand_width, group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd, access_type as old_access_type
-        from mr_rec_ip_mod_record
+        from MR_REC_ip_mod_record
         where mod_time between %s and %s
         order by id desc
         '''
