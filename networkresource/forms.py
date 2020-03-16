@@ -166,7 +166,7 @@ class NewIPAllocationForm(forms.Form):
 
     def clean_group_id(self):
         group_id = self.cleaned_data['group_id']
-        num_cnt = 10
+        num_cnt = 9
         if group_id / (10**num_cnt) < 1:
             raise forms.ValidationError('集团编码位数应>={}位'.format(num_cnt))
         else:
@@ -174,7 +174,7 @@ class NewIPAllocationForm(forms.Form):
 
     def clean_product_id(self):
         product_id = self.cleaned_data['product_id']
-        num_cnt = 10
+        num_cnt = 9
         if product_id / (10**num_cnt) < 1:
             raise forms.ValidationError('产品编码位数应>={}位'.format(num_cnt))
         else:
