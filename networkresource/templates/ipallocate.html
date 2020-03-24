@@ -30,6 +30,8 @@
                                 <label for="{{ new_ip_allocation_form.include_private_ip.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.include_private_ip.label }}</label>
                                 {{ new_ip_allocation_form.include_private_ip }}
                                 <!-- <p class="text-danger error-data">{{ field.errors.as_text }}</p> -->
+                                <label for="{{ new_ip_allocation_form.icp_id.id_for_label }}" class="col-sm-2 control-label">{{ new_ip_allocation_form.icp_id.label }}</label>
+                                {{ new_ip_allocation_form.icp_id }}
                             </div>
                             <div class="row">
                                 <div class="col-sm-12">
@@ -195,10 +197,35 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <a href="" data-toggle="modal" data-target="#icp-modal" class="modal_form_trigger" id="add_icp">
+                                        <h4><span class="label label-default">5 点击添加ICP信息</span></h4>
+                                    </a>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>营业执照</th>
+                                                <th>客户地址</th>
+                                                <th>保障等级</th>
+                                                <th>联系人</th>
+                                                <th>派单人</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="conf-icp-table">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                             <hr>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <h4><span class="label label-default">5 其他信息</span></h4>
+                                    <h4><span class="label label-default">6 其他信息</span></h4>
                                 </div>
                             </div>
                             <br>
@@ -325,6 +352,50 @@
                 </div>
             </div>
         </div>
+        <!-- icp-modal -->
+        <div class="modal fade" id="icp-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">添加ICP信息</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="input-group">
+                                    <textarea id="icp_text" name="icp_text" class="form-control" rows="4"></textarea>
+                                    <span class="input-group-addon">
+                                        <button id="id_parse_icp" class="btn btn-default" type="button">解析</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <!-- 解析ICP后补全的内容 -->
+                                <form id="icp_info_form" class="form">
+                                    {% for field in new_icp_info_form %}
+                                        <div class="form-group">
+                                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                            {{ field }}
+                                            <p id="error_{{ field.id_for_label }}" class="text-danger icp-error-data">{{ field.errors.as_text }}</p>
+                                        </div>
+                                    {% endfor %}
+                                    <button type="reset" class="btn btn-danger btn-sm">重置</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="confirm_icp_info" type="submit" class="btn btn-primary">确认新增</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
     </div>
     
 {% endblock %}
@@ -475,7 +546,8 @@
                         // console.log(data);
                         $("p.error-data").text(""); // 清空错误信息
                         document.getElementById('ip-detail-form').reset();  // 清空form
-                        $("#conf-ip-table").html(""); // 清空目标table
+                        $("#conf-ip-table").html(""); // 清空目标ip table
+                        $("#conf-icp-table").html(""); // 清空icp table
                         alert("分配成功");
                     }else{
                         // console.log(data);
@@ -576,6 +648,66 @@
                     }
                 },
                 error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 点开modal的时候，清理icp表单
+        $("#add_icp").click(function(){
+            $("#icp_text").val("");
+        });
+        // 解析icp信息
+        $("#id_parse_icp").click(function(){
+            $.ajax({
+                url: "{% url 'parse_icp' %}",
+                type: 'GET',
+                data: $("#icp_text").serialize(),
+                cache: false,
+                success: function(data){
+                    var parsed_icp_result = JSON.parse(data['parsed_icp_result']);
+                    for(var key in parsed_icp_result){
+                        $('#'+key).val(parsed_icp_result[key]);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 确认ICP信息
+        $('#confirm_icp_info').click(function(){
+            $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'confirm_icp' %}",
+                type: 'POST',
+                data: $("#icp_info_form").serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    $('#loading').modal('hide');
+                    if(data['status'] == 'success'){
+                        $("p.icp-error-data").text(""); // 清空错误信息
+                        document.getElementById('icp_info_form').reset();  // 清空form
+                        $('#id_icp_id').val(data['id']); // 将icp——id回填给分配form
+                        $('#conf-icp-table').html('<tr><td>'+data['identify_id']+'</td><td>'+data['client_address']+'</td><td>'+data['guard_level']+'</td></td><td>'+data['client_tech']+data['client_tech_contact']+'</td><td>'+data['distributor']+data['distributor_contact']+'</td></tr>');
+                        alert("ICP备案信息创建成功");
+                        $("#icp-modal").modal("hide");
+                    }else{
+                        // console.log(data);
+                        $("p.icp-error-data").text("");
+                        if ('error_info' in data){
+                            alert("创建失败，请查看对应字段的错误信息");
+                            var error_data = JSON.parse(data['error_info']);
+                            for (var key in error_data){
+                                var item = error_data[key];
+                                // console.log(item[0]['message']);
+                                // 按照对应id补全错误信息
+                                $("#error_id_"+key).text(item[0]['message']);
+                            }
+                        }
+                    }
+                },
+                error: function(xhr){
+                    $('#loading').modal('hide');
                     console.log(xhr);
                 }
             });

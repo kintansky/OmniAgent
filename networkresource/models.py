@@ -159,11 +159,49 @@ class IPAllocationBase(models.Model):
         abstract = True
 
 
+class ICP(models.Model):
+    identify_id = models.CharField(max_length=100)  # 必填
+    guard_level = models.CharField(max_length=10, null=True)
+    city = models.CharField(max_length=10, null=True)
+    district = models.CharField(max_length=10, null=True)
+    distributor = models.CharField(max_length=10, null=True)
+    distributor_contact = models.CharField(max_length=20, null=True)
+    demand = models.TextField(null=True)
+    bandwidth_up = models.PositiveIntegerField(default=0)
+    bandwidth_dwn = models.PositiveIntegerField(default=0)
+    client_tech = models.CharField(max_length=10, null=True)
+    client_tech_contact = models.CharField(max_length=20, null=True)
+    demand_ipv4_amount = models.PositiveIntegerField(default=0)
+    demand_ipv6_amount = models.PositiveIntegerField(default=0)
+    client_address = models.CharField(max_length=255, null=True)
+    businessman = models.CharField(max_length=10, null=True)
+    businessman_contact = models.CharField(max_length=20, null=True)
+
+    class Meta:
+        db_table = 'MR_REC_icp_info'
+        ordering = ['id',]
+        # indexes = [
+        #     models.Index(fields=['identify_id']),
+        # ]
+
+
 class IPAllocation(IPAllocationBase):
     comment = models.CharField(max_length=255, null=True)
     alc_user = models.CharField(max_length=10, null=True)
     alc_time = models.DateTimeField()
     last_mod_time = models.DateTimeField(null=True)
+    icp = models.ForeignKey(
+        ICP,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    # icp = models.OneToOneField(
+    #     ICP,
+    #     on_delete=models.SET_NULL,
+    #     blank=True,
+    #     null=True,
+    # )
 
     class Meta:
         db_table = 'MR_REC_ip_allocation'

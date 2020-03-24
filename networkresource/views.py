@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm
+from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema, ICP
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm, ICPInfoForm
 from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportClassifiedXls
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -169,6 +169,8 @@ def new_allocate_ip(request):
     if request.method == 'GET':
         ip_target_form = IPTargetForm()
         new_ip_allocation_form = NewIPAllocationForm()
+        new_icp_info_form = ICPInfoForm()
+        context['new_icp_info_form'] = new_icp_info_form
         context['ip_target_form'] = ip_target_form
         context['new_ip_allocation_form'] = new_ip_allocation_form
     return render(request, 'ipallocate.html', context)
@@ -359,6 +361,69 @@ def ajax_get_olt_bng(request, device_type):
     return JsonResponse(data)
 
 
+def searchICPInfo(rePattern, text, groupNum):
+    m = re.search(rePattern, text)
+    if m:
+        return m.group(groupNum)
+    else:
+        return None
+
+def parse_icp(request):
+    data = {}
+    icp_text = request.GET.get('icp_text', '')
+    # 字段对应的正则表达式，因为提供的字符串可能格式不稳定，尽量不要多字段匹配
+    icp_research_pattern = {
+        'id_identify_id': [r'单位证件号码\s+(\S+)', 1],
+        'id_guard_level': [r'保障等级\s+(\S+)', 1],
+        'id_city': [r'受理地市\s+(\S+)', 1],
+        'id_district': [r'受理区域\s+(\S+)', 1],
+        'id_distributor': [r'派单人\s+(\S+)', 1],
+        'id_distributor_contact': [r'派单人\s+\S+\s+?联系方式\s*?(\d+)', 1],
+        'id_demand': [r'需求描述\s+(\S+)', 1],
+        'id_bandwidth_up': [r'上行带宽\s+(\d+)', 1],
+        'id_bandwidth_dwn': [r'上行带宽\s+\d+\s+下行带宽\s+(\d+)', 1],
+        'id_client_tech': [r'客户配合联系人\s+(\S+)', 1],
+        'id_client_tech_contact': [r'客户配合联系人\s+\S+\s+客户配合联系方式\s+(\d+)', 1],
+        'id_demand_ipv4_amount': [r'(\d+)\s+IPV4地址数量', 1],  # 确认数据位置
+        'id_demand_ipv6_amount': [r'(\d+)\s+IPV6地址数量', 1],  # 确认数据位置
+        'id_client_address': [r'单位详细地址\s+(\S+)', 1],
+        'id_businessman': [r'联系人姓名\(客户侧\)\s+(\S+)', 1],
+        'id_businessman_contact': [r'联系人姓名\(客户侧\)\s+\S+\s+联系人电话\(客户侧\)\s+(\d+)', 1],
+    }
+    # 解析icp_text成一个字典，字典都以id_字段名为key
+    icp_result = dict()
+    for key in icp_research_pattern:
+        s = searchICPInfo(icp_research_pattern[key][0], icp_text, icp_research_pattern[key][1])
+        if s is not None:
+            icp_result[key] = s
+            continue
+    data['parsed_icp_result'] = json.dumps(icp_result)
+    return JsonResponse(data)
+
+def confirm_icp(request):
+    data = {}
+    # print(request.POST)
+    new_icp_info_form = ICPInfoForm(request.POST)
+    if new_icp_info_form.is_valid():
+        # 新增前确认是否存在一摸一样的数据
+        try:
+            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+            # data['choose_icp_id'] = already_has_icp.pk
+            objectDataSerializer(already_has_icp, data)
+        except ObjectDoesNotExist:  # 如果不存在则创建
+            new_icp = ICP(**new_icp_info_form.cleaned_data)
+            new_icp.save()
+            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+            # data['choose_icp_id'] = already_has_icp.pk
+            objectDataSerializer(already_has_icp, data)
+        data['status'] = 'success'
+    else:
+        data['status'] = 'error'
+        errorDict = new_icp_info_form.errors.get_json_data()
+        data['error_info'] = json.dumps(errorDict)
+    return JsonResponse(data)
+
+
 def ajax_confirm_allocate(request):
     data = {}
     new_ip_allocation_form = NewIPAllocationForm(request.POST)
@@ -415,6 +480,7 @@ def ajax_confirm_allocate(request):
                         ip_allocation.alc_user = request.user.first_name
                         ip_allocation.alc_time = timezone.datetime.now()
                         ip_allocation.last_mod_time = ip_allocation.alc_time
+                        ip_allocation.icp = get_object_or_404(ICP, pk=new_ip_allocation_form.cleaned_data['icp_id'])
 
                         ip_allocation.save()
 
@@ -422,7 +488,6 @@ def ajax_confirm_allocate(request):
         else:
             data['status'] = 'error'
             errorDict = new_ip_allocation_form.errors.get_json_data()
-            print(errorDict)
             data['error_info'] = json.dumps(errorDict)
     else:
         data['status'] = 'error'

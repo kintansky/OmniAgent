@@ -128,6 +128,8 @@ class NewIPAllocationForm(forms.Form):
     rt = forms.CharField(label='RT', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rt', 'style': 'width:70%'}))
     rd = forms.CharField(label='RD', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'rd', 'style': 'width:70%'}))
     
+    icp_id = forms.IntegerField(label='icp_id', required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
+
     # 如果多字段同时clean只能使用clean，执行顺序是先单字段校验，再进行混合的clean
     def clean(self):
         cleaned_data = super().clean()
@@ -166,16 +168,16 @@ class NewIPAllocationForm(forms.Form):
 
     def clean_group_id(self):
         group_id = self.cleaned_data['group_id']
-        num_cnt = 9
-        if group_id / (10**num_cnt) < 1:
+        num_cnt = 10
+        if group_id / (10**(num_cnt-1)) < 1:
             raise forms.ValidationError('集团编码位数应>={}位'.format(num_cnt))
         else:
             return group_id
 
     def clean_product_id(self):
         product_id = self.cleaned_data['product_id']
-        num_cnt = 9
-        if product_id / (10**num_cnt) < 1:
+        num_cnt = 10
+        if product_id / (10**(num_cnt-1)) < 1:
             raise forms.ValidationError('产品编码位数应>={}位'.format(num_cnt))
         else:
             return product_id
@@ -240,6 +242,34 @@ class NewIPAllocationForm(forms.Form):
                 raise forms.ValidationError('分配目标地址包含私网地址，请填写rd')
             else:
                 return rd
+
+    def clena_service_id(self):
+        service_id = self.cleaned_data['service_id']
+        num_cnt = 10
+        if service_id/(10**(num_cnt+1)) > 1:
+            raise forms.ValidationError('service id位数应<={}位'.format(num_cnt))
+        else:
+            return service_id
+
+
+class ICPInfoForm(forms.Form):
+    identify_id = forms.CharField(label='营业执照', widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '营业执照号',}))
+    guard_level = forms.CharField(label='保护等级', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '保护等级',}))
+    city = forms.CharField(label='地市', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    district = forms.CharField(label='区县', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    distributor = forms.CharField(label='派单人', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    distributor_contact = forms.CharField(label='派单人联系方式', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    demand = forms.CharField(label='需求', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    bandwidth_up = forms.IntegerField(label='上行带宽M', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm', 'placeholder': '20M'}))
+    bandwidth_dwn = forms.IntegerField(label='下行带宽M', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm', 'placeholder': '20M'}))
+    client_tech = forms.CharField(label='技术人员', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    client_tech_contact = forms.CharField(label='技术人员电话', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    demand_ipv4_amount = forms.IntegerField(label='v4地址需求量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
+    demand_ipv6_amount = forms.IntegerField(label='v6地址需求量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
+    client_address = forms.CharField(label='客户地址', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    businessman = forms.CharField(label='商务联系人', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    businessman_contact = forms.CharField(label='商务联系人电话', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+
 
 class DeviceIpSegmentForm(forms.Form):
     device_name = forms.CharField(label='Device', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'GDFOS-IPMAN-BNG01-DS-HW', 'style':'width:200px'}))

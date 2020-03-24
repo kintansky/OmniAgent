@@ -183,6 +183,7 @@
                 <h4 class="modal-title">详细信息</h4>
             </div>
             <div class="modal-body">
+                <p id="comment"></p>
                 <form id="mod_form" action="" method="POST" rid="">
                     <!-- 隐藏内容，调试可关闭style -->
                     <div class="row">
@@ -419,8 +420,11 @@
                         $("#mod_order_num").val("");
                         $("#mod_msg").val("");
                         $("#mod_form").attr("rid", data["id"]);
-                        for(field in data){
+                        for(var field in data){
                             $("#"+field).val(data[field]);
+                        }
+                        if(data['comment'] != ''){
+                            $("#comment").html('<div class="alert alert-warning" role="alert"><strong>备注：</strong>'+data['comment']+'</div>');
                         }
                     }else{
                         // console.log(data);
