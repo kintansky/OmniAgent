@@ -513,21 +513,31 @@ def ip_allocated_client_list(request):
 def export_ip_allocation(request, amount):
     if amount == 'all':
         cmd_all = '''
-        select id, order_num, client_name, state, ip, ip_mask, gateway, 
-        bng, logic_port, svlan, cevlan, description, ip_func, 
-        olt, service_id, brand_width, group_id, product_id, network_type, 
-        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
-        from MR_REC_ip_allocation
-        order by id desc
+        SELECT a.id, a.order_num, a.client_name, a.state, a.ip, a.ip_mask, a.gateway, 
+        a.bng, a.logic_port, a.svlan, a.cevlan, a.description, a.ip_func, 
+        a.olt, a.service_id, a.brand_width, a.group_id, a.product_id, a.network_type, 
+        a.community, a.rt, a.rd, a.comment, a.alc_user, a.alc_time, a.access_type, a.last_mod_time,
+        b.identify_id, b.guard_level, b.city, b.district, b.distributor, b.distributor_contact, 
+        b.demand, b.bandwidth_up, b.bandwidth_dwn, b.client_tech, b.client_tech_contact, 
+        b.demand_ipv4_amount, b.demand_ipv6_amount, b.client_address, b.businessman, b.businessman_contact 
+        from MR_REC_ip_allocation as a
+        left join MR_REC_icp_info as b
+        on a.icp_id = b.id
+        order BY a.id desc
         '''
         ip_allocation = IPAllocation.objects.raw(cmd_all)
         cmd_his = '''
-        select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
-        gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
-        description as old_description, ip_func as old_ip_func, olt as old_olt, access_type as old_access_type, service_id as old_service_id, brand_width as old_brand_width, 
-        group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd
-        from MR_REC_ip_mod_record
-        order by id desc
+        select a.id, a.mod_order_num, a.mod_user, a.mod_time, a.mod_type, a.mod_msg, a.order_num AS old_order_num, a.client_name as old_client_name, a.state as old_state, a.ip as old_ip, a.ip_mask as old_ip_mask,
+        a.gateway as old_gateway, a.bng as old_bng, a.logic_port as old_logic_port, a.svlan as old_svlan, a.cevlan as old_cevlan, 
+        a.description as old_description, a.ip_func as old_ip_func, a.olt as old_olt, a.access_type as old_access_type, a.service_id as old_service_id, a.brand_width as old_brand_width, 
+        a.group_id as old_group_id, a.product_id as old_product_id, a.network_type as old_network_type, a.community as old_community, a.rt as old_rt, a.rd as old_rd,
+        b.identify_id, b.guard_level, b.city, b.district, b.distributor, b.distributor_contact, 
+        b.demand, b.bandwidth_up, b.bandwidth_dwn, b.client_tech, b.client_tech_contact, 
+        b.demand_ipv4_amount, b.demand_ipv6_amount, b.client_address, b.businessman, b.businessman_contact 
+        from MR_REC_ip_mod_record as a
+        left join MR_REC_icp_info as b
+        on a.icp_id = b.id
+        order BY a.id desc
         '''
         mod_his = IPMod.objects.raw(cmd_his)
         output = exportClassifiedXls(
@@ -539,24 +549,44 @@ def export_ip_allocation(request, amount):
     elif amount == 'today':
         # 当天的在网记录
         cmd_today = '''
+        select a.id, a.order_num, a.client_name, a.state, a.ip, a.ip_mask, a.gateway, 
+        a.bng, a.logic_port, a.svlan, a.cevlan, a.description, a.ip_func, 
+        a.olt, a.service_id, a.brand_width, a.group_id, a.product_id, a.network_type, 
+        a.community, a.rt, a.rd, a.comment, a.alc_user, a.alc_time, a.access_type, a.last_mod_time,
+        b.identify_id, b.guard_level, b.city, b.district, b.distributor, b.distributor_contact, 
+        b.demand, b.bandwidth_up, b.bandwidth_dwn, b.client_tech, b.client_tech_contact, 
+        b.demand_ipv4_amount, b.demand_ipv6_amount, b.client_address, b.businessman, b.businessman_contact 
+        from (
         select id, order_num, client_name, state, ip, ip_mask, gateway, 
         bng, logic_port, svlan, cevlan, description, ip_func, 
         olt, service_id, brand_width, group_id, product_id, network_type, 
-        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time 
+        community, rt, rd, comment, alc_user, alc_time, access_type, last_mod_time , icp_id
         from MR_REC_ip_allocation
-        where alc_time between %s and %s or last_mod_time between %s and %s
-        order by id desc
+        WHERE (alc_time BETWEEN %s and %s) OR (last_mod_time BETWEEN %s and %s)) as a 
+        left join MR_REC_icp_info as b
+        on a.icp_id = b.id
+        order by a.id desc
         '''
         timeBegin, timeEnd = getDateRange(-1)
         ip_allocation = IPAllocation.objects.raw(cmd_today, (timeBegin, timeEnd, timeBegin, timeEnd))
         # 当天的操作日志
         cmd_today_history = '''
-        select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num as old_order_num, client_name as old_client_name, state as old_state, ip as old_ip, ip_mask as old_ip_mask,
-        gateway as old_gateway, bng as old_bng, logic_port as old_logic_port, svlan as old_svlan, cevlan as old_cevlan, 
-        description as old_description, ip_func as old_ip_func, olt as old_olt, service_id as old_service_id, brand_width as old_brand_width, group_id as old_group_id, product_id as old_product_id, network_type as old_network_type, community as old_community, rt as old_rt, rd as old_rd, access_type as old_access_type
+        select a.id, a.mod_order_num, a.mod_user, a.mod_time, a.mod_type, a.mod_msg, a.order_num AS old_order_num, a.client_name as old_client_name, a.state as old_state, a.ip as old_ip, a.ip_mask as old_ip_mask,
+        a.gateway as old_gateway, a.bng as old_bng, a.logic_port as old_logic_port, a.svlan as old_svlan, a.cevlan as old_cevlan, 
+        a.description as old_description, a.ip_func as old_ip_func, a.olt as old_olt, a.access_type as old_access_type, a.service_id as old_service_id, a.brand_width as old_brand_width, 
+        a.group_id as old_group_id, a.product_id as old_product_id, a.network_type as old_network_type, a.community as old_community, a.rt as old_rt, a.rd as old_rd,
+        b.identify_id, b.guard_level, b.city, b.district, b.distributor, b.distributor_contact, 
+        b.demand, b.bandwidth_up, b.bandwidth_dwn, b.client_tech, b.client_tech_contact, 
+        b.demand_ipv4_amount, b.demand_ipv6_amount, b.client_address, b.businessman, b.businessman_contact 
+        from (
+        select id, mod_order_num, mod_user, mod_time, mod_type, mod_msg, order_num, client_name, state, ip, ip_mask,
+        gateway, bng, logic_port, svlan, cevlan, 
+        description, ip_func, olt, service_id, brand_width, group_id, product_id, network_type, community, rt, rd, access_type, icp_id
         from MR_REC_ip_mod_record
-        where mod_time between %s and %s
-        order by id desc
+        where mod_time BETWEEN %s and %s) as a
+        left join MR_REC_icp_info as b
+        on a.icp_id = b.id
+        order by a.id desc
         '''
         today_mod_history = IPAllocation.objects.raw(cmd_today_history, (timeBegin, timeEnd))
         output = exportClassifiedXls(

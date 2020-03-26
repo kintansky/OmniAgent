@@ -239,7 +239,7 @@
                                 </div>
                             </div>
                         </form>
-                        <button type="submit" id="confirm-allocate-btn" class="btn btn-success pull-right">确认分配</button>
+                        <button type="submit" id="confirm-allocate-btn" class="btn btn-success pull-right" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">确认分配</button>
                     </div>
                 </div>
             </div>
@@ -389,7 +389,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button id="confirm_icp_info" type="submit" class="btn btn-primary">确认新增</button>
+                        <button id="confirm_icp_info" type="submit" class="btn btn-primary" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">确认新增</button>
                     </div>
                 </div>
             </div>
@@ -534,14 +534,14 @@
 
         // 确认分配
         $("#confirm-allocate-btn").click(function(){
-            $('#loading').modal('show');
+            $("#confirm-allocate-btn").popover('show');
             $.ajax({
                 url: "{% url 'confirm_allocate' %}",
                 type: 'POST',
                 data: $('#ip-detail-form').serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
-                    $('#loading').modal('hide');
+                    $("#confirm-allocate-btn").popover('hide');
                     if(data['status'] == 'success'){
                         // console.log(data);
                         $("p.error-data").text(""); // 清空错误信息
@@ -568,7 +568,7 @@
                     }
                 },
                 error: function(xhr){
-                    $('#loading').modal('hide');
+                    $("#confirm-allocate-btn").popover('hide');
                     console.log(xhr);
                     alert("分配失败");
                 }
@@ -676,14 +676,14 @@
         });
         // 确认ICP信息
         $('#confirm_icp_info').click(function(){
-            $('#loading').modal('show');
+            $('#confirm_icp_info').popover('show');
             $.ajax({
                 url: "{% url 'confirm_icp' %}",
                 type: 'POST',
                 data: $("#icp_info_form").serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
-                    $('#loading').modal('hide');
+                    $('#confirm_icp_info').popover('hide');
                     if(data['status'] == 'success'){
                         $("p.icp-error-data").text(""); // 清空错误信息
                         document.getElementById('icp_info_form').reset();  // 清空form
@@ -707,7 +707,7 @@
                     }
                 },
                 error: function(xhr){
-                    $('#loading').modal('hide');
+                    $('#confirm_icp_info').popover('hide');
                     console.log(xhr);
                 }
             });
