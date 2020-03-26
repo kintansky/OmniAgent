@@ -117,8 +117,13 @@
             <td>{{ record.alc_user }}</td>
             {% if user.is_authenticated %}
                 <td>
-                    <a href="" data-toggle="modal" data-target=".bs-example-modal-lg" class="modal_form_trigger" rid="{{ record.id }}">
-                        <span data-toggle="tooltip" data-placement="top" title="点击修改" class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                    <a href="" data-toggle="modal" data-target="#mod-ip-modal" class="ip_modal_form_trigger" rid="{{ record.id }}">
+                        <!-- 这里的rid是ipallocation的id -->
+                        <span data-toggle="tooltip" data-placement="top" title="修改IP信息" class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+                    </a>|
+                    <a href="" data-toggle="modal" data-target="#mod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
+                        <!-- 这里的rid是icp的id -->
+                        <span data-toggle="tooltip" data-placement="top" title="修改ICP信息" class="glyphicon glyphicon-tags" aria-hidden="true"></span>
                     </a>
                 </td>
             {% else %}
@@ -175,12 +180,12 @@
 
 {% block other_content %}
 {# modal #}
-<div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+<div class="modal fade" id="mod-ip-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">详细信息</h4>
+                <h4 class="modal-title">IP详细信息</h4>
             </div>
             <div class="modal-body">
                 <p id="comment"></p>
@@ -390,6 +395,65 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="mod-icp-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">ICP备案信息</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="input-group">
+                            <textarea id="icp_text" name="icp_text" class="form-control" rows="4"></textarea>
+                            <span class="input-group-addon">
+                                <button id="id_parse_icp" class="btn btn-default" type="button">解析</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <!-- 解析ICP后补全的内容 -->
+                        <form id="icp_info_form" class="form" rid="">
+                            {% for field in new_icp_info_form %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    <p id="error_{{ field.id_for_label }}" class="text-danger icp-error-data">{{ field.errors.as_text }}</p>
+                                </div>
+                            {% endfor %}
+                            <button type="reset" class="btn btn-danger btn-sm">重置</button>
+                        </form>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <form class="form" id="mod_icp_order_form">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="mod_icp_order_num" class="col-sm-2 control-label">变更单号</label>
+                                <input type="text" name="mod_icp_order_num" id="mod_icp_order_num" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="mod_icp_msg" class="col-sm-2 control-label">变更说明</label>
+                                <input type="text" name="mod_icp_msg" id="mod_icp_msg" class="form-control" style="width:70%">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- 这里的rid是ipallocation的id -->
+                <button id="confirm_icp_info" type="submit" class="btn btn-primary" rid="">更新ICP信息</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block tail_script %}
@@ -408,7 +472,7 @@
             }
         });
         // 请求单条记录的详细信息
-        $(".modal_form_trigger").click(function(){
+        $(".ip_modal_form_trigger").click(function(){
             $.ajax({
                 url: "{% url 'locate_allocated_ip' %}",  // 异步请求的地址
                 type: "GET",    // 请求方式
@@ -544,6 +608,92 @@
             var auto_item = $(this).text();
             $("#olt-list").css("display", "none");
             $(".olt-input").val(auto_item);
+        });
+        // 清空ICP表单，回填数据
+        $(".icp_modal_form_trigger").click(function(){
+            var icp_trigger = $(this);
+            var rid = icp_trigger.attr("rid");
+            $("#icp_text").val("");
+            $.ajax({
+                url: "{% url 'ajax_locate_icp' %}",
+                type: 'GET',
+                data: "rid=" + rid,
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        var parsed_icp_result = JSON.parse(data['parsed_icp_result']);
+                        for(var key in parsed_icp_result){
+                            $('#id_'+key).val(parsed_icp_result[key]);
+                        }
+                        // 将IP记录的rid回填至confirm_icp_info，用于后续传递
+                        var ip_record_id = icp_trigger.prev('a').attr('rid');
+                        $("#confirm_icp_info").attr("rid", ip_record_id);
+                    }else{
+                        alert(data["error_info"]);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 解析icp信息
+        $("#id_parse_icp").click(function(){
+            $.ajax({
+                url: "{% url 'parse_icp' %}",
+                type: 'GET',
+                data: $("#icp_text").serialize(),
+                cache: false,
+                success: function(data){
+                    var parsed_icp_result = JSON.parse(data['parsed_icp_result']);
+                    for(var key in parsed_icp_result){
+                        $('#'+key).val(parsed_icp_result[key]);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
+        // 更新ICP信息
+        $('#confirm_icp_info').click(function(){
+            // $('#loading').modal('show');
+            $.ajax({
+                url: "{% url 'ajax_mod_icp_info' %}",
+                type: 'POST',
+                data: $("#mod_icp_order_form").serialize() + '&' + $("#icp_info_form").serialize() +"&rid="+$(this).attr('rid')+ "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    // $('#loading').modal('hide');
+                    if(data['status'] == 'success'){
+                        $("p.icp-error-data").text(""); // 清空错误信息
+                        document.getElementById('icp_info_form').reset();  // 清空form
+                        alert("ICP备案信息更新成功");
+                        $("#icp-modal").modal("hide");
+                        window.location.reload();
+                    }else{
+                        $("p.icp-error-data").text("");
+                        if ('error_info' in data){
+                            if('error_info' in data){
+                                alert("创建失败，请查看对应字段的错误信息");
+                                var error_data = JSON.parse(data['error_info']);
+                                for (var key in error_data){
+                                    var item = error_data[key];
+                                    // 按照对应id补全错误信息
+                                    $("#error_id_"+key).text(item[0]['message']);
+                                }
+                            }
+                        }
+                        if('other_error' in data){
+                            alert(data['other_error']);
+                        }
+                    }
+                },
+                error: function(xhr){
+                    // $('#loading').modal('hide');
+                    console.log(xhr);
+                }
+            });
         });
     });
 </script>

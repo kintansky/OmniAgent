@@ -643,6 +643,7 @@ def ip_allocated_search(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['ip_search_form'] = ip_search_form
+    context['new_icp_info_form'] = ICPInfoForm()
     return render(request, 'ip_allocated_list.html', context)
 
 
@@ -666,9 +667,44 @@ def ajax_locate_allocated_ip(request):
         data['error_info'] = '无法找到相应记录'
     return JsonResponse(data)
 
+def backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, mod_user, mod_type):
+    # old_data = objectDataSerializer(mod_target, {})
+    old_data['mod_target_id'] = old_data.pop('id')
+    old_data.pop('comment')
+    old_data.pop('alc_user')
+    old_data.pop('alc_time')
+    old_data.pop('last_mod_time')
+    # 需要处理数据库对0时返回None的情况
+    old_data['mod_order_num'] = mod_order_num
+    old_data['mod_msg'] = mod_msg
+    if old_data['svlan'] is None:
+        old_data['svlan'] = 0
+    if old_data['cevlan'] is None:
+        old_data['cevlan'] = 0
+    old_data['mod_user'] = mod_user
+    old_data['mod_time'] = timezone.datetime.now()
+    old_data['mod_type'] = mod_type
+    mod_record = IPMod(**old_data)
+    mod_record.save()
+
 
 def ajax_mod_allocated_ip(request, operation_type):
     data = {}
+    # 变更依据的校验
+    if request.POST.get('mod_order_num') is None:
+        data['status'] = 'error'
+        data['error_info'] = '请提供有效的变更单号'
+        return JsonResponse(data)
+    elif request.POST.get('mod_order_num').strip() == '':
+        data['status'] = 'error'
+        data['error_info'] = '请提供有效的变更单号'
+        return JsonResponse(data)
+    else:
+        mod_order_num = request.POST.get('mod_order_num').strip()
+    if request.POST.get('mod_msg') is not None:
+        mod_msg = request.POST.get('mod_msg').strip()
+    else:
+        mod_msg = ''
     if operation_type == 'mod':
         rid = request.POST.get('rid')
         form1Dict = request.POST.dict()
@@ -683,47 +719,19 @@ def ajax_mod_allocated_ip(request, operation_type):
         form2Dict['first_ip'] = request.POST.get('ip')
         form2Dict['ip_num'] = 1
         form2Dict['gateway'] = request.POST.get('gateway')
-        ip_target_form = IPTargetForm(form2Dict)    # form实例化可以直接传入dict, model不行
+        ip_target_form = IPTargetForm(form2Dict)    # form实例化可以直接传入dict
         if ip_target_form.is_valid() and new_ip_allocation_form.is_valid():
             mod_target = IPAllocation.objects.get(id=rid)
             if mod_target.state == ip_target_form.cleaned_data['state'] == "临时禁用":
                 data['status'] = 'error'
                 data['error_info'] = '本条记录处于禁用状态，不允许修改'
                 return JsonResponse(data)
-            old_data = objectDataSerializer(mod_target, {})
-            # 备份旧数据
-            # print(new_ip_allocation_form.cleaned_data)
-            # print(ip_target_form.cleaned_data)
-            old_data['mod_target_id'] = old_data.pop('id')
-            old_data.pop('comment')
-            old_data.pop('alc_user')
-            old_data.pop('alc_time')
-            old_data.pop('last_mod_time')            
-            if request.POST.get('mod_order_num') is None:
-                data['status'] = 'error'
-                data['error_info'] = '请提供有效的变更单号'
-                return JsonResponse(data)
-            elif request.POST.get('mod_order_num').strip() == '':
-                data['status'] = 'error'
-                data['error_info'] = '请提供有效的变更单号'
-                return JsonResponse(data)
-            else:
-                old_data['mod_order_num'] = request.POST.get('mod_order_num').strip()
-            if request.POST.get('mod_msg') is not None:
-                old_data['mod_msg'] = request.POST.get('mod_msg').strip()
-            # 需要处理数据库对0时返回None的情况
-            if old_data['svlan'] is None:
-                old_data['svlan'] = 0
-            if old_data['cevlan'] is None:
-                old_data['cevlan'] = 0
-            old_data['mod_user'] = request.user.first_name
-            old_data['mod_time'] = timezone.datetime.now()
             if ip_target_form.cleaned_data['state'] == "临时禁用":
-                old_data['mod_type'] = 'ban'    # 适配点击变更按钮来临时禁用的操作
+                mod_type = 'ban'    # 适配点击变更按钮来临时禁用的操作
             else:
-                old_data['mod_type'] = 'mod'
-            mod_record = IPMod(**old_data)
-            mod_record.save()
+                mod_type = 'mod'
+            old_data = objectDataSerializer(mod_target, {})
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, mod_type)
             # 更新新数据
             mod_target.order_num =  old_data['mod_order_num']
             mod_target.client_name = new_ip_allocation_form.cleaned_data['client_name']
@@ -769,34 +777,8 @@ def ajax_mod_allocated_ip(request, operation_type):
             data['error_info'] = '本数据已处于禁用状态，无需再次禁用'
             return JsonResponse(data)
         old_data = objectDataSerializer(mod_target, {})
-        old_data['mod_target_id'] = old_data.pop('id')
-        old_data.pop('comment')
-        old_data.pop('alc_user')
-        old_data.pop('alc_time')
-        old_data.pop('last_mod_time')
-        if request.POST.get('mod_order_num') is None:
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        elif request.POST.get('mod_order_num').strip() == '':
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        else:
-            old_data['mod_order_num'] = request.POST.get('mod_order_num').strip()
-        if request.POST.get('mod_msg') is not None:
-            old_data['mod_msg'] = request.POST.get('mod_msg').strip()
-        # 需要处理数据库对0时返回None的情况
-        if old_data['svlan'] is None:
-            old_data['svlan'] = 0
-        if old_data['cevlan'] is None:
-            old_data['cevlan'] = 0
-        old_data['mod_user'] = request.user.first_name
-        old_data['mod_time'] = timezone.datetime.now()
-        old_data['mod_type'] = 'ban'
-        mod_record = IPMod(**old_data)
-        mod_record.save()
-
+        backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'ban')
+        # 更新旧数据内容
         mod_target.last_mod_time = old_data['mod_time']
         mod_target.state = '临时禁用'
         mod_target.save()
@@ -806,44 +788,13 @@ def ajax_mod_allocated_ip(request, operation_type):
         group_id = request.POST.get('group_id')
         product_id = request.POST.get('product_id')
         client_name = request.POST.get('client_name')
-        if request.POST.get('mod_order_num') is None:
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        elif request.POST.get('mod_order_num').strip() == '':
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        else:
-            mod_order_num = request.POST.get('mod_order_num').strip()
-        if request.POST.get('mod_msg') is not None:
-            mod_msg = request.POST.get('mod_msg').strip()
-        else:
-            mod_msg = ''
-        # mod_target_list = IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
         raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
         mod_target_list = IPAllocation.objects.raw(raw_query, ('临时禁用', '%%{}%%'.format(client_name), group_id, order_num, product_id))
-        # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
+        # 如果不使用raw会全部实例化，导致大批量修改时溢出
         mod_time = timezone.datetime.now()
         for mod_target in mod_target_list:
-            # old_data = objectDataSerializer(mod_target, {})
             old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
-            old_data['mod_target_id'] = old_data.pop('id')
-            old_data.pop('comment')
-            old_data.pop('alc_user')
-            old_data.pop('alc_time')
-            old_data.pop('last_mod_time')
-            old_data['mod_order_num'] = mod_order_num
-            old_data['mod_msg'] = mod_msg
-            if old_data['svlan'] is None:
-                old_data['svlan'] = 0
-            if old_data['cevlan'] is None:
-                old_data['cevlan'] = 0
-            old_data['mod_user'] = request.user.first_name
-            old_data['mod_time'] = mod_time
-            old_data['mod_type'] = 'ban'
-            mod_record = IPMod(**old_data)
-            mod_record.save()
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'ban')
         # update更新原分配表数据为临时禁用,已禁用的无需再禁用
         IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=mod_time, state = '临时禁用')
         data['status'] = 'success'
@@ -851,33 +802,7 @@ def ajax_mod_allocated_ip(request, operation_type):
         rid = request.POST.get('rid')
         mod_target = IPAllocation.objects.get(id=rid)
         old_data = objectDataSerializer(mod_target, {})
-        old_data['mod_target_id'] = old_data.pop('id')
-        old_data.pop('comment')
-        old_data.pop('alc_user')
-        old_data.pop('alc_time')
-        old_data.pop('last_mod_time')
-        if request.POST.get('mod_order_num') is None:
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        elif request.POST.get('mod_order_num').strip() == '':
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        else:
-            old_data['mod_order_num'] = request.POST.get('mod_order_num').strip()
-        if request.POST.get('mod_msg') is not None:
-            old_data['mod_msg'] = request.POST.get('mod_msg').strip()
-        # 需要处理数据库对0时返回None的情况
-        if old_data['svlan'] is None:
-            old_data['svlan'] = 0
-        if old_data['cevlan'] is None:
-            old_data['cevlan'] = 0
-        old_data['mod_user'] = request.user.first_name
-        old_data['mod_time'] = timezone.datetime.now()
-        old_data['mod_type'] = 'del'
-        mod_record = IPMod(**old_data)
-        mod_record.save()
+        backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'del')
         mod_target.delete() # 最后删除原数据
         data['status'] = 'success'
     elif operation_type == 'del_multi': # 批量删除
@@ -885,49 +810,87 @@ def ajax_mod_allocated_ip(request, operation_type):
         group_id = request.POST.get('group_id')
         product_id = request.POST.get('product_id')
         client_name = request.POST.get('client_name')
-        if request.POST.get('mod_order_num') is None:
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        elif request.POST.get('mod_order_num').strip() == '':
-            data['status'] = 'error'
-            data['error_info'] = '请提供有效的变更单号'
-            return JsonResponse(data)
-        else:
-            mod_order_num = request.POST.get('mod_order_num').strip()
-        if request.POST.get('mod_msg') is not None:
-            mod_msg = request.POST.get('mod_msg').strip()
-        else:
-            mod_msg = ''
         # mod_target_list = IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
         raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
         mod_target_list = IPAllocation.objects.raw(raw_query, ('%%{}%%'.format(client_name), group_id, order_num, product_id))
-        # BUG: 如果不使用raw会全部实例化，导致大批量修改时溢出
+        # 如果不使用raw会全部实例化，导致大批量修改时溢出
         for mod_target in mod_target_list:
-            # old_data = objectDataSerializer(mod_target, {})
             old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
-            old_data['mod_target_id'] = old_data.pop('id')
-            old_data.pop('comment')
-            old_data.pop('alc_user')
-            old_data.pop('alc_time')
-            old_data.pop('last_mod_time')
-            old_data['mod_order_num'] = mod_order_num
-            old_data['mod_msg'] = mod_msg
-            if old_data['svlan'] is None:
-                old_data['svlan'] = 0
-            if old_data['cevlan'] is None:
-                old_data['cevlan'] = 0
-            old_data['mod_user'] = request.user.first_name
-            old_data['mod_time'] = timezone.datetime.now()
-            old_data['mod_type'] = 'del'
-            mod_record = IPMod(**old_data)
-            mod_record.save()
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'del')
         # delete原表数据
         IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).delete()
         data['status'] = 'success'
     else:
         data['status'] = 'error'
         data['error_info'] = '非法操作'
+    return JsonResponse(data)
+
+def ajax_locate_icp(request):
+    data = {}
+    rid = request.GET.get("rid")
+    try:
+        record = ICP.objects.get(id=rid)
+        parsed_icp_result = objectDataSerializer(record, {})
+        parsed_icp_result.pop('id')
+        data['parsed_icp_result'] = json.dumps(parsed_icp_result)
+        data['status'] = 'success'
+    except ObjectDoesNotExist:
+        data['status'] = 'error'
+        data['error_info'] = '无法找到相应记录'
+    return JsonResponse(data)
+
+def ajax_mod_icp_info(request):
+    data = {}
+    if request.POST.get('mod_icp_order_num') is None:
+        data['status'] = 'error'
+        data['other_error'] = '请提供有效的变更单号'
+        return JsonResponse(data)
+    elif request.POST.get('mod_icp_order_num').strip() == '':
+        data['status'] = 'error'
+        data['other_error'] = '请提供有效的变更单号'
+        return JsonResponse(data)
+    else:
+        mod_order_num = request.POST.get('mod_icp_order_num').strip()
+    if request.POST.get('mod_icp_msg') is not None:
+        mod_msg = request.POST.get('mod_icp_msg').strip()
+    else:
+        mod_msg = ''
+    ip_record_id = request.POST.get('rid')
+    new_icp_info_form = ICPInfoForm(request.POST)
+    if new_icp_info_form.is_valid():
+        # print(new_icp_info_form.cleaned_data)
+        # 新增前确认是否存在一摸一样的数据
+        try:
+            mod_target = IPAllocation.objects.get(id=ip_record_id)
+        except ObjectDoesNotExist:
+            data['status'] = 'error'
+            data['error_info'] = '无法找到相应记录'
+            return JsonResponse(data)
+        try:
+            # 如果存在相关记录直接使用旧记录即可
+            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+            # 如果记录和原纪录一致,则不修改
+            if already_has_icp.id == mod_target.icp_id:
+                data['status'] = 'error'
+                data['other_error'] = '提供的ICP信息与原记录一致，无法变更'
+                return JsonResponse(data)
+        except ObjectDoesNotExist:  # 如果不存在则创建
+            new_icp = ICP(**new_icp_info_form.cleaned_data)
+            new_icp.save()
+            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+        finally:
+            # 旧数据备份
+            old_data = objectDataSerializer(mod_target, {})
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'mod')
+            # 新数据更新
+            mod_target.icp = already_has_icp
+            mod_target.save()
+        
+        data['status'] = 'success'
+    else:
+        data['status'] = 'error'
+        errorDict = new_icp_info_form.errors.get_json_data()
+        data['error_info'] = json.dumps(errorDict)    
     return JsonResponse(data)
 
 # 工作量统计
