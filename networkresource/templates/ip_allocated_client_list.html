@@ -104,8 +104,12 @@
             </td>
             {% if user.is_authenticated %}
                 <td>
-                    <a href="" data-toggle="modal" data-target=".bs-example-modal" class="modal_form_trigger">
+                    <a href="" data-toggle="modal" data-target="#multimod-ip-modal" class="modal_form_trigger">
                         <span data-toggle="tooltip" data-placement="top" title="临时禁用 / 删除数据" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
+                    </a>|
+                    <a href="" data-toggle="modal" data-target="#multimod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
+                        <!-- 这里的rid是icp的id -->
+                        <span data-toggle="tooltip" data-placement="top" title="修改ICP信息" class="glyphicon glyphicon-tags" aria-hidden="true"></span>
                     </a>
                 </td>
             {% else %}
@@ -159,7 +163,7 @@
 {% endblock%}
 
 {% block other_content %}
-<div class="modal fade bs-example-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+<div class="modal fade" id="multimod-ip-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -197,8 +201,88 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger modal_del">删除数据</button>
-                <button type="button" class="btn btn-warning modal_ban">临时禁用</button>
+                <button type="button" class="btn btn-danger" id="modal_del" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">删除数据</button>
+                <button type="button" class="btn btn-warning" id="modal_ban" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">临时禁用</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="multimod-icp-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">ICP备案信息</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="input-group">
+                            <textarea id="icp_text" name="icp_text" class="form-control" rows="4"></textarea>
+                            <span class="input-group-addon">
+                                <button id="id_parse_icp" class="btn btn-default" type="button">解析</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <!-- 解析ICP后补全的内容 -->
+                        <form id="icp_info_form" class="form" rid="">
+                            {% for field in new_icp_info_form %}
+                                <div class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    <p id="error_{{ field.id_for_label }}" class="text-danger icp-error-data">{{ field.errors.as_text }}</p>
+                                </div>
+                            {% endfor %}
+                            <button type="reset" class="btn btn-danger btn-sm">重置</button>
+                        </form>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <form class="form" id="mod_icp_order_form">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="mod_icp_order_num" class="col-sm-2 control-label">变更单号</label>
+                                    <input type="text" name="mod_icp_order_num" id="mod_icp_order_num" class="form-control" style="width:70%">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="mod_icp_msg" class="col-sm-2 control-label">变更说明</label>
+                                    <input type="text" name="mod_icp_msg" id="mod_icp_msg" class="form-control" style="width:70%">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" style="display: none;">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label for="order_num_icp" class="control-label">服开单号</label>
+                                    <input type="text" name="order_num_icp" id="order_num_icp" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="client_name_icp" class="control-label">客户名</label>
+                                    <input type="text" name="client_name_icp" id="client_name_icp" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="group_id_icp" class="control-label">集团编号</label>
+                                    <input type="text" name="group_id_icp" id="group_id_icp" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="product_id_icp" class="control-label">产品编号</label>
+                                    <input type="text" name="product_id_icp" id="product_id_icp" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm_icp_info" type="submit" class="btn btn-primary" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">更新ICP信息</button>
             </div>
         </div>
     </div>
@@ -218,46 +302,72 @@
         });
         // 批量操作
         // 禁用操作
-        $(".modal_ban").click(function(){
-            $('#loading').modal('show');
+        $("#modal_ban").click(function(){
+            $("#modal_ban").popover('show');
             $.ajax({
                 url: "{% url 'mod_allocated_ip' 'ban_multi' %}",
                 type: "POST",
                 data: $("#mod_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
                 success: function(data){
+                    $("#modal_ban").popover('hide');
                     if(data['status'] == 'success'){
-                        $('#loading').modal('hide');
-                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        $('#multimod-ip-modal').modal('hide');  // 修改成功后关闭modal
                         alert('临时禁用成功');
                         window.location.reload();
                     }else{
-                        $('#loading').modal('hide');
                         console.log(data);
                         alert(data['error_info']);
                     }
                 },
                 error: function(xhr){
+                    $("#modal_ban").popover('hide');
                     console.log(xhr);
                 }
             });
         });
         // 删除操作
-        $(".modal_del").click(function(){
-            $('#loading').modal('show');
+        $("#modal_del").click(function(){
+            $("#modal_del").popover('show');
             $.ajax({
                 url: "{% url 'mod_allocated_ip' 'del_multi' %}",
                 type: "POST",
                 data: $("#mod_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
                 success: function(data){
+                    $("#modal_del").popover('hide');
                     if(data['status'] == 'success'){
-                        $('#loading').modal('hide');
-                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        $('#multimod-ip-modal').modal('hide');  // 修改成功后关闭modal
                         alert('数据删除成功');
                         window.location.reload();
                     }else{
-                        $('#loading').modal('hide');
                         console.log(data);
                         alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    $("#modal_del").popover('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+        // 回填目标IP信息
+        $(".icp_modal_form_trigger").click(function(){
+            // 回填成新的form用于提交
+            $("#order_num_icp").val($(this).parent().siblings(".order_num").text());
+            $("#client_name_icp").val($(this).parent().siblings(".client_name").text());
+            $("#group_id_icp").val($(this).parent().siblings(".group_id").text());
+            $("#product_id_icp").val($(this).parent().siblings(".product_id").text());
+        });
+        // 解析icp信息
+        $("#id_parse_icp").click(function(){
+            $.ajax({
+                url: "{% url 'parse_icp' %}",
+                type: 'GET',
+                data: $("#icp_text").serialize(),
+                cache: false,
+                success: function(data){
+                    var parsed_icp_result = JSON.parse(data['parsed_icp_result']);
+                    for(var key in parsed_icp_result){
+                        $('#'+key).val(parsed_icp_result[key]);
                     }
                 },
                 error: function(xhr){
@@ -265,6 +375,48 @@
                 }
             });
         });
+
+        // 批量更新ICP信息
+        $("#confirm_icp_info").click(function(){
+            $("#confirm_icp_info").popover('show');
+            $.ajax({
+                url: "{% url 'ajax_mod_icp_info' 'mod_multi' %}",
+                type: 'POST',
+                data: $("#mod_icp_order_form").serialize() + '&' + $("#icp_info_form").serialize() + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    $("#confirm_icp_info").popover('hide');
+                    if(data['status'] == 'success'){
+                        $("p.icp-error-data").text(""); // 清空错误信息
+                        document.getElementById('icp_info_form').reset();  // 清空form
+                        alert("ICP备案信息更新成功");
+                        $("#icp-modal").modal("hide");
+                        window.location.reload();
+                    }else{
+                        $("p.icp-error-data").text("");
+                        if ('error_info' in data){
+                            if('error_info' in data){
+                                alert("创建失败，请查看对应字段的错误信息");
+                                var error_data = JSON.parse(data['error_info']);
+                                for (var key in error_data){
+                                    var item = error_data[key];
+                                    // 按照对应id补全错误信息
+                                    $("#error_id_"+key).text(item[0]['message']);
+                                }
+                            }
+                        }
+                        if('other_error' in data){
+                            alert(data['other_error']);
+                        }
+                    }
+                },
+                error: function(xhr){
+                    $("#confirm_icp_info").popover('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+
     });
 </script>
 {% endblock %}

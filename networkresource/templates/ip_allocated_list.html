@@ -388,9 +388,9 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger modal_del">删除数据</button>
-                <button type="button" class="btn btn-warning modal_ban">临时禁用</button>
-                <button type="button" class="btn btn-success modal_mod">变更</button>
+                <button type="button" class="btn btn-danger" id="modal_del" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">删除数据</button>
+                <button type="button" class="btn btn-warning" id="modal_ban" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">临时禁用</button>
+                <button type="button" class="btn btn-success" id="modal_mod" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">变更</button>
             </div>
         </div>
     </div>
@@ -449,7 +449,7 @@
             </div>
             <div class="modal-footer">
                 <!-- 这里的rid是ipallocation的id -->
-                <button id="confirm_icp_info" type="submit" class="btn btn-primary" rid="">更新ICP信息</button>
+                <button id="confirm_icp_info" type="submit" class="btn btn-primary" rid="" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">更新ICP信息</button>
             </div>
         </div>
     </div>
@@ -501,14 +501,16 @@
             });
         });
         // 删除分配记录
-        $(".modal_del").click(function(){
+        $("#modal_del").click(function(){
+            $("#modal_del").popover('show');
             $.ajax({
                 url: "{% url 'mod_allocated_ip' 'del' %}",
                 type: "POST",
                 data: $("#mod_order_num").serialize()+"&"+$("#mod_msg").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
                 success: function(data){
+                    $("#modal_del").popover('hide');
                     if(data['status'] == 'success'){
-                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        $('#mod-ip-modal').modal('hide');  // 修改成功后关闭modal
                         alert('删除成功');
                         window.location.reload();
                     }else{
@@ -517,19 +519,22 @@
                     }
                 },
                 error: function(xhr){
+                    $("#modal_del").popover('hide');
                     console.log(xhr);
                 }
             });
         });
         // 临时禁用
-        $(".modal_ban").click(function(){
+        $("#modal_ban").click(function(){
+            $("#modal_ban").popover('show');
             $.ajax({
                 url: "{% url 'mod_allocated_ip' 'ban' %}",
                 type: "POST",
                 data: $("#mod_order_num").serialize()+"&"+$("#mod_msg").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
                 success: function(data){
+                    $("#modal_ban").popover('hide');
                     if(data['status'] == 'success'){
-                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        $('#mod-ip-modal').modal('hide');  // 修改成功后关闭modal
                         alert('临时禁用成功');
                         window.location.reload();
                     }else{
@@ -538,19 +543,22 @@
                     }
                 },
                 error: function(xhr){
+                    $("#modal_ban").popover('hide');
                     console.log(xhr);
                 }
             });
         });
         // 变更按钮
-        $(".modal_mod").click(function(){
+        $("#modal_mod").click(function(){
+            $("#modal_mod").popover('show');
             $.ajax({
                 url: "{% url 'mod_allocated_ip' 'mod' %}",
                 type: "POST",
                 data: $("#mod_form").serialize()+"&rid="+$("#mod_form").attr('rid')+"&csrfmiddlewaretoken="+"{{ csrf_token  }}",
                 success: function(data){
+                    $("#modal_mod").popover('hide');
                     if(data['status'] == 'success'){
-                        $('.modal').modal('hide');  // 修改成功后关闭modal
+                        $('#mod-ip-modal').modal('hide');  // 修改成功后关闭modal
                         alert('变更成功');
                         window.location.reload();
                     }else{
@@ -559,6 +567,7 @@
                     }
                 },
                 error: function(xhr){
+                    $("#modal_mod").popover('hide');
                     console.log(xhr);
                 }
             });
@@ -657,14 +666,14 @@
         });
         // 更新ICP信息
         $('#confirm_icp_info').click(function(){
-            // $('#loading').modal('show');
+            $('#confirm_icp_info').popover('show');
             $.ajax({
-                url: "{% url 'ajax_mod_icp_info' %}",
+                url: "{% url 'ajax_mod_icp_info' 'mod' %}",
                 type: 'POST',
                 data: $("#mod_icp_order_form").serialize() + '&' + $("#icp_info_form").serialize() +"&rid="+$(this).attr('rid')+ "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
-                    // $('#loading').modal('hide');
+                    $('#confirm_icp_info').popover('hide');
                     if(data['status'] == 'success'){
                         $("p.icp-error-data").text(""); // 清空错误信息
                         document.getElementById('icp_info_form').reset();  // 清空form
@@ -690,7 +699,7 @@
                     }
                 },
                 error: function(xhr){
-                    // $('#loading').modal('hide');
+                    $('#confirm_icp_info').popover('hide');
                     console.log(xhr);
                 }
             });

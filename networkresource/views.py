@@ -506,6 +506,7 @@ def ip_allocated_client_list(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['client_search_form'] = ClientSearchForm()
+    context['new_icp_info_form'] = ICPInfoForm()
     return render(request, 'ip_allocated_client_list.html', context)
 
 
@@ -592,6 +593,7 @@ def allocated_client_search(request):
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['client_search_form'] = client_search_form
+    context['new_icp_info_form'] = ICPInfoForm()
     return render(request, 'ip_allocated_client_list.html', context)
 
 
@@ -839,7 +841,7 @@ def ajax_locate_icp(request):
         data['error_info'] = '无法找到相应记录'
     return JsonResponse(data)
 
-def ajax_mod_icp_info(request):
+def ajax_mod_icp_info(request, operation_type):
     data = {}
     if request.POST.get('mod_icp_order_num') is None:
         data['status'] = 'error'
@@ -855,43 +857,62 @@ def ajax_mod_icp_info(request):
         mod_msg = request.POST.get('mod_icp_msg').strip()
     else:
         mod_msg = ''
-    ip_record_id = request.POST.get('rid')
+    # 校验form
     new_icp_info_form = ICPInfoForm(request.POST)
-    if new_icp_info_form.is_valid():
-        # print(new_icp_info_form.cleaned_data)
-        # 新增前确认是否存在一摸一样的数据
-        try:
-            mod_target = IPAllocation.objects.get(id=ip_record_id)
-        except ObjectDoesNotExist:
-            data['status'] = 'error'
-            data['error_info'] = '无法找到相应记录'
-            return JsonResponse(data)
-        try:
-            # 如果存在相关记录直接使用旧记录即可
-            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
-            # 如果记录和原纪录一致,则不修改
-            if already_has_icp.id == mod_target.icp_id:
+    if not new_icp_info_form.is_valid():
+        data['status'] = 'error'
+        errorDict = new_icp_info_form.errors.get_json_data()
+        data['error_info'] = json.dumps(errorDict)
+        return JsonResponse(data)
+    # 检查ICP记录
+    try:
+        # 如果存在相关记录直接使用旧记录即可
+        already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+    except ObjectDoesNotExist:  # 如果不存在则创建
+        new_icp = ICP(**new_icp_info_form.cleaned_data)
+        new_icp.save()
+        already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
+    finally:
+        if operation_type == 'mod':
+            ip_record_id = request.POST.get('rid')
+            new_icp_info_form = ICPInfoForm(request.POST)
+            # 新增前确认是否存在一摸一样的数据
+            try:
+                mod_target = IPAllocation.objects.get(id=ip_record_id)
+                # 如果记录和原纪录一致,则不修改
+                if already_has_icp.id == mod_target.icp_id:
+                    data['status'] = 'error'
+                    data['other_error'] = '提供的ICP信息与原记录一致，无法变更'
+                    return JsonResponse(data)
+            except ObjectDoesNotExist:
                 data['status'] = 'error'
-                data['other_error'] = '提供的ICP信息与原记录一致，无法变更'
+                data['error_info'] = '无法找到相应记录'
                 return JsonResponse(data)
-        except ObjectDoesNotExist:  # 如果不存在则创建
-            new_icp = ICP(**new_icp_info_form.cleaned_data)
-            new_icp.save()
-            already_has_icp = ICP.objects.get(**new_icp_info_form.cleaned_data)
-        finally:
             # 旧数据备份
             old_data = objectDataSerializer(mod_target, {})
             backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'mod')
             # 新数据更新
+            mod_target.last_mod_time = old_data['mod_time']
             mod_target.icp = already_has_icp
             mod_target.save()
-        
-        data['status'] = 'success'
-    else:
-        data['status'] = 'error'
-        errorDict = new_icp_info_form.errors.get_json_data()
-        data['error_info'] = json.dumps(errorDict)    
-    return JsonResponse(data)
+            data['status'] = 'success'
+        elif operation_type == 'mod_multi':
+            order_num = request.POST.get('order_num_icp')
+            group_id = request.POST.get('group_id_icp')
+            product_id = request.POST.get('product_id_icp')
+            client_name = request.POST.get('client_name_icp')
+            raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE client_name LIKE %s AND group_id = %s AND order_num = %s AND product_id = %s ORDER BY alc_time DESC'
+            mod_target_list = IPAllocation.objects.raw(raw_query, ('%%{}%%'.format(client_name), group_id, order_num, product_id))
+            mod_time = timezone.datetime.now()
+            for mod_target in mod_target_list:
+                old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
+                backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'mod')
+            IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=mod_time, icp=already_has_icp)
+            data['status'] = 'success'
+        else:
+            data['status'] = 'error'
+            data['error_info'] = '非法操作'
+        return JsonResponse(data)
 
 # 工作量统计
 def list_workload(request):
