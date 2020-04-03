@@ -890,7 +890,11 @@ def ajax_mod_allocated_ip(request, operation_type):
 
 def ajax_locate_icp(request):
     data = {}
-    rid = request.GET.get("rid")
+    rid = request.GET.get("rid", '')
+    if rid is None or rid == '' or rid == 'None':
+        data['status'] = 'error'
+        data['error_info'] = '此IP记录暂无ICP信息'
+        return JsonResponse(data)
     try:
         record = ICP.objects.get(id=rid)
         parsed_icp_result = objectDataSerializer(record, {})
