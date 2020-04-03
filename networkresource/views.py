@@ -379,13 +379,13 @@ def parse_icp(request):
         'id_district': [r'受理区域\s+(\S+)', 1],
         'id_distributor': [r'派单人\s+(\S+)', 1],
         'id_distributor_contact': [r'派单人\s+\S+\s+?联系方式\s*?(\d+)', 1],
-        'id_demand': [r'需求描述\s+(\S+)', 1],
+        'id_demand': [r'需求描述\s+([\s\S]*?)\n\n', 1],
         'id_bandwidth_up': [r'上行带宽\s+(\d+)', 1],
         'id_bandwidth_dwn': [r'上行带宽\s+\d+\s+下行带宽\s+(\d+)', 1],
         'id_client_tech': [r'客户配合联系人\s+(\S+)', 1],
         'id_client_tech_contact': [r'客户配合联系人\s+\S+\s+客户配合联系方式\s+(\d+)', 1],
-        'id_demand_ipv4_amount': [r'(\d+)\s+IPV4地址数量', 1],  # 确认数据位置
-        'id_demand_ipv6_amount': [r'(\d+)\s+IPV6地址数量', 1],  # 确认数据位置
+        'id_demand_ipv4_amount': [r'IPV4地址数量\(个\)\D+(\d+)', 1],  # 确认数据位置
+        'id_demand_ipv6_amount': [r'IPV6地址数量\(个\)\D+(\d+)', 1],  # 确认数据位置
         'id_client_address': [r'单位详细地址\s+(\S+)', 1],
         'id_businessman': [r'联系人姓名\(客户侧\)\s+(\S+)', 1],
         'id_businessman_contact': [r'联系人姓名\(客户侧\)\s+\S+\s+联系人电话\(客户侧\)\s+(\d+)', 1],
