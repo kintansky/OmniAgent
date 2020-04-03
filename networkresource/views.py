@@ -480,7 +480,8 @@ def ajax_confirm_allocate(request):
                         ip_allocation.alc_user = request.user.first_name
                         ip_allocation.alc_time = timezone.datetime.now()
                         ip_allocation.last_mod_time = ip_allocation.alc_time
-                        ip_allocation.icp = get_object_or_404(ICP, pk=new_ip_allocation_form.cleaned_data['icp_id'])
+                        if new_ip_allocation_form.cleaned_data['icp_id'] is not None:
+                            ip_allocation.icp = get_object_or_404(ICP, pk=new_ip_allocation_form.cleaned_data['icp_id'])
 
                         ip_allocation.save()
 
