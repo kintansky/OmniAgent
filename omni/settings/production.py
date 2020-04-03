@@ -37,8 +37,8 @@ DATABASES = {
         'NAME': 'omni_agent',
         'USER': 'root',
         'PASSWORD': 'hlw2019!@#$',
-        'HOST': '127.0.0.1',
-        'PORT': '9003',
+        'HOST': '10.201.163.214',
+        'PORT': '3306',
         'OPTIONS': {
             'autocommit': True,
         },
@@ -50,8 +50,8 @@ DATABASES = {
         'NAME': 'cmdb',
         'USER': 'root',
         'PASSWORD': 'hlw2019!@#$',
-        'HOST': '127.0.0.1',
-        'PORT': '9003',
+        'HOST': '10.201.163.214',
+        'PORT': '3306',
         'OPTIONS': {
             'autocommit': True,
         },
