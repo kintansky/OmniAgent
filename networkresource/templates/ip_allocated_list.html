@@ -59,7 +59,10 @@
 {% endblock %}
 
 {% block table_title %}
-        <th><input id="checkAll" type="checkbox" /></th>
+        <th data-toggle="tooltip" data-placement="top" title="点击修改">
+            <input id="checkAll" type="checkbox" />
+            <span class="glyphicon glyphicon-wrench" data-toggle="modal" data-target="#multimod-ip-modal" id="multi_modal_form_trigger" ></span>
+        </th>
         <th>工单号</th>
         <th>IP</th>
         <th>客户</th>
@@ -78,7 +81,9 @@
         {% else %}
             <tr>
         {% endif %}
-            <td><input class="check_item" id="{{ record.id }}" name="checkItem" type="checkbox" /></td>
+            <td>
+                <input class="check_item" id="{{ record.id }}" name="checkItem" type="checkbox" />
+            </td>
             <td data-toggle="tooltip" data-placement="top" title="{{ record.order_num }}">
                 {% if record.state == '预分配' %}
                     <span class="label label-info">{{ record.state }}</span>
@@ -89,12 +94,17 @@
                 {% endif %}
                 {{ record.order_num|truncatechars:15 }}
             </td>
-            <td data-toggle="tooltip" data-placement="top" title="网关: {{ record.gateway }}">
-                {% if record.ip_func == '公网' %}
-                    <span class="label label-danger">公网</span>
-                {% endif %}
-                {{ record.ip }}
-            </td>
+            {% if record.ip_func == '公网' %}
+                <td data-toggle="tooltip" data-placement="top" title="网关: {{ record.gateway }}">
+                    <span class="label label-danger">{{ record.ip_func }}</span>
+                    {{ record.ip }}
+                </td>
+            {% else %}
+                <td data-toggle="tooltip" data-placement="top" title="COMMUNITY: {{ record.community }}:{{ record.rt }}:{{ record.rd }}">
+                    <span class="label label-info">{{ record.ip_func }}</span>
+                    {{ record.ip }}
+                </td>
+            {% endif %}
             <td data-toggle="tooltip" data-placement="top" title="产品编码：{{ record.product_id }}::{{ record.client_name }}">
                 {{ record.client_name|truncatechars:15 }}
             </td>
@@ -117,15 +127,28 @@
             <td>{{ record.alc_user }}</td>
             {% if user.is_authenticated %}
                 <td>
-                    <a href="" data-toggle="modal" data-target="#mod-ip-modal" class="ip_modal_form_trigger" rid="{{ record.id }}">
-                        <!-- 这里的rid是ipallocation的id -->
-                        <span data-toggle="tooltip" data-placement="top" title="修改IP信息" class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-                    </a>|
-                    <a href="" data-toggle="modal" data-target="#mod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
-                        <!-- 这里的rid是icp的id -->
-                        <span data-toggle="tooltip" data-placement="top" title="修改ICP信息" class="glyphicon glyphicon-tags" aria-hidden="true"></span>
-                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-xs dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            变更
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            <li>
+                                <a href="" data-toggle="modal" data-target="#mod-ip-modal" class="ip_modal_form_trigger" rid="{{ record.id }}">
+                                    <!-- 这里的rid是ipallocation的id -->
+                                    修改IP信息
+                                </a>
+                            </li>
+                            <li>
+                                <a href="" data-toggle="modal" data-target="#mod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
+                                    <!-- 这里的rid是icp的id -->
+                                    修改ICP信息
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </td>
+                
             {% else %}
             {# user no login #}
                 <td>
@@ -180,6 +203,37 @@
 
 {% block other_content %}
 {# modal #}
+<div class="modal fade" id="multimod-ip-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">请提供操作依据</h4>
+            </div>
+            <div class="modal-body">
+                <p class="bg-primary text-center"><strong>以下为批量操作, 请注意</strong></p>
+                <form id="multi_mod_form" action="" method="POST">
+                    <div class="form-group">
+                        <label for="multi_mod_order_num" class="control-label">变更单号</label>
+                        <input type="text" name="multi_mod_order_num" id="multi_mod_order_num" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="multi_mod_msg" class="control-label">变更说明</label>
+                        <input type="text" name="multi_mod_msg" id="multi_mod_msg" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="multi_mod_target" class="control-label">变更清单</label>
+                        <input type="text" name="multi_mod_target" id="multi_mod_target" class="form-control" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="multi_modal_del" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">删除数据</button>
+                <button type="button" class="btn btn-warning" id="multi_modal_ban" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">临时禁用</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="mod-ip-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -471,6 +525,70 @@
                 });
             }
         });
+        // 复选框进行多条操作
+        // 禁用操作
+        $("#multi_modal_ban").click(function(){
+            $("#multi_modal_ban").popover('show');
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'ban_multi_by_id' %}",
+                type: "POST",
+                data: 'mod_order_num='+$("#multi_mod_order_num").val()+'&mod_msg='+$('#multi_mod_msg').val()+'&multi_mod_target='+$('#multi_mod_target').val()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+                success: function(data){
+                    $("#modal_ban").popover('hide');
+                    if(data['status'] == 'success'){
+                        $('#multimod-ip-modal').modal('hide');  // 修改成功后关闭modal
+                        alert('临时禁用成功');
+                        window.location.reload();
+                    }else{
+                        console.log(data);
+                        $("#multi_modal_ban").popover('hide');
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    $("#multi_modal_ban").popover('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+        // 删除操作
+        $("#multi_modal_del").click(function(){
+            $("#multi_modal_del").popover('show');
+            $.ajax({
+                url: "{% url 'mod_allocated_ip' 'del_multi_by_id' %}",
+                type: "POST",
+                data: 'mod_order_num='+$("#multi_mod_order_num").val()+'&mod_msg='+$('#multi_mod_msg').val()+'&multi_mod_target='+$('#multi_mod_target').val()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+                success: function(data){
+                    $("#modal_del").popover('hide');
+                    if(data['status'] == 'success'){
+                        $('#multimod-ip-modal').modal('hide');  // 修改成功后关闭modal
+                        alert('数据删除成功');
+                        window.location.reload();
+                    }else{
+                        console.log(data);
+                        $("#multi_modal_del").popover('hide');
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    $("#multi_modal_del").popover('hide');
+                    console.log(xhr);
+                }
+            });
+        });
+        // 回填目标IP信息
+        $("#multi_modal_form_trigger").click(function(){
+            var tar = new Array();
+            $(".check_item").each(function(){
+                if($(this).is(":checked") == true){
+                    tar.push($(this).attr('id'));
+                }
+            });
+            // console.log(tar.join());
+            $('#multi_mod_target').val(tar.join());
+        });
+
+
         // 请求单条记录的详细信息
         $(".ip_modal_form_trigger").click(function(){
             $.ajax({
@@ -515,6 +633,7 @@
                         window.location.reload();
                     }else{
                         console.log(data);
+                        $("#modal_del").popover('hide');
                         alert(data['error_info']);
                     }
                 },
@@ -539,6 +658,7 @@
                         window.location.reload();
                     }else{
                         console.log(data);
+                        $("#modal_ban").popover('hide');
                         alert(data['error_info']);
                     }
                 },
@@ -563,6 +683,7 @@
                         window.location.reload();
                     }else{
                         // console.log(data);
+                        $("#modal_mod").popover('hide');
                         alert(data['error_info']);
                     }
                 },
@@ -681,6 +802,7 @@
                         $("#icp-modal").modal("hide");
                         window.location.reload();
                     }else{
+                        $('#confirm_icp_info').popover('hide');
                         $("p.icp-error-data").text("");
                         if ('error_info' in data){
                             if('error_info' in data){

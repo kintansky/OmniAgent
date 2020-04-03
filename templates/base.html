@@ -109,7 +109,13 @@
             </div>
         </div>
     </div>
-
+    <!-- <div class="spinner">
+        <div class="rect1"></div>
+        <div class="rect2"></div>
+        <div class="rect3"></div>
+        <div class="rect4"></div>
+        <div class="rect5"></div>
+    </div> -->
     {% block content %}{% endblock %}
 
     <footer class="footer">
@@ -124,11 +130,11 @@
     <script src="{% static 'jquery@1.12.4.min.js' %}"></script>
     <script src="{% static 'bootstrap@3.3.7/js/bootstrap.min.js' %}"></script>
     <script>
-    $(function(){
-        $('[data-toggle="popover"]').popover({
-            html: true
-        });
-    })
+        $(function(){
+            $('[data-toggle="popover"]').popover({
+                html: true
+            });
+        })
     </script>
     {% block tail_script %}{% endblock %}
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->

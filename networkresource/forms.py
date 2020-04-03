@@ -41,7 +41,10 @@ class ClientSearchForm(forms.Form):
 
 class IPAllocateSearchForm(ClientSearchForm):
     ip_address = forms.GenericIPAddressField(label='IP', protocol='both', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.1.1.1'}))
+    community = forms.CharField(label='Community', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
+    def clean_comminity(self):
+        return self.cleaned_data['community'].strip()
 
 class IPTargetForm(forms.Form):
     IPFUNC_CHOICES = (

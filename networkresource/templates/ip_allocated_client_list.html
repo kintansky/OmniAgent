@@ -104,13 +104,25 @@
             </td>
             {% if user.is_authenticated %}
                 <td>
-                    <a href="" data-toggle="modal" data-target="#multimod-ip-modal" class="modal_form_trigger">
-                        <span data-toggle="tooltip" data-placement="top" title="临时禁用 / 删除数据" class="glyphicon glyphicon-ban-circle" aria-hidden="true"></span>
-                    </a>|
-                    <a href="" data-toggle="modal" data-target="#multimod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
-                        <!-- 这里的rid是icp的id -->
-                        <span data-toggle="tooltip" data-placement="top" title="修改ICP信息" class="glyphicon glyphicon-tags" aria-hidden="true"></span>
-                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-primary btn-xs dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            批量操作
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            <li>
+                                <a href="" data-toggle="modal" data-target="#multimod-ip-modal" class="modal_form_trigger">
+                                    临时禁用 / 删除数据
+                                </a>
+                            </li>
+                            <li>
+                                <a href="" data-toggle="modal" data-target="#multimod-icp-modal" class="icp_modal_form_trigger" rid="{{ record.icp_id }}">
+                                    <!-- 这里的rid是icp的id -->
+                                    修改ICP信息
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </td>
             {% else %}
                 <td>
@@ -316,6 +328,7 @@
                         window.location.reload();
                     }else{
                         console.log(data);
+                        $("#modal_ban").popover('hide');
                         alert(data['error_info']);
                     }
                 },
@@ -340,6 +353,7 @@
                         window.location.reload();
                     }else{
                         console.log(data);
+                        $("#modal_del").popover('hide');
                         alert(data['error_info']);
                     }
                 },
@@ -393,6 +407,7 @@
                         $("#icp-modal").modal("hide");
                         window.location.reload();
                     }else{
+                        $("#confirm_icp_info").popover('hide');
                         $("p.icp-error-data").text("");
                         if ('error_info' in data){
                             if('error_info' in data){

@@ -649,18 +649,19 @@ def ip_allocated_search(request):
         client_name = ip_search_form.cleaned_data['client_name']
         group_id = ip_search_form.cleaned_data['group_id']
         product_id = ip_search_form.cleaned_data['product_id']
+        community = ip_search_form.cleaned_data['community']
         if ip_address != '':
-            ip_all_list = IPAllocation.objects.filter(ip=ip_address)
+            ip_all_list = IPAllocation.objects.filter(ip=ip_address, community__icontains=community)
         elif order_num != '':
-            ip_all_list = IPAllocation.objects.filter(order_num=order_num, client_name__icontains=client_name)
+            ip_all_list = IPAllocation.objects.filter(order_num=order_num, client_name__icontains=client_name, community__icontains=community)
             if group_id is not None and product_id is not None:
-                ip_all_list = IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name)
+                ip_all_list = IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name, community__icontains=community)
         elif group_id is not None:
-            ip_all_list = IPAllocation.objects.filter(group_id=group_id)
+            ip_all_list = IPAllocation.objects.filter(group_id=group_id, community__icontains=community)
         elif product_id is not None:
-            ip_all_list = IPAllocation.objects.filter(product_id=product_id)
+            ip_all_list = IPAllocation.objects.filter(product_id=product_id, community__icontains=community)
         elif client_name != '':
-            ip_all_list = IPAllocation.objects.filter(client_name__icontains=client_name)
+            ip_all_list = IPAllocation.objects.filter(client_name__icontains=client_name, community__icontains=community)
         else:
             ip_all_list = IPAllocation.objects.all()
     else:
@@ -830,6 +831,21 @@ def ajax_mod_allocated_ip(request, operation_type):
         # update更新原分配表数据为临时禁用,已禁用的无需再禁用
         IPAllocation.objects.filter(~Q(state='临时禁用'), order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).update(last_mod_time=mod_time, state = '临时禁用')
         data['status'] = 'success'
+    elif operation_type == 'ban_multi_by_id':
+        id = request.POST.get('multi_mod_target', '')
+        if id == '':
+            data['status'] = 'error'
+            data['error_info'] = '批量操作未选定目标'
+            return JsonResponse(data)
+        id_list = id.split(',')
+        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE state != %s AND id in ({}) ORDER BY alc_time DESC'.format(','.join(['%s',]*len(id_list)))
+        mod_target_list = IPAllocation.objects.raw(raw_query, ('临时禁用',)+tuple(id_list))
+        mod_time = timezone.datetime.now()
+        for mod_target in mod_target_list:
+            old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'ban')
+        IPAllocation.objects.filter(~Q(state='临时禁用'), id__in=tuple(id_list)).update(last_mod_time=mod_time, state = '临时禁用')
+        data['status'] = 'success'
     elif operation_type == 'del': # 删除数据
         rid = request.POST.get('rid')
         mod_target = IPAllocation.objects.get(id=rid)
@@ -851,6 +867,21 @@ def ajax_mod_allocated_ip(request, operation_type):
             backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'del')
         # delete原表数据
         IPAllocation.objects.filter(order_num=order_num, group_id=group_id, product_id=product_id, client_name__icontains=client_name).delete()
+        data['status'] = 'success'
+    elif operation_type == 'del_multi_by_id':
+        id = request.POST.get('multi_mod_target', '')
+        if id == '':
+            data['status'] = 'error'
+            data['error_info'] = '批量操作未选定目标'
+            return JsonResponse(data)
+        id_list = id.split(',')
+        raw_query = 'SELECT * FROM omni_agent.MR_REC_ip_allocation WHERE id in ({}) ORDER BY alc_time DESC'.format(','.join(['%s',]*len(id_list)))
+        mod_target_list = IPAllocation.objects.raw(raw_query, tuple(id_list))
+        mod_time = timezone.datetime.now()
+        for mod_target in mod_target_list:
+            old_data = objectDataSerializerRaw(mod_target, mod_target_list.columns, {})
+            backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, 'del')
+        IPAllocation.objects.filter(id__in=tuple(id_list)).delete()
         data['status'] = 'success'
     else:
         data['status'] = 'error'
