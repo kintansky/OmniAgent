@@ -58,7 +58,7 @@ def exportXls(fieldList, object_list, datetime_field=tuple()):
                 sheet.write(row, col, qs[i][t]) # 逐条实例化
             col += 1
         row += 1
-    save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
+    save_path = os.path.join(BASE_DIR, 'downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
 
     # print('保存位置：', save_path)
@@ -85,7 +85,7 @@ def rawQueryExportXls(fieldList, rawobj_list, datetime_field=tuple()):    # rawq
                 sheet.write(row, col, rawobj.serializable_value(t))
             col += 1
         row += 1
-    save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
+    save_path = os.path.join(BASE_DIR, 'downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
     return save_path
 
@@ -140,7 +140,7 @@ def exportClassifiedXls(fieldList, rawobj_list, datetime_field, classify_field, 
                 else:
                     sheet3.write(row, col , rawobj.serializable_value(t))
                 col += 1
-    save_path = os.path.join(BASE_DIR, 'collected_static/downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
+    save_path = os.path.join(BASE_DIR, 'downloads/temp/{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
     return save_path
 
