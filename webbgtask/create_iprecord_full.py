@@ -3,8 +3,9 @@ import mysql.connector
 from functools import wraps
 from IPy import IP, IPSet
 import os
+from omni.settings.base import BASE_DIR
 
-BASE_SAVE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_SAVE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 class SqlDatabase:
     def __init__(self, host, port, user, password, db):
         self.__loginInfo = {
@@ -134,5 +135,10 @@ if __name__ == "__main__":
     idx = {'-1': '私网', '1': '公网外部使用', '2': '公网内部使用'}
     for t in result:
         bk = writeXls(bk, idx[t], titles, result[t])
-    filepath = os.path.join(BASE_SAVE_DIR, 'collected_static/downloads/files/iprecord_all.xls')
+    p = os.path.join(BASE_DIR, 'downloads/temp/')
+    if not os.path.exists(p):
+        os.makedirs(p)
+        os.chown(p, 1006, 1006)
+    # filepath = os.path.join(BASE_SAVE_DIR, 'collected_static/downloads/files/iprecord_all.xls')
+    filepath = os.path.join(p, 'iprecord_all.xls')
     bk.save(filepath)
