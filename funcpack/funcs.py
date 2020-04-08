@@ -61,7 +61,7 @@ def exportXls(fieldList, object_list, datetime_field=tuple()):
     p = os.path.join(BASE_DIR, 'downloads/temp/')
     if not os.path.exists(p):
         os.makedirs(p)
-        os.chown(p, 'www', 'www')
+        os.chown(p, 1006, 1006)
     save_path = os.path.join(p, '{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
 
@@ -92,7 +92,7 @@ def rawQueryExportXls(fieldList, rawobj_list, datetime_field=tuple()):    # rawq
     p = os.path.join(BASE_DIR, 'downloads/temp/')
     if not os.path.exists(p):
         os.makedirs(p)
-        os.chown(p, 'www', 'www')
+        os.chown(p, 1006, 1006)
     save_path = os.path.join(p, '{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
     return save_path
@@ -151,7 +151,7 @@ def exportClassifiedXls(fieldList, rawobj_list, datetime_field, classify_field, 
     p = os.path.join(BASE_DIR, 'downloads/temp/')
     if not os.path.exists(p):
         os.makedirs(p)
-        os.chown(p, 'www', 'www')
+        os.chown(p, 1006, 1006)
     save_path = os.path.join(p, '{}.xls'.format(timezone.datetime.strftime(timezone.datetime.now(), '%Y%m%d%H%M%S%f')))
     book.save(save_path)
     return save_path
