@@ -1162,7 +1162,7 @@ def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
-    expireDate, _ = getDateRange(-8)    # 系统自动清理9天前的预占，因此显示8天前的预占信息作为即将过期的信息
+    expireDate, _ = getDateRange(-14)    # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
     almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
@@ -1184,7 +1184,7 @@ def search_device_allocated_segment(request):
         all_device_ip_segment_query_line + otherCmd
     )
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
-    expireDate, _ = getDateRange(-8)
+    expireDate, _ = getDateRange(-14)   # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
     almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
 
     context['records'] = page_of_objects.object_list
