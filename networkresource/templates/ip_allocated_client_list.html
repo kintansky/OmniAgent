@@ -307,10 +307,10 @@
     $(document).ready(function(){
         $(".modal_form_trigger").click(function(){
             // 回填成新的form用于提交
-            $("#order_num").val($(this).parent().siblings(".order_num").text());
-            $("#client_name").val($(this).parent().siblings(".client_name").text());
-            $("#group_id").val($(this).parent().siblings(".group_id").text());
-            $("#product_id").val($(this).parent().siblings(".product_id").text());
+            $("#order_num").val($(this).parent().parent().parent().parent().siblings(".order_num").text());
+            $("#client_name").val($(this).parent().parent().parent().parent().siblings(".client_name").text());
+            $("#group_id").val($(this).parent().parent().parent().parent().siblings(".group_id").text());
+            $("#product_id").val($(this).parent().parent().parent().parent().siblings(".product_id").text());
         });
         // 批量操作
         // 禁用操作
@@ -366,10 +366,10 @@
         // 回填目标IP信息
         $(".icp_modal_form_trigger").click(function(){
             // 回填成新的form用于提交
-            $("#order_num_icp").val($(this).parent().siblings(".order_num").text());
-            $("#client_name_icp").val($(this).parent().siblings(".client_name").text());
-            $("#group_id_icp").val($(this).parent().siblings(".group_id").text());
-            $("#product_id_icp").val($(this).parent().siblings(".product_id").text());
+            $("#order_num_icp").val($(this).parent().parent().parent().parent().siblings(".order_num").text());
+            $("#client_name_icp").val($(this).parent().parent().parent().parent().siblings(".client_name").text());
+            $("#group_id_icp").val($(this).parent().parent().parent().parent().siblings(".group_id").text());
+            $("#product_id_icp").val($(this).parent().parent().parent().parent().siblings(".product_id").text());
         });
         // 解析icp信息
         $("#id_parse_icp").click(function(){
