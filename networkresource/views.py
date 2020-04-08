@@ -371,7 +371,6 @@ def searchICPInfo(rePattern, text, groupNum):
 def parse_icp(request):
     data = {}
     icp_text = request.GET.get('icp_text', '')
-    print(icp_text)
     # 字段对应的正则表达式，因为提供的字符串可能格式不稳定，尽量不要多字段匹配
     icp_research_pattern = {
         'id_identify_id': [r'单位证件号码\s+(\S+)', 1],
@@ -398,7 +397,6 @@ def parse_icp(request):
         if s is not None:
             icp_result[key] = s
             continue
-    print(icp_result)
     data['parsed_icp_result'] = json.dumps(icp_result)
     return JsonResponse(data)
 
