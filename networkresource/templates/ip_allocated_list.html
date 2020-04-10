@@ -742,6 +742,9 @@
         // 清空ICP表单，回填数据
         $(".icp_modal_form_trigger").click(function(){
             var icp_trigger = $(this);
+            // rid的插入需要写在这里，因为如果失败，也需要吧rid插回去
+            var ip_record_id = icp_trigger.parent().prev().children('a').attr('rid');
+            $("#confirm_icp_info").attr("rid", ip_record_id);
             var rid = icp_trigger.attr("rid");
             $("#icp_text").val("");
             $.ajax({
@@ -755,8 +758,7 @@
                         for(var key in parsed_icp_result){
                             $('#id_'+key).val(parsed_icp_result[key]);
                         }
-                        // 将IP记录的rid回填至confirm_icp_info，用于后续传递
-                        var ip_record_id = icp_trigger.prev('a').attr('rid');
+
                         $("#confirm_icp_info").attr("rid", ip_record_id);
                     }else{
                         alert(data["error_info"]);
