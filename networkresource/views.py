@@ -767,6 +767,8 @@ def ajax_mod_allocated_ip(request, operation_type):
             old_data = objectDataSerializer(mod_target, {})
             backup_ip_allocation(old_data, mod_target, mod_order_num, mod_msg, request.user.first_name, mod_type)
             # 更新新数据
+            print(ip_target_form.cleaned_data)
+            print(new_ip_allocation_form.cleaned_data)
             mod_target.order_num =  old_data['mod_order_num']
             mod_target.client_name = new_ip_allocation_form.cleaned_data['client_name']
             mod_target.state = ip_target_form.cleaned_data['state']
@@ -785,6 +787,7 @@ def ajax_mod_allocated_ip(request, operation_type):
             mod_target.group_id = new_ip_allocation_form.cleaned_data['group_id']
             mod_target.product_id = new_ip_allocation_form.cleaned_data['product_id']
             mod_target.network_type = new_ip_allocation_form.cleaned_data['network_type']
+            mod_target.access_type = new_ip_allocation_form.cleaned_data['access_type']
             mod_target.last_mod_time = old_data['mod_time']
             if new_ip_allocation_form.cleaned_data['include_private_ip'] == 'y':
                 mod_target.community = new_ip_allocation_form.cleaned_data['community']
