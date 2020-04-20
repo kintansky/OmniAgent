@@ -282,7 +282,9 @@ class GroupClientIpReserve(models.Model):
     reserved_person = models.CharField(max_length=20)
     client_name = models.CharField(max_length=255)
     contact = models.CharField(max_length=11)   # 联系电话
-    reserved_time = models.DateTimeField()
+    reserved_time = models.DateTimeField()  # 预留的日期
+    delay_days = models.PositiveSmallIntegerField(default=0)    # 延期次数
+    expire_time = models.DateTimeField(null=True)    # 超时时间
 
     class Meta:
         db_table = 'MR_REC_group_client_ip_reserve'

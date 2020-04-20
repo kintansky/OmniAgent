@@ -10,7 +10,7 @@ import os
 from django.utils import timezone
 from IPy import IP
 import json
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, F
 import base64
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -1165,8 +1165,8 @@ def get_device_allocated_segment(request):
     context = {}
     device_ip_segment_all_list = GroupClientIPSegment.objects.raw(all_device_ip_segment_query_line)
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
-    expireDate, _ = getDateRange(-14)    # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
-    almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
+    _, expireDate = getDateRange(-14)    # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
+    almostExpireCnt = GroupClientIpReserve.objects.filter(expire_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
@@ -1187,8 +1187,8 @@ def search_device_allocated_segment(request):
         all_device_ip_segment_query_line + otherCmd
     )
     page_of_objects, page_range = pages(request, device_ip_segment_all_list)
-    expireDate, _ = getDateRange(-14)   # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
-    almostExpireCnt = GroupClientIpReserve.objects.filter(reserved_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
+    _, expireDate = getDateRange(-14)   # 系统自动清理15天前的预占，因此显示14天前的预占信息作为即将过期的信息
+    almostExpireCnt = GroupClientIpReserve.objects.filter(expire_time__lt=expireDate).values('reserved_person').annotate(Sum('reserved_cnt'))
 
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
@@ -1207,7 +1207,7 @@ def ajax_get_segment_used_detail(request):
     # print(reserved_list[0].reserved_person)
     reserved_dict = {}
     for r in reserved_list:
-        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, (r.reserved_time+timezone.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S'), r.id]
+        reserved_dict[r.id] = [r.subnet_gateway+'/'+str(r.subnet_mask), r.reserved_cnt, r.reserved_person, r.contact, r.client_name, (r.reserved_time+timezone.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S'), r.id, r.delay_days, (r.expire_time+timezone.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')]
     data['reserved_dict'] = json.dumps(reserved_dict)
     # print(data)
     data['status'] = 'success'
@@ -1295,6 +1295,7 @@ def reserve_segment(request):
     ip_reserve.contact = contact
     ip_reserve.client_name = client_name
     ip_reserve.reserved_time = timezone.datetime.now()
+    ip_reserve.expire_time = ip_reserve.reserved_time + timezone.timedelta(14)  # 预占资源过期时间位15天
     ip_reserve.save()
     data['status'] = 'success'
     return JsonResponse(data)
@@ -1321,6 +1322,34 @@ def cancle_reserve(request):
 
     return JsonResponse(data)
 
+def delay_reserve(request):
+    data = {}
+    rid = request.POST.get('rid', None)
+    if rid is not None:
+        try:
+            record = GroupClientIpReserve.objects.get(id=rid)
+            if record.delay_days >= 3:
+                data['status'] = 'error'
+                data['error_info'] = '最多延期3次，你已延期{}次，已达上限'.format(record.delay_days)
+                return JsonResponse(data)
+            if record.reserved_person == request.user.first_name:
+                record.delay_days = F('delay_days') + 1
+                record.expire_time = F('expire_time') + timezone.timedelta(5)
+                record.save()
+                data['status'] = 'success'
+            else:
+                data['status'] = 'error'
+                data['error_info'] = '越权操作：预占人与延期人账号不一致'
+        except ObjectDoesNotExist:
+            data['status'] = 'error'
+            data['error_info'] = '记录不存在'
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '传递参数有误'
+
+    return JsonResponse(data)
+
+
 
 @login_required(redirect_field_name='from', login_url='login')
 def ajax_get_my_reserved_list(request):
@@ -1332,7 +1361,9 @@ def ajax_get_my_reserved_list(request):
         my_reserved_dict[my_reserved.id] = [
             my_reserved.subnet_gateway, my_reserved.subnet_mask, my_reserved.reserved_cnt, 
             my_reserved.client_name, my_reserved.contact, 
-            my_reserved.reserved_time.strftime('%Y-%m-%d'), 
+            my_reserved.reserved_time.strftime('%Y-%m-%d'),
+            my_reserved.delay_days, 
+            my_reserved.expire_time.strftime('%Y-%m-%d'), 
         ]
     data['status'] = 'success'
     data['my_reserved_dict'] = json.dumps(my_reserved_dict)

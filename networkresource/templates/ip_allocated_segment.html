@@ -24,7 +24,7 @@
                 <h4 class="panel-title">
                     <a class="collapsed" role="button" data-toggle="collapse" href="#collapseListGroup1" aria-expanded="false" aria-controls="collapseListGroup1">
                         <span class="glyphicon glyphicon-expand"></span>
-                        <strong>注意：</strong> 占用有效期为<strong> 15 </strong>天，逾期占用将被自动清理，即将逾期清单：
+                        <strong>注意：</strong> 占用有效期为<strong> 15 </strong>天，逾期占用将被自动清理，如需延期，请尽快延期（最多延期3次，每次5天），即将逾期清单：
                     </a>
                 </h4>
                 </div>
@@ -151,6 +151,7 @@
                                     <th>预占人</th>
                                     <th>客户</th>
                                     <th>预占时间</th>
+                                    <th>逾期时间</th>
                                     <th>操作</th>
                                 </thead>
                                 <tbody class='segment_detail'>
@@ -228,6 +229,7 @@
                                 <th>IP段</th>
                                 <th>客户</th>
                                 <th>预占时间</th>
+                                <th>逾期时间</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -265,9 +267,11 @@
                         for(var key in reserved_dict){
                             var data_list = reserved_dict[key];
                             if(user_is_staff == 'True'){
-                                dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+data_list[6]+'>撤销</a></td></tr>';
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0]+'</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td data-toggle="tooltip" data-placement="top" title="已延期'+data_list[7]+'次">'+data_list[8]+
+                                    '</td><td><div class="btn-group" role="group"><button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expand="false">操作<span class="caret"></span></button><ul class="dropdown-menu"><li><a class="cancle_reserve_btn" href="" rid="'+data_list[6]+'">撤销</a></li><li><a class="delay_reserve_btn" href="" rid="'+key+'">延后5天</a></li></ul></div></td></tr>';
                             }else{
-                                dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+data_list[6]+'>撤销</a></td></tr>';
+                                dataStr += '<tr><td><span class="label label-success">'+data_list[0].substr(0, 8)+'***</span></td><td><span class="label label-danger">预占'+data_list[1]+'个</span></td><td>'+data_list[2]+'('+data_list[3]+')</td><td>'+data_list[4]+'</td><td>'+data_list[5]+'</td><td data-toggle="tooltip" data-placement="top" title="已延期'+data_list[7]+'次">'+data_list[8]+
+                                    '</td><td><div class="btn-group" role="group"><button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expand="false">操作<span class="caret"></span></button><ul class="dropdown-menu"><li><a class="cancle_reserve_btn" href="" rid="'+data_list[6]+'">撤销</a></li><li><a class="delay_reserve_btn" href="" rid="'+key+'">延后5天</a></li></ul></div></td></tr>';
                             }
                         }
                         $(".segment_detail").html(dataStr);
@@ -357,6 +361,28 @@
                 }
             });
         });
+        // 延后
+        $(document).on("click", ".delay_reserve_btn", function(){
+            var delay_record = $(this);
+            $.ajax({
+                url: '{% url "delay_reserve" %}',
+                type: 'POST',
+                data: "rid=" + delay_record.attr('rid') + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        window.location.reload();
+                        // cancle_record.remove();
+                        alert("延后成功");
+                    }else{
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            });
+        });
 
         // 我的占用情况
         $("#modal_form_trigger").click(function(){
@@ -372,9 +398,11 @@
                         for(var key in my_reserved_dict){
                             var d = my_reserved_dict[key];
                             if(user_is_staff == 'True'){
-                                my_reserved_data += '<tr><td>'+d[0]+'/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+key+'>撤销</a></td></tr>';
+                                my_reserved_data += '<tr><td>'+d[0]+'/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td data-toggle="tooltip" data-placement="top" title="已延期'+d[6]+'次">'+d[7]+
+                                    '</td><td><div class="btn-group" role="group"><button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expand="false">操作<span class="caret"></span></button><ul class="dropdown-menu"><li><a class="cancle_reserve_btn" href="" rid="'+key+'">撤销</a></li><li><a class="delay_reserve_btn" href="" rid="'+key+'">延后5天</a></li></ul></div></td></tr>';
                             }else{
-                                my_reserved_data += '<tr><td>'+d[0].substr(0, 8)+'***/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td><a class="btn btn-danger btn-xs cancle_reserve_btn" href="" role="button" rid='+key+'>撤销</a></td></tr>';
+                                my_reserved_data += '<tr><td>'+d[0].substr(0, 8)+'***/'+d[1]+' <span class="label label-success">预占'+d[2]+'个</span></td><td data-toggle="tooltip" data-placement="top" title="'+d[3]+'">'+d[3].substr(0, 8)+'...<span class="label label-primary">'+d[4]+'</span></td><td>'+d[5]+'</td><td data-toggle="tooltip" data-placement="top" title="已延期'+d[6]+'次">'+d[7]+
+                                    '</td><td><div class="btn-group" role="group"><button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expand="false">操作<span class="caret"></span></button><ul class="dropdown-menu"><li><a class="cancle_reserve_btn" href="" rid="'+key+'">撤销</a></li><li><a class="delay_reserve_btn" href="" rid="'+key+'">延后5天</a></li></ul></div></td></tr>';
                             }
                         }
                         $('#my_reserved_list').html(my_reserved_data);
