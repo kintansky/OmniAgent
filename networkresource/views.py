@@ -1275,7 +1275,7 @@ def confirm_segment_to_draft(request):
             mask = int(draft_seg_form.cleaned_data['amount'])
             data['status'] = 'success'
             #TODO：按掩码进行分配
-            
+
         # 这里对应其他出错情况
         if 'status' not in data:
             data['status'] = 'error'
@@ -1305,8 +1305,17 @@ def confirm_draft(request):
             # 更新manyTomany字段
             # TODO: 增加找不到BNG和OLT的except
             bngs = Device.objects.filter(device_name__in=tuple(seg_data[2].split(',')))
+            if bngs.count() == 0:
+                data['status'] = 'error'
+                data['error_info'] = '未找到对应BNG记录'
+                return JsonResponse(data)
             target_record.access_bng.add(*bngs)
+            # TODO:需要确认是否每次都有OLT填入
             olts = OltInfoWG.objects.filter(olt_zh__in=tuple(seg_data[3].split(',')))
+            if olts.count() == 0:
+                data['status'] = 'error'
+                data['error_info'] = '未找到对应OLT记录'
+                return JsonResponse(data)
             target_record.access_olt.add(*olts)
             target_record.save()
     data['status'] = 'success'
