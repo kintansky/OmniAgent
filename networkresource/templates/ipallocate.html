@@ -94,8 +94,7 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.olt.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" title="填写帮助" data-content="如果无法匹配到OLT，请手工填入">{{ new_ip_allocation_form.olt.label }}?</label>
                                         {{ new_ip_allocation_form.olt }}
-                                        <div id="olt-list" class="olt-list">
-                                        </div>
+                                        <div id="olt-list" class="olt-list"></div>
                                         <p class="text-danger error-data" id="id_error_olt">{{ new_ip_allocation_form.olt.errors.as_text }}</p>
                                     </div>
                                 </div>
@@ -103,7 +102,7 @@
                                     <div class="form-group">
                                         <label for="{{ new_ip_allocation_form.bng.id_for_label }}" class="col-sm-2 control-label" data-toggle="popover" data-trigger="hover" title="填写帮助" data-content="正常情况下应会自动生成两台BNG1/BNG2这样的格式，如果未正常生成，请手工补全">{{ new_ip_allocation_form.bng.label }}?</label>
                                         {{ new_ip_allocation_form.bng }}
-                                        <p class="text-danger error-data" id="id_error_bng">{{ new_ip_allocation_form.errors.as_text }}</p>
+                                        <p class="text-danger error-data" id="id_error_bng">{{ new_ip_allocation_form.bng.errors.as_text }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -490,7 +489,7 @@
                         $('#target-list').val(data['target_list']);
                         $("#ready_ip_modal").modal("hide");
                         var table_data = JSON.parse(data['table_data']);
-                        console.log(table_data);
+                        // console.log(table_data);
                         $("#conf-ip-table").html("");   // 清空旧数据
                         for (var key in table_data){
                             var item = table_data[key];

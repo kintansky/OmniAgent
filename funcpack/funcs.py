@@ -7,6 +7,7 @@ from IPy import IP, IPSet
 from omni.settings.base import BASE_DIR
 from django.utils import timezone
 import json
+from math import ceil
 
 def pages(request, object_list, page_conf=settings.EACH_PAGE_DEVICES_NUMBER):
     paginator = Paginator(object_list, page_conf)
@@ -220,3 +221,16 @@ def partition(arr, lowIndex, highIndex, sortIndex):
 '''
 快排 end
 '''
+# 按照子网块大小进行网段平分
+def splitNet(targetNet, subMask):
+    targetIP, segmentMask = targetNet.split('/')
+    net = IP.make_net(targetIP, segmentMask)
+    blockSize = 2**(32-subMask) # 块大小
+    netCount = ceil(2**(32-int(segmentMask))/blockSize) # 可平分的子网数
+    result = []
+    for i in range(netCount):
+        s = eval('0b'+net[0].strBin())+blockSize*i # 二进制计算下一个子网地址
+        snet = IP.make_net(s, subMask)
+        # print(snet, snet.len())
+        result.append(snet.strNormal())
+    return result

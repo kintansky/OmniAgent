@@ -1,19 +1,21 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema, ICP
-from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm, ICPInfoForm
-from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportClassifiedXls
+from watchdog.models import Device
+from .models import IpmanResource, IpRecord, IPAllocation, IPMod, GroupClientIPSegment, GroupClientIpReserve, PublicIpSegment, PublicIPSegmentSchema, ICP, OltInfoWG
+from .forms import IPsearchForm, IPAllocateSearchForm, IPTargetForm, NewIPAllocationForm, ClientSearchForm, DeviceIpSegmentForm, NewIpSegmentForm, WorkLoadSearchForm, NewSchemaSegmentForm, ICPInfoForm, NewDraftSegmentBaseForm
+from funcpack.funcs import pages, exportXls, objectDataSerializer, objectDataSerializerRaw, dict2SearchParas, getDateRange, rawQueryExportXls, exportClassifiedXls, splitNet
 from django.http import FileResponse, JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 import re
 from omni.settings.base import BASE_DIR
 import os
 from django.utils import timezone
-from IPy import IP
+from IPy import IP, IPSet
 import json
 from django.db.models import Q, Count, Sum, F
 import base64
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
+from math import log, ceil
 
 
 # Create your views here.
@@ -1093,12 +1095,15 @@ def list_all_segment(request):
     all_segment = PublicIpSegment.objects.all().order_by('-id')
     page_of_objects, page_range = pages(request, all_segment)
     new_ip_segment_form = NewSchemaSegmentForm()
+    new_draft_segment_base_form = NewDraftSegmentBaseForm()
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['new_ip_segment_form'] = new_ip_segment_form
+    context['new_draft_segment_base_form'] = new_draft_segment_base_form
     return render(request, 'segment_schema.html', context)
 
+# 新增地址段并生成明细，涉及三个表
 def allocate_segment(request):
     data = {}
     new_ip_segment_form = NewSchemaSegmentForm(request.POST)
@@ -1118,7 +1123,7 @@ def allocate_segment(request):
             new_seg.specialization = specialization
             new_seg.save()
             for ip in snet:
-                # 插入明细到mr_rec_group_client_ip_segment
+                # 插入明细到mr_rec_group_client_ip_segment  # TODO: 新增exception，避免GroupClientIPSegment有对应Ip但是其他表没有的情况
                 target1 = GroupClientIPSegment()
                 target1.ip = ip.strNormal()
                 target1.ip_state = 0
@@ -1129,8 +1134,9 @@ def allocate_segment(request):
                 # 插入明细到mr_rec_public_segment_schema
                 target2 = PublicIPSegmentSchema()
                 target2.ip = ip.strNormal()
-                target2.upper_segment = snet[0].strNormal()
-                target2.upper_mask = int(mask)
+                # target2.upper_segment = snet[0].strNormal()
+                # target2.upper_mask = int(mask)
+                target2.belong_segment = new_seg    # 外键
                 target2.state = 0
                 target2.alc_time = timezone.datetime.now()
                 target2.save()
@@ -1147,14 +1153,163 @@ def search_segment(request):
     all_segment = PublicIpSegment.objects.filter(upper_segment=target_segment).order_by('-id')
     page_of_objects, page_range = pages(request, all_segment)
     new_ip_segment_form = NewSchemaSegmentForm()
+    new_draft_segment_base_form = NewDraftSegmentBaseForm()
     context['records'] = page_of_objects.object_list
     context['page_of_objects'] = page_of_objects
     context['page_range'] = page_range
     context['new_ip_segment_form'] = new_ip_segment_form
+    context['new_draft_segment_base_form'] = new_draft_segment_base_form
     return render(request, 'segment_schema.html', context)
 
+# 规划网段
 def schema_detail(request):
     data = {}
+    belong_seg_id = request.GET.get('rdata', 0)
+    try:
+        belong_net = PublicIpSegment.objects.get(id=belong_seg_id)
+        unschemaed_net = IPSet([IP(belong_net.upper_segment+'/'+str(belong_net.upper_mask)),])
+    except ObjectDoesNotExist:
+        data['status'] = 'error'
+        data['error_info'] = '参数有误'
+    else:
+        # 1、已规划的列出子网即可
+        # schemaed_seg_list = PublicIPSegmentSchema.objects.filter(~Q(subnet_gateway=None), belong_segment_id=belong_seg_id).values('subnet_gateway', 'subnet_mask').annotate(Count('id'), unused=Count('state', filter=Q(state=0)))
+        raw_query_cmd = '''
+        SELECT id, GROUP_CONCAT(ip) as ips, subnet_gateway, 
+        COUNT(id) AS total, COUNT(if(state=0, 1, null)) AS unused
+        FROM mr_rec_public_segment_schema
+        WHERE belong_segment_id = %s and subnet_gateway IS NOT NULL 
+        GROUP BY subnet_gateway
+        '''
+        schemaed_seg_list = PublicIPSegmentSchema.objects.raw(raw_query_cmd, (belong_seg_id,))
+        seg_list = []
+        for seg in schemaed_seg_list:
+            used_net = IPSet([])
+            for ip in seg.ips.split(','):
+                used_net.add(IP(ip))
+            for n in used_net.prefixes:    # 如果不用prefixes的话好像有bug，如果只有一个网段的时候，遍历会变成遍历单个IP
+                seg_list.append({'subnet':n.strNormal(), 'subnet_gateway': seg.subnet_gateway, 'total': seg.total, 'unused': seg.unused})
+                unschemaed_net.discard(n)
+        data['schemaed_segment'] = json.dumps(seg_list)
+        print(data['schemaed_segment'])
+        unschemaed_net_list = []
+        for n in unschemaed_net.prefixes:
+            unschemaed_net_list.append({'segment': n.strNormal(), 'total': n.len()})
+        data['unschemaed_segment'] = json.dumps(unschemaed_net_list)
+        data['status'] = 'success'
+    finally:
+        return JsonResponse(data)
+
+def get_schema_olt_bng(request, device_type):
+    data = {}
+    if device_type == 'olt':
+        device_name = request.GET.get('search_olt', '').strip()
+        olt_list = OltInfoWG.objects.filter(olt_zh__icontains=device_name).values_list('olt_zh', flat=True)
+        # print(olt_list)
+        if len(olt_list) > 10:
+            data['olt_list'] = '候选结果过多，请使用关键字'
+            data['status'] = 'error'
+        elif len(olt_list) == 0:
+            data['olt_list'] = '无候选结果'
+            data['status'] = 'error'
+            data['olt_count'] = 0
+        else:
+            data['olt_list'] = ','.join(olt_list)
+            data['status'] = 'success'
+        return JsonResponse(data)
+    elif device_type == 'bng':
+        device_name = request.GET.get('search_bng', '').strip()
+        bng_list = Device.objects.filter(device_name__icontains=device_name).values_list('device_name', flat=True)
+        if len(bng_list) > 10:
+            data['bng_list'] = '候选结果过多，请使用关键字'
+            data['status'] = 'error'
+        elif len(bng_list) == 0:
+            data['bng_list'] = '无候选结果'
+            data['status'] = 'error'
+            data['bng_count'] = 0
+        else:
+            data['bng_list'] = ','.join(bng_list)
+            data['status'] = 'success'
+        return JsonResponse(data)
+    else:
+        pass
+    return JsonResponse(data)
+
+
+def confirm_segment_to_draft(request):
+    data = {}
+    target_net = request.GET.get('target_net')
+    undrafted_net = IPSet([IP.make_net(*target_net.split('/')),])    # 未规划网段
+    drafted_net = request.GET.get('drafted_net').split(',')
+    if any(drafted_net):
+        for n in drafted_net:
+            dn = IP.make_net(*n.split('/'))   # 已加入规划草稿的网段
+            undrafted_net.discard(dn)                    # 从目标网段剔除已规划，提出后生成是多个网段
+    else:
+        drafted_net = []    # 如果空的直接重置为[]
+    draft_seg_form = NewDraftSegmentBaseForm(request.GET)
+    if draft_seg_form.is_valid():
+        access_olt_list = set(draft_seg_form.cleaned_data['access_olt'].split(',')) # 去重
+        access_bng_list = set(draft_seg_form.cleaned_data['access_bng'].split(',')) # 去重
+        access_type = draft_seg_form.cleaned_data['access_type']
+        draft_type = draft_seg_form.cleaned_data['draft_type']
+        gateway = draft_seg_form.cleaned_data['gateway']
+        # 剩余的就是有掩码大-》小排
+        if draft_type == '1':   # 根据需求IP数量规划
+            demand_amount = int(draft_seg_form.cleaned_data['amount'])
+            subnetMask = 32-ceil(log(demand_amount, 2))
+            for tn in undrafted_net.prefixes:
+                if subnetMask < tn.prefixlen():
+                    continue
+                subnet_list = splitNet(tn.strNormal(), subnetMask)
+                if gateway == '' or gateway is None:
+                    subnet = IP.make_net(*subnet_list[0].split('/'))
+                    if subnet.len() > 1:
+                        gateway = subnet[1]
+                draft_segment = [subnet.strNormal(), gateway.strNormal(), access_type, ','.join(access_bng_list), ','.join(access_olt_list)]
+                data['draft_segment'] = json.dumps(draft_segment)
+                data['drafted_net'] = drafted_net + [subnet.strNormal(),]
+                data['status'] = 'success'
+                break
+        elif draft_type == '2': # 根据网段IP掩码规划
+            mask = int(draft_seg_form.cleaned_data['amount'])
+            data['status'] = 'success'
+            #TODO：按掩码进行分配
+            
+        # 这里对应其他出错情况
+        if 'status' not in data:
+            data['status'] = 'error'
+            data['error_info'] = '无法满足本次分配'
+    else:
+        data['status'] = 'error'
+        errorDict = draft_seg_form.errors.get_json_data()
+        data['error_info'] = json.dumps(errorDict)
+    return JsonResponse(data)
+
+
+def confirm_draft(request):
+    data = {}
+    schema_target_raw = request.GET.get('schema_target')
+    schema_target = json.loads(schema_target_raw)
+    for seg in schema_target:
+        seg_data = schema_target[seg]
+        target_net = IP.make_net(*seg.split('/'))
+        for ip in target_net:
+            # 更新schema数据
+            target_record = PublicIPSegmentSchema.objects.get(ip=ip.strNormal())
+            target_record.subnet_gateway = seg_data[0]
+            target_record.subnet_mask = target_net.prefixlen()
+            target_record.access_type = seg_data[1]
+            target_record.alc_user = request.user.first_name
+            target_record.alc_time = timezone.datetime.now()
+            # 更新manyTomany字段
+            # TODO: 增加找不到BNG和OLT的except
+            bngs = Device.objects.filter(device_name__in=tuple(seg_data[2].split(',')))
+            target_record.access_bng.add(*bngs)
+            olts = OltInfoWG.objects.filter(olt_zh__in=tuple(seg_data[3].split(',')))
+            target_record.access_olt.add(*olts)
+            target_record.save()
+    data['status'] = 'success'
     return JsonResponse(data)
 
 

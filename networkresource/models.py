@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from watchdog.models import Device
 
 # Create your models here.
 
@@ -15,6 +16,41 @@ class OpticalMoudle(models.Model):
         indexes = [
             models.Index(fields=['device']),
             models.Index(fields=['port']),
+        ]
+
+
+class OltBngRef(models.Model):
+    bng = models.CharField(max_length=255)
+    port = models.CharField(max_length=40)
+    logic_port = models.CharField(max_length=40)
+    description = models.CharField(max_length=255)
+    olt_num = models.CharField(max_length=10)
+    district = models.CharField(max_length=10)
+    olt = models.CharField(max_length=255)
+    olt_state = models.CharField(max_length=20, null=True)
+    olt_type = models.CharField(max_length=10, null=True)
+    olt_ip = models.GenericIPAddressField()
+
+    class Meta:
+        db_table = 'MR_REP_olt_bng_references'
+        indexes = [
+            models.Index(fields=['bng']),
+            models.Index(fields=['logic_port']),
+            models.Index(fields=['olt_num']),
+        ]
+
+class OltInfoWG(models.Model):
+    olt_num = models.CharField(max_length=10, primary_key=True)
+    district = models.CharField(max_length=10)
+    olt_zh = models.CharField(max_length=100)
+    state = models.CharField(max_length=20, null=True)
+    olt_type = models.CharField(max_length=10, null=True)
+    ip = models.GenericIPAddressField()
+
+    class Meta:
+        db_table = 'MR_REC_olt_info_wg'
+        indexes = [
+            models.Index(fields=['ip']),
         ]
 
 class IpmanResource(models.Model):
@@ -80,7 +116,7 @@ class IpRecord(models.Model):
 #         # db_table = 'MR_REC_public_ip_gateway'
 #         db_table = 'MR_STS_public_gateway'
 
-
+# segment 清单，非明细
 class PublicIpSegment(models.Model):
     upper_segment = models.GenericIPAddressField(protocol='both')
     upper_mask = models.PositiveSmallIntegerField()
@@ -88,19 +124,22 @@ class PublicIpSegment(models.Model):
 
     class Meta:
         db_table = 'MR_REC_public_segment_reference'
-        unique_together = (('upper_segment', 'upper_mask'),)
+        unique_together = (('upper_segment', 'upper_mask'),)    # TODO：框架修改原因，此方法后面改成models.UniqueConstraint
         ordering = ['id', ]
 
-
+# segment 明细规划表
 class PublicIPSegmentSchema(models.Model):
     ip = models.GenericIPAddressField(protocol='both', unique=True)
-    upper_segment = models.GenericIPAddressField(protocol='both')
-    upper_mask = models.PositiveSmallIntegerField()
+    # upper_segment = models.GenericIPAddressField(protocol='both')
+    # upper_mask = models.PositiveSmallIntegerField()
+    belong_segment = models.ForeignKey(PublicIpSegment, on_delete=models.CASCADE, blank=True, null=True)   # 改为使用外键直接关联PublicIpSegment
     state = models.SmallIntegerField(default=0) # 默认0，预占-1，正常启用1，下沉地址2
     subnet_gateway = models.CharField(max_length=10, null=True)
     subnet_mask = models.PositiveSmallIntegerField(null=True)
-    access_bng = models.CharField(max_length=255, null=True)    # 这里记录的是两台bng，以/分割
-    access_olt = models.CharField(max_length=255, null=True)    # 记录可能是多台olt，以/分割
+    # access_bng = models.CharField(max_length=255, null=True)    # 这里记录的是两台bng，以/分割
+    # access_olt = models.CharField(max_length=255, null=True)    # 记录可能是多台olt，以/分割
+    access_bng = models.ManyToManyField(Device)     # 改用manyToManyFiled管理BNG和OLT
+    access_olt = models.ManyToManyField(OltInfoWG)  # 改用manyToManyFiled管理BNG和OLT
     access_type = models.CharField(max_length=10, null=True)  # 前端使用choice限制 
     alc_user = models.CharField(max_length=10, null=True)
     alc_time = models.DateTimeField()
@@ -219,44 +258,9 @@ class IPMod(IPAllocationBase):
             models.Index(fields=['client_name']),
             models.Index(fields=['product_id']),
         ]
-        
-
-class OltBngRef(models.Model):
-    bng = models.CharField(max_length=255)
-    port = models.CharField(max_length=40)
-    logic_port = models.CharField(max_length=40)
-    description = models.CharField(max_length=255)
-    olt_num = models.CharField(max_length=10)
-    district = models.CharField(max_length=10)
-    olt = models.CharField(max_length=255)
-    olt_state = models.CharField(max_length=20, null=True)
-    olt_type = models.CharField(max_length=10, null=True)
-    olt_ip = models.GenericIPAddressField()
-
-    class Meta:
-        db_table = 'MR_REP_olt_bng_references'
-        indexes = [
-            models.Index(fields=['bng']),
-            models.Index(fields=['logic_port']),
-            models.Index(fields=['olt_num']),
-        ]
 
 
-class OltInfoWG(models.Model):
-    olt_num = models.CharField(max_length=10, primary_key=True)
-    district = models.CharField(max_length=10)
-    olt_zh = models.CharField(max_length=100)
-    state = models.CharField(max_length=20, null=True)
-    olt_type = models.CharField(max_length=10, null=True)
-    ip = models.GenericIPAddressField()
-
-    class Meta:
-        db_table = 'MR_REC_olt_info_wg'
-        indexes = [
-            models.Index(fields=['ip']),
-        ]
-
-
+# 这部分现网使用的，旧表
 class GroupClientIPSegment(models.Model):
     ip = models.GenericIPAddressField(protocol='both', unique=True)
     # ip_state = models.BooleanField(default=False)
@@ -310,3 +314,32 @@ class SwVlan(models.Model):
     class Meta:
         db_table = 'MR_REC_sw_vlan'
 
+
+# class DeviceChassisBase(models.Model):
+#     NEID = models.PositiveIntegerField()
+#     device_name = models.CharField(max_length=50)
+#     chassis_id = models.BigIntegerField()
+#     chassis_pos = models.PositiveSmallIntegerField()
+#     chassis_snmp_index = models.PositiveIntegerField()
+#     chassis_name = models.CharField(max_length=50)
+#     chassis_hardware_ver = models.CharField(max_length=100, null=True, blank=True)
+#     chassis_software_ver = models.CharField(max_length=100, null=True, blank=True)
+#     chassis_sn = models.CharField(max_length=50, null=True, blank=True)
+#     chassis_mfg = models.CharField(max_length=20, null=True, blank=True)
+
+#     class Meta:
+#         abstract = True
+
+
+# class DevcieChassis(DeviceChassisBase):
+#     record_time = models.DateTimeField()
+
+#     class Meta:
+#         # 这里还需要指定数据库，这部分表数据在cmdb
+#         db_table = 'MR_REC_chassis'
+#         constrains = [
+#             models.UniqueConstraint(fields=['NEID', 'chassis_snmp_index', 'chassis_sn'], name='NEID_chassis_snmp_index_chassis_sn'),
+#             models.UniqueConstraint(fields=['chassis_id', 'chassis_sn'], name='chassis_id_chassis_sn')
+#         ]
+
+# class DeviceChassisDiff(DeviceChassisBase):

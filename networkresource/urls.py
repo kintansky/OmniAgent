@@ -37,6 +37,9 @@ urlpatterns = [
     path('ip/segment_schema/ajax_allocate_segment/', views.allocate_segment, name='ajax_allocate_segment'),
     path('ip/segment_schema/search/', views.search_segment, name='search_segment'),
     path('ip/segment_schema/detail/', views.schema_detail, name='schema_detail'),
+    path('ip/segment_schema/get_schema_olt_bng/<str:device_type>', views.get_schema_olt_bng, name='get_schema_olt_bng'),
+    path('ip/segment)schema/confirm_segment_to_draft/', views.confirm_segment_to_draft, name='confirm_segment_to_draft'),
+    path('ip/segment)schema/confirm_draft/', views.confirm_draft, name='confirm_draft'),
 
     # IP资源使用情况
     path('ip/ip_allocated_segment/', views.get_device_allocated_segment, name='get_device_allocated_segment'),

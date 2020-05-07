@@ -256,22 +256,22 @@ class NewIPAllocationForm(forms.Form):
 
 
 class ICPInfoForm(forms.Form):
-    identify_id = forms.CharField(label='营业执照', widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '营业执照号',}))
-    guard_level = forms.CharField(label='保护等级', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '保护等级',}))
-    city = forms.CharField(label='地市', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    district = forms.CharField(label='区县', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    identify_id = forms.CharField(label='单位证件号码', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '营业执照号',}))
+    guard_level = forms.CharField(label='业务保障等级', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm', 'placeholder': '保护等级',}))
+    city = forms.CharField(label='受理地市', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    district = forms.CharField(label='受理区域', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
     distributor = forms.CharField(label='派单人', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
     distributor_contact = forms.CharField(label='派单人联系方式', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    demand = forms.CharField(label='需求', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    demand = forms.CharField(label='需求描述', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
     bandwidth_up = forms.IntegerField(label='上行带宽M', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm', 'placeholder': '20M'}))
     bandwidth_dwn = forms.IntegerField(label='下行带宽M', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm', 'placeholder': '20M'}))
-    client_tech = forms.CharField(label='技术人员', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    client_tech_contact = forms.CharField(label='技术人员电话', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    demand_ipv4_amount = forms.IntegerField(label='v4地址需求量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
-    demand_ipv6_amount = forms.IntegerField(label='v6地址需求量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
-    client_address = forms.CharField(label='客户地址', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    businessman = forms.CharField(label='商务联系人', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
-    businessman_contact = forms.CharField(label='商务联系人电话', widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    client_tech = forms.CharField(label='客户配合联系人', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    client_tech_contact = forms.CharField(label='客户配合联系方式', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    demand_ipv4_amount = forms.IntegerField(label='IPV4数量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
+    demand_ipv6_amount = forms.IntegerField(label='IPV6数量', min_value=0, widget=forms.NumberInput(attrs={'class': 'form-control input-sm',}))
+    client_address = forms.CharField(label='单位详细地址', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    businessman = forms.CharField(label='联系人姓名（客户侧）', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
+    businessman_contact = forms.CharField(label='联系人电话（客户侧）', required=False, widget=forms.TextInput(attrs={'class': 'form-control input-sm',}))
 
 
 class DeviceIpSegmentForm(forms.Form):
@@ -302,6 +302,48 @@ class NewSchemaSegmentForm(forms.Form):
             return d
         else:
             raise forms.ValidationError('目标网段格式有误，请正确填写')
+
+class NewDraftSegmentBaseForm(forms.Form):
+    ACCESS_CHOICES = (
+        ('', ''),
+        ('GPON', 'GPON'),
+        ('PTN', 'PTN'),
+        ('DIRECT', 'DIRECT'),
+    )
+    DRAFT_TYPE_CHOICES = (
+        ('1', '根据需求IP数量规划'),
+        ('2', '根据网段IP掩码规划'),
+    )
+    # 搜索框
+    search_olt = forms.CharField(label='输入搜索OLT', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    search_bng = forms.CharField(label='输入搜索BNG', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    # 填充框
+    access_olt = forms.CharField(label='接入OLT', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    access_bng = forms.CharField(label='接入BNG', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
+    draft_type = forms.ChoiceField(label='规划方式', choices=DRAFT_TYPE_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
+    gateway = forms.GenericIPAddressField(label='网关', required=False, protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '指定网关，如192.168.1.1，未指定情况下默认使用子网段的第一个IP作为网关'}))
+    amount = forms.IntegerField(label='需求数量or掩码', max_value=256, min_value=0, required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '如通过掩码规划，请填写掩码，如使用数量规划，请填写IP数量'}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        access_type = cleaned_data.get('access_type')
+        olt = cleaned_data.get('access_olt')
+        bng = cleaned_data.get('access_bng')
+        if 'PTN' in olt.upper() and access_type != 'PTN':
+            # raise forms.ValidationError('接入设备为PTN，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为PTN，但接入方式为{}'.format(access_type))
+        elif 'OLT' in olt.upper() and access_type != 'GPON':
+            # raise forms.ValidationError('接入设备为OLT，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为OLT，但接入方式为{}'.format(access_type))
+        elif olt == '' and re.match(r'.*?(-BNG\d+)|(-BRAS\d+)|(-SR\d+).*?', bng.upper()) and access_type != 'DIRECT':
+            # raise forms.ValidationError('接入设备为BNG，但接入方式为{}'.format(olt))
+            self.add_error('access_type', '接入设备为BNG，但接入方式为{}'.format(access_type))
+        draft_type = cleaned_data.get('draft_type')
+        amount = cleaned_data.get('amount')
+        if draft_type == '2' and amount > 32:
+            self.add_error('amount', '根据网段IP掩码规划情况下，掩码可选范围为[0, 32]')
+        return cleaned_data
 
 class WorkLoadSearchForm(TimeRangeForm):
     worker = forms.CharField(label='用户', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
