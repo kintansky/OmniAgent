@@ -50,8 +50,10 @@
                                         </div>
                                     </div>
                                     {% endfor %}
+                                    <div class="btn-group" role="group" aria-label="...">
+                                        <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
+                                    </div>
                                 </div>
-                                <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
                             </form>
                         </div>
                     </div>
@@ -223,7 +225,7 @@
                 <div class="panel panel-primary">
                     <div class="panel-heading">
                         草稿
-                        <button id="confirm-draft" type="submit" class="btn btn-success btn-xs pull-right">确认</button>
+                        <button id="confirm-draft" type="submit" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">确认</button>
                     </div>
                     <div class="panel-body">
                         <table class="table table-striped table-hover">
@@ -247,7 +249,7 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">单个子网规划</div>
                             <div class="panel-body">
-                                <form id="tatget_and_drafted_form" action="">
+                                <form id="tatget_and_drafted_form" action="" style="display: none;">
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="form-group">
@@ -303,14 +305,23 @@
                                             <div class="form-group">
                                                 <label for="{{ new_draft_segment_base_form.access_type.id_for_label }}" class="control-label" >{{ new_draft_segment_base_form.access_type.label }}</label>
                                                 {{ new_draft_segment_base_form.access_type }}
-                                                <p class="text-danger error-data" id="id_error_bng">{{ new_draft_segment_base_form.access_type.errors.as_text }}</p>
+                                                <p class="text-danger error-data" id="id_error_access_type">{{ new_draft_segment_base_form.access_type.errors.as_text }}</p>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div class="row">
                                         <div class="col-sm-6">
                                             <div class="form-group">
                                                 <label for="{{ new_draft_segment_base_form.draft_type.id_for_label }}" class="control-label" >{{ new_draft_segment_base_form.draft_type.label }}</label>
                                                 {{ new_draft_segment_base_form.draft_type }}
-                                                <p class="text-danger error-data" id="id_error_bng">{{ new_draft_segment_base_form.draft_type.errors.as_text }}</p>
+                                                <p class="text-danger error-data" id="id_error_draft_type">{{ new_draft_segment_base_form.draft_type.errors.as_text }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label for="{{ new_draft_segment_base_form.draft_type_addon.id_for_label }}" class="control-label" >{{ new_draft_segment_base_form.draft_type_addon.label }}</label>
+                                                {{ new_draft_segment_base_form.draft_type_addon }}
+                                                <p class="text-danger error-data" id="id_draft_type_addon">{{ new_draft_segment_base_form.draft_type_addon.errors.as_text }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -355,11 +366,11 @@
         $('#new_segment_btn').click(function(){
             $('#loading').modal('show');
             $.ajax({
-                url: "{% url 'ajax_allocate_segment' %}",  // 异步请求的地址
-                type: "POST",    // 请求方式
-                data: $("#new_segment_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",   // 发送的json
+                url: "{% url 'ajax_allocate_segment' %}",
+                type: "POST",
+                data: $("#new_segment_form").serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
                 cache: false,
-                success: function(data){    // 回调函数，返回data
+                success: function(data){
                     if(data['status'] == 'success'){
                         $('#loading').modal('hide');
                         alert('新增成功');
@@ -390,10 +401,28 @@
                 success: function(data){
                     if(data['status'] == 'success'){
                         // console.log(data['schemaed_segment']);
+                        // 已规划部分
                         var seg_list = JSON.parse(data['schemaed_segment']);
                         for(var i in seg_list){
-                            $('#schemaed_segment_tb').append('<tr><td>'+seg_list[i]['subnet']+'</td><td>'+seg_list[i]['subnet_gateway']+'</td><td>'+seg_list[i]['unused']+'/'+seg_list[i]['total']+'</td><td>操作</td></tr>');
+                            $('#schemaed_segment_tb').append('<tr><td>'+seg_list[i]['subnet']+'</td><td>'+seg_list[i]['subnet_gateway']+'</td><td>'+seg_list[i]['unused']+'/'+seg_list[i]['total']+'</td>\
+                                <td>\
+                                    <div class="dropdown">\
+                                        <button class="btn btn-primary btn-xs dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">\
+                                            操作\
+                                            <span class="caret"></span>\
+                                        </button>\
+                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">\
+                                            <li>\
+                                                <a class="del_subnet" seg="'+seg_list[i]['subnet']+'">回收</a>\
+                                            </li>\
+                                            <li>\
+                                                <a class="change_subnet" seg="'+seg_list[i]['subnet']+'">变更</a>\
+                                            </li>\
+                                        </ul>\
+                                    </div>\
+                                </td></tr>');
                         }
+                        // 待规划部分
                         // console.log(data['unschemaed_segment']);
                         var un_seg_list = JSON.parse(data['unschemaed_segment']);
                         for(var i in un_seg_list){
@@ -408,8 +437,53 @@
                 },
             });
         });
+        // 回收
+        $(document).on("click", ".del_subnet", function(){
+            $.ajax({
+                url: "{% url 'mod_schemaed_subnet' 'del' %}",
+                type: 'POST',
+                data: 'subnet='+$(this).attr('seg')+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        alert('回收成功');
+                    }else{
+                        alert('回收失败: ' + data['error_info']);
+                    }
+                    window.location.reload();
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            })
+        })
+        // 变更
+        $(document).on("click", ".change_subnet", function(){
+            // $.ajax({
+            //     url: "{% url 'mod_schemaed_subnet' 'change' %}",
+            //     type: 'POST',
+            //     data: $(this).serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
+            //     cache: false,
+            //     success: function(data){
+            //         if(data['status'] == 'success'){
+                        
+            //         }else{
+
+            //         }
+            //     },
+            //     error: function(xhr){
+            //         console.log(xhr);
+            //     }
+            // })
+        })
+
+        // 开始规划按钮
         $(document).on("click", ".begin-schema", function(){
+            // 清空表单
+            $("p.error-data").text("");
             document.getElementById("segment-draft-form").reset();
+            document.getElementById("tatget_and_drafted_form").reset();
+            $("#draft-segment").html('');
             $('#id_target_net').val($(this).attr('seg'));
         });
 
@@ -523,17 +597,33 @@
                 success: function(data){
                     if (data['status'] == 'success'){
                         //   console.log(data);
-                        var draft_seg = JSON.parse(data['draft_segment'])
-                        var s = '<tr>';
-                        for (var i=0; i<draft_seg.length; i++){
-                            s += '<td>'+draft_seg[i]+'</td>';
+                        var draft_seg_list = JSON.parse(data['draft_segment'])
+                        for (var i=0; i<draft_seg_list.length; i++){
+                            var draft_seg = draft_seg_list[i];
+                            var s = '<tr>';
+                            for (var j=0; j<draft_seg.length; j++){
+                                s += '<td>'+draft_seg[j]+'</td>';
+                            }
+                            s += '<td><button type="button" class="btn btn-danger btn-xs remove-draft" seg="'+draft_seg[0]+'">取消</button></td></tr>';
+                            $('#draft-segment').append(s);
                         }
-                        s += '<td><button type="button" class="btn btn-danger btn-xs remove-draft" seg="'+draft_seg[0]+'">取消</button></td></tr>';
-                        $('#draft-segment').append(s);
                         document.getElementById("segment-draft-form").reset();    // 清空表单
                         $('#id_drafted_net').val(data['drafted_net']);  // 将已加入草稿的回填进去
                     }else{
-                        alert(data['error_info']);
+                        $("p.error-data").text("");
+                        if ('error_info' in data){
+                            alert("失败");
+                            var error_data = JSON.parse(data['error_info']);
+                            for (var key in error_data){
+                                var item = error_data[key];
+                                // console.log(item[0]['message']);
+                                // 按照对应id补全错误信息
+                                $("#id_error_"+key).text(item[0]['message']);
+                            }
+                        }
+                        if ('other_error' in data){
+                            alert(data['other_error']);
+                        }
                     }
                 },
                 error: function(xhr){
@@ -560,6 +650,7 @@
         });
         // 确认规划草稿
         $('#confirm-draft').click(function(){
+            $('#confirm-draft').popover('show');
             var tr = $('#draft-segment').children('tr');
             var transfer_target = {};
             for (var i=0; i<tr.length; i++){
@@ -575,21 +666,43 @@
             // console.log(transfer_target);
             $.ajax({
                 url: "{% url 'confirm_draft' %}",
-                type: 'GET',
-                data: 'schema_target='+JSON.stringify(transfer_target),
+                type: 'POST',
+                data: 'schema_target='+JSON.stringify(transfer_target)+ "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
+                    $('#confirm-draft').popover('hide');
                     if (data['status'] == 'success'){
                         alert('规划成功');
+                        $('#segment_schema_modal').modal('hide');
                     }else{
                         alert('失败');
                     }
                 },
                 error: function(xhr){
                     console.log(xhr);
+                    $('#confirm-draft').popover('hide');
                 }
             });
         });
+        // 选择掩码分配方式时的可选只分配一个段或者生成的都分配
+        $('#id_draft_type').click(function(){
+            // var  addon = $('#id_draft_type_addon');
+            if ($(this).val() == '1'){
+                $('#id_draft_type_addon').prop('disabled', true);
+                $('#id_gateway').prop('disabled', false);
+                // $('#id_gateway').prop('placeholder', '按掩码分配默认使用第一个地址作为网关');
+            }else{
+                $('#id_draft_type_addon').prop('disabled', false);
+            }
+        })
+        $('#id_draft_type_addon').click(function(){
+            if ($('#id_draft_type_addon').val() == '2'){
+                $('#id_gateway').prop('disabled', true);
+            }else{
+                $('#id_gateway').prop('disabled', false);
+            }
+        })
+
     });
 </script>
 {% endblock %}

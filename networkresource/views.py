@@ -1146,6 +1146,7 @@ def allocate_segment(request):
         data['status'] = 'error'
         data['error_info'] = '网段格式有误'
     return JsonResponse(data)
+    
 
 def search_segment(request):
     context = {}
@@ -1191,7 +1192,7 @@ def schema_detail(request):
                 seg_list.append({'subnet':n.strNormal(), 'subnet_gateway': seg.subnet_gateway, 'total': seg.total, 'unused': seg.unused})
                 unschemaed_net.discard(n)
         data['schemaed_segment'] = json.dumps(seg_list)
-        print(data['schemaed_segment'])
+        # print(data['schemaed_segment'])
         unschemaed_net_list = []
         for n in unschemaed_net.prefixes:
             unschemaed_net_list.append({'segment': n.strNormal(), 'total': n.len()})
@@ -1199,6 +1200,31 @@ def schema_detail(request):
         data['status'] = 'success'
     finally:
         return JsonResponse(data)
+
+def mod_schemaed_subnet(request, mod_type):
+    data = {}
+    if mod_type == 'del':
+        subnet = request.POST.get('subnet')
+        sn = IP.make_net(*subnet.split('/'))
+        for ip in sn:
+            target_record = PublicIPSegmentSchema.objects.get(ip=ip.strNormal())
+            target_record.state = 0
+            target_record.subnet_gateway = None
+            target_record.subnet_mask = None
+            target_record.access_type = None
+            target_record.alc_user = request.user.first_name
+            target_record.alc_time = timezone.datetime.now()
+            target_record.access_bng.clear()
+            target_record.access_olt.clear()
+            target_record.save()
+        data['status'] = 'success'
+    elif mod_type == 'change':  # TODO: 变更
+        pass
+    else:
+        data['status'] = 'error'
+        data['error_info'] = '无效操作'
+    return JsonResponse(data)
+
 
 def get_schema_olt_bng(request, device_type):
     data = {}
@@ -1253,6 +1279,7 @@ def confirm_segment_to_draft(request):
         access_bng_list = set(draft_seg_form.cleaned_data['access_bng'].split(',')) # 去重
         access_type = draft_seg_form.cleaned_data['access_type']
         draft_type = draft_seg_form.cleaned_data['draft_type']
+        draft_type_addon = draft_seg_form.cleaned_data['draft_type_addon']  # 主要用于按掩码分配情况下，是否生成多有子网段
         gateway = draft_seg_form.cleaned_data['gateway']
         # 剩余的就是有掩码大-》小排
         if draft_type == '1':   # 根据需求IP数量规划
@@ -1265,21 +1292,51 @@ def confirm_segment_to_draft(request):
                 if gateway == '' or gateway is None:
                     subnet = IP.make_net(*subnet_list[0].split('/'))
                     if subnet.len() > 1:
-                        gateway = subnet[1]
-                draft_segment = [subnet.strNormal(), gateway.strNormal(), access_type, ','.join(access_bng_list), ','.join(access_olt_list)]
-                data['draft_segment'] = json.dumps(draft_segment)
-                data['drafted_net'] = drafted_net + [subnet.strNormal(),]
+                        gateway = subnet[1].strNormal()
+                    else:
+                        gateway = subnet.strNormal()
+                draft_segment = [subnet_list[0], gateway, access_type, ','.join(access_bng_list), ','.join(access_olt_list)]
+                data['draft_segment'] = json.dumps([draft_segment,])    # 这里是一个list，适配返回多个子网的情况
+                data['drafted_net'] = ','.join(drafted_net + [subnet_list[0],])
                 data['status'] = 'success'
                 break
         elif draft_type == '2': # 根据网段IP掩码规划
             mask = int(draft_seg_form.cleaned_data['amount'])
-            data['status'] = 'success'
-            #TODO：按掩码进行分配
-
+            for tn in undrafted_net.prefixes:
+                if mask < tn.prefixlen():
+                    continue
+                subnet_list = splitNet(tn.strNormal(), mask)    # TODO: 注意32位的不返回掩码，额外添加
+                draft_segment = []
+                if draft_type_addon == '2':
+                    for sn in subnet_list:
+                        subnet = IP.make_net(*sn.split('/'))
+                        if subnet.len() > 1:    # gateway 默认使用第一位
+                            gateway = subnet[1].strNormal()
+                        else:
+                            gateway = subnet.strNormal()
+                        draft_segment.append([sn, gateway, access_type, ','.join(access_bng_list), ','.join(access_olt_list)])
+                        drafted_net += [sn,]
+                        data['draft_segment'] = json.dumps(draft_segment)
+                        data['drafted_net'] = ','.join(drafted_net)
+                        data['status'] = 'success'
+                elif draft_type_addon == '1':
+                    if gateway == '' or gateway is None:
+                        subnet = IP.make_net(*subnet_list[0].split('/'))
+                        if subnet.len() > 1:
+                            gateway = subnet[1].strNormal()
+                        else:
+                            gateway = subnet.strNormal()
+                    draft_segment.append([subnet_list[0], gateway, access_type, ','.join(access_bng_list), ','.join(access_olt_list)])
+                    drafted_net += [subnet_list[0],]
+                    data['draft_segment'] = json.dumps(draft_segment)
+                    data['drafted_net'] = ','.join(drafted_net)
+                    data['status'] = 'success'
+                    break
+                
         # 这里对应其他出错情况
         if 'status' not in data:
             data['status'] = 'error'
-            data['error_info'] = '无法满足本次分配'
+            data['other_error'] = '无法满足本次分配'
     else:
         data['status'] = 'error'
         errorDict = draft_seg_form.errors.get_json_data()
@@ -1289,7 +1346,7 @@ def confirm_segment_to_draft(request):
 
 def confirm_draft(request):
     data = {}
-    schema_target_raw = request.GET.get('schema_target')
+    schema_target_raw = request.POST.get('schema_target')
     schema_target = json.loads(schema_target_raw)
     for seg in schema_target:
         seg_data = schema_target[seg]

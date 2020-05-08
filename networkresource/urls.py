@@ -40,6 +40,7 @@ urlpatterns = [
     path('ip/segment_schema/get_schema_olt_bng/<str:device_type>', views.get_schema_olt_bng, name='get_schema_olt_bng'),
     path('ip/segment)schema/confirm_segment_to_draft/', views.confirm_segment_to_draft, name='confirm_segment_to_draft'),
     path('ip/segment)schema/confirm_draft/', views.confirm_draft, name='confirm_draft'),
+    path('ip/segment)schema/mod_schemaed_subnet/<str:mod_type>', views.mod_schemaed_subnet, name='mod_schemaed_subnet'),
 
     # IP资源使用情况
     path('ip/ip_allocated_segment/', views.get_device_allocated_segment, name='get_device_allocated_segment'),

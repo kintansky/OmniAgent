@@ -314,6 +314,10 @@ class NewDraftSegmentBaseForm(forms.Form):
         ('1', '根据需求IP数量规划'),
         ('2', '根据网段IP掩码规划'),
     )
+    DRAFT_TYPE_ADDON_CHOICES = (
+        ('1', '只生成一个子网段'),
+        ('2', '生成所有子网段'),
+    )
     # 搜索框
     search_olt = forms.CharField(label='输入搜索OLT', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     search_bng = forms.CharField(label='输入搜索BNG', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -322,6 +326,7 @@ class NewDraftSegmentBaseForm(forms.Form):
     access_bng = forms.CharField(label='接入BNG', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
     draft_type = forms.ChoiceField(label='规划方式', choices=DRAFT_TYPE_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
+    draft_type_addon = forms.ChoiceField(label='分配方式', required=False, choices=DRAFT_TYPE_ADDON_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
     gateway = forms.GenericIPAddressField(label='网关', required=False, protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '指定网关，如192.168.1.1，未指定情况下默认使用子网段的第一个IP作为网关'}))
     amount = forms.IntegerField(label='需求数量or掩码', max_value=256, min_value=0, required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '如通过掩码规划，请填写掩码，如使用数量规划，请填写IP数量'}))
 
@@ -330,20 +335,24 @@ class NewDraftSegmentBaseForm(forms.Form):
         access_type = cleaned_data.get('access_type')
         olt = cleaned_data.get('access_olt')
         bng = cleaned_data.get('access_bng')
-        if 'PTN' in olt.upper() and access_type != 'PTN':
-            # raise forms.ValidationError('接入设备为PTN，但接入方式为{}'.format(olt))
-            self.add_error('access_type', '接入设备为PTN，但接入方式为{}'.format(access_type))
-        elif 'OLT' in olt.upper() and access_type != 'GPON':
-            # raise forms.ValidationError('接入设备为OLT，但接入方式为{}'.format(olt))
-            self.add_error('access_type', '接入设备为OLT，但接入方式为{}'.format(access_type))
-        elif olt == '' and re.match(r'.*?(-BNG\d+)|(-BRAS\d+)|(-SR\d+).*?', bng.upper()) and access_type != 'DIRECT':
-            # raise forms.ValidationError('接入设备为BNG，但接入方式为{}'.format(olt))
-            self.add_error('access_type', '接入设备为BNG，但接入方式为{}'.format(access_type))
+        if olt is not None:
+            if 'PTN' in olt.upper() and access_type != 'PTN':
+                self.add_error('access_type', '接入设备为PTN，但接入方式为{}'.format(access_type))
+            elif 'OLT' in olt.upper() and access_type != 'GPON':
+                self.add_error('access_type', '接入设备为OLT，但接入方式为{}'.format(access_type))
+            elif olt == '' and re.match(r'.*?(-BNG\d+)|(-BRAS\d+)|(-SR\d+).*?', bng.upper()) and access_type != 'DIRECT':
+                self.add_error('access_type', '接入设备为BNG，但接入方式为{}'.format(access_type))
         draft_type = cleaned_data.get('draft_type')
         amount = cleaned_data.get('amount')
         if draft_type == '2' and amount > 32:
             self.add_error('amount', '根据网段IP掩码规划情况下，掩码可选范围为[0, 32]')
         return cleaned_data
+
+    def clean_access_type(self):
+        if self.cleaned_data['access_type'] == '' or self.cleaned_data['access_type'] is None:
+            raise forms.ValidationError('未选择接入方式')
+        else:
+            return self.cleaned_data['access_type']
 
 class WorkLoadSearchForm(TimeRangeForm):
     worker = forms.CharField(label='用户', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
