@@ -327,8 +327,8 @@ class NewDraftSegmentBaseForm(forms.Form):
     access_type = forms.ChoiceField(label='接入方式', choices=ACCESS_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
     draft_type = forms.ChoiceField(label='规划方式', choices=DRAFT_TYPE_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
     draft_type_addon = forms.ChoiceField(label='分配方式', required=False, choices=DRAFT_TYPE_ADDON_CHOICES, widget=forms.Select(attrs={'class': 'forms-control'}))
-    gateway = forms.GenericIPAddressField(label='网关', required=False, protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '指定网关，如192.168.1.1，未指定情况下默认使用子网段的第一个IP作为网关'}))
-    amount = forms.IntegerField(label='需求数量or掩码', max_value=256, min_value=0, required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '如通过掩码规划，请填写掩码，如使用数量规划，请填写IP数量'}))
+    gateway = forms.GenericIPAddressField(label='网关', required=False, protocol='both', widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '如192.168.1.1，如未指定默认使用子网段的第一个IP作为网关'}))
+    amount = forms.IntegerField(label='需求数量or掩码', max_value=256, min_value=0, required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '如通过掩码规划，请填掩码，如通过数量规划，请填写数量'}))
 
     def clean(self):
         cleaned_data = super().clean()

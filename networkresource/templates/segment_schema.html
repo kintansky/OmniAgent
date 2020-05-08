@@ -247,7 +247,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
-                            <div class="panel-heading">单个子网规划</div>
+                            <div class="panel-heading" id="schema_panel_head">子网规划</div>
                             <div class="panel-body">
                                 <form id="tatget_and_drafted_form" action="" style="display: none;">
                                     <div class="row">
@@ -269,7 +269,7 @@
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="form-group">
-                                                <label for="{{ new_draft_segment_base_form.search_olt.id_for_label }}" class="col-sm-6 control-label">{{ new_draft_segment_base_form.search_olt.label }}?</label>
+                                                <label for="{{ new_draft_segment_base_form.search_olt.id_for_label }}" class="col-sm-6 control-label">{{ new_draft_segment_base_form.search_olt.label }}</label>
                                                 {{ new_draft_segment_base_form.search_olt }}
                                                 <div id="olt-list" class="olt-list"></div>
                                                 <p class="text-danger error-data" id="id_error_search_olt">{{ new_draft_segment_base_form.search_olt.errors.as_text }}</p>
@@ -286,7 +286,7 @@
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="form-group">
-                                                <label for="{{ new_draft_segment_base_form.search_bng.id_for_label }}" class="col-sm-6 control-label">{{ new_draft_segment_base_form.search_bng.label }}?</label>
+                                                <label for="{{ new_draft_segment_base_form.search_bng.id_for_label }}" class="col-sm-6 control-label">{{ new_draft_segment_base_form.search_bng.label }}</label>
                                                 {{ new_draft_segment_base_form.search_bng }}
                                                 <div id="bng-list" class="bng-list"></div>
                                                 <p class="text-danger error-data" id="id_error_search_bng">{{ new_draft_segment_base_form.search_bng.errors.as_text }}</p>
@@ -485,6 +485,8 @@
             document.getElementById("tatget_and_drafted_form").reset();
             $("#draft-segment").html('');
             $('#id_target_net').val($(this).attr('seg'));
+            $('#schema_panel_head').html('<strong>子网规划: '+$(this).attr('seg')+'</strong>');
+
         });
 
         // 模糊匹配OLT清单
