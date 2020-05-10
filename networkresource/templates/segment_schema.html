@@ -163,7 +163,7 @@
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="panel panel-primary">
+                                    <div class="panel panel-success">
                                         <div class="panel-heading">
                                             已规划
                                         </div>
@@ -187,7 +187,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="panel panel-info">
+                                    <div class="panel panel-warning">
                                         <div class="panel-heading">
                                             待规划
                                         </div>
@@ -343,7 +343,7 @@
                                     <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
                                 </form>
                                 <button type="submit" class="btn btn-success btn-sm" id="confirm-to-draft">加入草稿</button>
-                                <button type="submit" class="btn btn-danger btn-sm" id="change-subnet-btn" style="display:none;">变更信息</button>
+                                <button type="submit" class="btn btn-danger btn-sm" id="change-subnet-btn" style="display:none;" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">变更信息</button>
                             </div>
                         </div>
                     </div>
@@ -413,10 +413,10 @@
                                         </button>\
                                         <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">\
                                             <li>\
-                                                <a class="del_subnet" seg="'+seg_list[i]['subnet']+'">回收</a>\
+                                                <a href="" class="del_subnet" seg="'+seg_list[i]['subnet']+'">回收网段</a>\
                                             </li>\
                                             <li>\
-                                                <a data-toggle="modal" data-target="#segment_schema_modal" class="change_subnet" seg="'+seg_list[i]['subnet']+'">变更</a>\
+                                                <a href="" data-toggle="modal" data-target="#segment_schema_modal" class="change_subnet" seg="'+seg_list[i]['subnet']+'">变更信息</a>\
                                             </li>\
                                         </ul>\
                                     </div>\
@@ -489,6 +489,7 @@
         })
         // 变更
         $('#change-subnet-btn').click(function(){
+            $(this).popover('show');
             $.ajax({
                 url: "{% url 'mod_schemaed_subnet' 'change' %}",
                 type: 'POST',
@@ -506,9 +507,12 @@
                             $("#id_error_"+key).text(item[0]['message']);
                         }
                     }
+                    window.location.reload();
+                    $(this).popover('hide');
                 },
                 error: function(xhr){
                     console.log(xhr);
+                    $(this).popover('hide');
                 }
             })
         })
@@ -722,6 +726,7 @@
                     }else{
                         alert('失败');
                     }
+                    window.location.reload();
                 },
                 error: function(xhr){
                     console.log(xhr);
