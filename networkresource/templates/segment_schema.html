@@ -222,7 +222,7 @@
                 <h4 class="modal-title">规划情况</h4>
             </div>
             <div class="modal-body">
-                <div class="panel panel-primary">
+                <div class="panel panel-primary" id="draft-panel">
                     <div class="panel-heading">
                         草稿
                         <button id="confirm-draft" type="submit" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-placement="auto bottom" data-trigger="manual" title="提示" data-content="后台正在处理，请稍后...">确认</button>
@@ -243,7 +243,6 @@
                         </table>
                     </div>
                 </div>
-                <p><strong>可通过以下两种方式添加,添加完成后点击右上角 确认清单</strong></p>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
@@ -344,6 +343,7 @@
                                     <button type="reset" class="btn btn-danger" style="display: none;">重置</button>
                                 </form>
                                 <button type="submit" class="btn btn-success btn-sm" id="confirm-to-draft">加入草稿</button>
+                                <button type="submit" class="btn btn-danger btn-sm" id="change-subnet-btn" style="display:none;">变更信息</button>
                             </div>
                         </div>
                     </div>
@@ -416,7 +416,7 @@
                                                 <a class="del_subnet" seg="'+seg_list[i]['subnet']+'">回收</a>\
                                             </li>\
                                             <li>\
-                                                <a class="change_subnet" seg="'+seg_list[i]['subnet']+'">变更</a>\
+                                                <a data-toggle="modal" data-target="#segment_schema_modal" class="change_subnet" seg="'+seg_list[i]['subnet']+'">变更</a>\
                                             </li>\
                                         </ul>\
                                     </div>\
@@ -457,28 +457,71 @@
                 }
             })
         })
-        // 变更
+        // 请求变更信息
         $(document).on("click", ".change_subnet", function(){
-            // $.ajax({
-            //     url: "{% url 'mod_schemaed_subnet' 'change' %}",
-            //     type: 'POST',
-            //     data: $(this).serialize()+"&csrfmiddlewaretoken="+"{{ csrf_token }}",
-            //     cache: false,
-            //     success: function(data){
-            //         if(data['status'] == 'success'){
-                        
-            //         }else{
-
-            //         }
-            //     },
-            //     error: function(xhr){
-            //         console.log(xhr);
-            //     }
-            // })
+            $("p.error-data").text("");
+            $("#draft-panel").css('display', 'none');
+            $("#confirm-to-draft").css('display', 'none');
+            $("#change-subnet-btn").css('display', 'block');
+            $('#schema_panel_head').html('<strong>子网规划: '+$(this).attr('seg')+'</strong>');
+            $.ajax({
+                url: "{% url 'mod_schemaed_subnet' 'request_change' %}",
+                type: 'GET',
+                data: "subnet="+$(this).attr('seg'),
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        var record_info = data['record_info'];
+                        for (var key in record_info){
+                            $('#id_'+key).val(record_info[key]);
+                        }
+                        $('#id_draft_type').prop('disabled', true);
+                        $('#id_draft_type_addon').prop('disabled', true);
+                        $('#id_amount').prop('disabled', true);
+                    }else{
+                        alert(data['error_info']);
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            })
+        })
+        // 变更
+        $('#change-subnet-btn').click(function(){
+            $.ajax({
+                url: "{% url 'mod_schemaed_subnet' 'change' %}",
+                type: 'POST',
+                data: $('#segment-draft-form').serialize()+'&'+$('#tatget_and_drafted_form').serialize()+'&draft_type='+$('#id_draft_type').val()+'&amount='+$('#id_amount').val()+"&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                cache: false,
+                success: function(data){
+                    if(data['status'] == 'success'){
+                        alert('变更成功');
+                        $('#segment_schema_modal').modal('hide');
+                    }else{
+                        alert("失败");
+                        var error_data = JSON.parse(data['error_info']);
+                        for (var key in error_data){
+                            var item = error_data[key];
+                            $("#id_error_"+key).text(item[0]['message']);
+                        }
+                    }
+                },
+                error: function(xhr){
+                    console.log(xhr);
+                }
+            })
         })
 
         // 开始规划按钮
         $(document).on("click", ".begin-schema", function(){
+            // 样式转换
+            $("#draft-panel").css('display', 'block');
+            $("#confirm-to-draft").css('display', 'block');
+            $("#change-subnet-btn").css('display', 'none');
+            $('#id_draft_type').prop('disabled', false);
+            // $('#id_draft_type_addon').prop('disabled', false);
+            $('#id_amount').prop('disabled', false);
             // 清空表单
             $("p.error-data").text("");
             document.getElementById("segment-draft-form").reset();
@@ -669,7 +712,7 @@
             $.ajax({
                 url: "{% url 'confirm_draft' %}",
                 type: 'POST',
-                data: 'schema_target='+JSON.stringify(transfer_target)+ "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
+                data: 'schema_target='+JSON.stringify(transfer_target) + "&csrfmiddlewaretoken=" + "{{ csrf_token }}",
                 cache: false,
                 success: function(data){
                     $('#confirm-draft').popover('hide');

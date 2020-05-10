@@ -1176,21 +1176,31 @@ def schema_detail(request):
         # 1、已规划的列出子网即可
         # schemaed_seg_list = PublicIPSegmentSchema.objects.filter(~Q(subnet_gateway=None), belong_segment_id=belong_seg_id).values('subnet_gateway', 'subnet_mask').annotate(Count('id'), unused=Count('state', filter=Q(state=0)))
         raw_query_cmd = '''
-        SELECT id, GROUP_CONCAT(ip) as ips, subnet_gateway, 
+        SELECT id, GROUP_CONCAT(ip) as ips, subnet_mask, subnet_gateway, 
         COUNT(id) AS total, COUNT(if(state=0, 1, null)) AS unused
-        FROM mr_rec_public_segment_schema
+        FROM MR_REC_public_segment_schema
         WHERE belong_segment_id = %s and subnet_gateway IS NOT NULL 
-        GROUP BY subnet_gateway
+        GROUP BY subnet_gateway, subnet_mask
         '''
         schemaed_seg_list = PublicIPSegmentSchema.objects.raw(raw_query_cmd, (belong_seg_id,))
+        # seg_list = []
+        # for seg in schemaed_seg_list:
+        #     print(seg)
+        #     used_net = IPSet([])
+        #     for ip in seg.ips.split(','):
+        #         used_net.add(IP.make_net(ip, seg.subnet_mask))  #used_net.add(IP(ip))
+        #     for n in used_net.prefixes:    # 如果不用prefixes的话好像有bug，如果只有一个网段的时候，遍历会变成遍历单个IP
+        #         seg_list.append({'subnet':n.strNormal(), 'subnet_gateway': seg.subnet_gateway, 'total': seg.total, 'unused': seg.unused})
+        #         unschemaed_net.discard(n)
         seg_list = []
         for seg in schemaed_seg_list:
-            used_net = IPSet([])
             for ip in seg.ips.split(','):
-                used_net.add(IP(ip))
-            for n in used_net.prefixes:    # 如果不用prefixes的话好像有bug，如果只有一个网段的时候，遍历会变成遍历单个IP
-                seg_list.append({'subnet':n.strNormal(), 'subnet_gateway': seg.subnet_gateway, 'total': seg.total, 'unused': seg.unused})
-                unschemaed_net.discard(n)
+                tmp_net = IP.make_net(ip, seg.subnet_mask)
+                already_create_net = [s['subnet'] for s in seg_list]    
+                if tmp_net.strNormal() not in already_create_net:   # 避免存在同属一个网关，但是划分为不同子网的聚合成一个大的子网显示，便于后面变更操作
+                    used_state_summary = PublicIPSegmentSchema.objects.filter(ip__in=(n.strNormal() for n in tmp_net)).aggregate(unused=Count('state', filter=Q(state=0)))
+                    seg_list.append({'subnet':tmp_net.strNormal(), 'subnet_gateway': seg.subnet_gateway, 'total': tmp_net.len(), 'unused': used_state_summary['unused']})
+                    unschemaed_net.discard(tmp_net)
         data['schemaed_segment'] = json.dumps(seg_list)
         # print(data['schemaed_segment'])
         unschemaed_net_list = []
@@ -1218,8 +1228,51 @@ def mod_schemaed_subnet(request, mod_type):
             target_record.access_olt.clear()
             target_record.save()
         data['status'] = 'success'
-    elif mod_type == 'change':  # TODO: 变更
-        pass
+    elif mod_type == 'request_change':
+        subnet = request.GET.get('subnet')
+        sn = IP.make_net(*subnet.split('/'))
+        # 取出对应信息回填
+        record = PublicIPSegmentSchema.objects.get(ip=sn[0].strNormal())
+        access_olt = record.access_olt.all().values_list('olt_zh')
+        access_bng = record.access_bng.all().values_list('device_name')
+        print(access_olt, access_bng)
+        data['record_info'] = {
+            'target_net': subnet, 
+            'drafted_net': subnet, 
+            'access_olt': ','.join([olt[0] for olt in access_olt]), 
+            'access_bng': ','.join([bng[0] for bng in access_bng]), 
+            'access_type': record.access_type,
+            'draft_type': '1',
+            'amount': sn.len(),
+            'gateway': record.subnet_gateway,
+        }
+        data['status'] = 'success'
+    elif mod_type == 'change':
+        print(request.POST)
+        subnet = request.POST.get('drafted_net')
+        sn = IP.make_net(*subnet.split('/'))
+        draft_seg_form = NewDraftSegmentBaseForm(request.POST)
+        if draft_seg_form.is_valid():
+            access_olt_list = set(draft_seg_form.cleaned_data['access_olt'].split(',')) # 去重
+            access_bng_list = set(draft_seg_form.cleaned_data['access_bng'].split(',')) # 去重
+            access_type = draft_seg_form.cleaned_data['access_type']
+            gateway = draft_seg_form.cleaned_data['gateway']
+            records = PublicIPSegmentSchema.objects.filter(ip__in=(ip.strNormal() for ip in sn))
+            print(records.count())
+            records.update(state=0, subnet_gateway=gateway, access_type=access_type, alc_user=request.user.first_name, alc_time=timezone.datetime.now())
+            bngs = Device.objects.filter(device_name__in=tuple(access_bng_list))
+            olts = OltInfoWG.objects.filter(olt_zh__in=tuple(access_olt_list))
+            for r in records:   # 不能直接set，TODO：增加是否有变化的判断
+                r.access_olt.clear()
+                r.access_olt.add(*olts)
+                r.access_bng.clear()
+                r.access_bng.add(*bngs)
+                r.save()
+            data['status'] = 'success'
+        else:
+            data['status'] = 'error'
+            errorDict = draft_seg_form.errors.get_json_data()
+            data['error_info'] = json.dumps(errorDict)
     else:
         data['status'] = 'error'
         data['error_info'] = '无效操作'
@@ -1333,7 +1386,7 @@ def confirm_segment_to_draft(request):
                     data['status'] = 'success'
                     break
                 
-        # 这里对应其他出错情况
+        # 其他出错情况
         if 'status' not in data:
             data['status'] = 'error'
             data['other_error'] = '无法满足本次分配'
